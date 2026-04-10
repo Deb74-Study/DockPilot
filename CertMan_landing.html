@@ -287,6 +287,8 @@
 
       <p id="message" class="message">Use credentials provided by Developer. First-time sign-ins will be asked to set a new password.</p>
 
+      <button id="launchCertManBtn" type="button" class="primary-btn hidden" style="margin-top:14px;justify-self:start;">Launch CertMan</button>
+
       <form id="loginForm" class="login-form">
         <label for="loginInput">Login name</label>
         <input id="loginInput" type="text" placeholder="e.g. frontend.dev" required />
@@ -382,6 +384,7 @@
     const loginInput = document.getElementById('loginInput');
     const passwordInput = document.getElementById('passwordInput');
     const message = document.getElementById('message');
+    const launchCertManBtn = document.getElementById('launchCertManBtn');
     const sessionCard = document.getElementById('sessionCard');
     const resultName = document.getElementById('resultName');
     const resultRole = document.getElementById('resultRole');
@@ -509,6 +512,7 @@
     function setLoginStatus(isLoggedIn, name = '') {
       pageShell.classList.toggle('logged-in', isLoggedIn);
       setLoginFormVisible(!isLoggedIn);
+      launchCertManBtn.classList.toggle('hidden', !isLoggedIn);
       if (isLoggedIn) {
         loginStatus.textContent = `Logged in as ${name}`;
         loginStatus.style.color = 'var(--ok)';
@@ -610,6 +614,10 @@
       hidePasswordCard();
       passwordInput.value = newPassword;
       setMessage('Password updated successfully. Use the new password for future sign-ins.', 'success');
+    });
+
+    launchCertManBtn.addEventListener('click', () => {
+      window.location.href = './CertificateManager.html';
     });
 
     openPasswordChangeBtn.addEventListener('click', () => {

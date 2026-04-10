@@ -1,0 +1,1252 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Certificate Manager</title>
+  <style>
+    :root {
+      --panel: rgba(11, 24, 45, 0.92);
+      --line: rgba(255, 255, 255, 0.1);
+      --text: #eef4ff;
+      --muted: #a9b7d3;
+      --accent: #6bd7ff;
+      --accent-2: #72f1cb;
+      --ok: #8ef0b1;
+      --warn: #ffd28c;
+      --blue-text: #163b73;
+      --shadow: 0 18px 40px rgba(0, 0, 0, 0.36);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      min-height: 100vh;
+      font-family: Inter, "Segoe UI", Arial, sans-serif;
+      color: var(--text);
+      background:
+        radial-gradient(circle at top left, rgba(31, 97, 172, 0.42), transparent 28%),
+        radial-gradient(circle at bottom right, rgba(12, 143, 152, 0.32), transparent 26%),
+        linear-gradient(135deg, #05101d, #08162a 45%, #06101b 100%);
+    }
+
+    .manager-shell {
+      width: min(1440px, calc(100vw - 32px));
+      margin: 16px auto;
+      display: grid;
+      gap: 16px;
+    }
+
+    .panel {
+      background: var(--panel);
+      border: 1px solid var(--line);
+      border-radius: 24px;
+      box-shadow: var(--shadow);
+      padding: 20px;
+    }
+
+    .header-panel {
+      display: grid;
+      gap: 12px;
+    }
+
+    .toolbar-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 14px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      display: inline-flex;
+      width: fit-content;
+      padding: 7px 12px;
+      border-radius: 999px;
+      color: var(--accent);
+      background: rgba(107, 215, 255, 0.12);
+      border: 1px solid rgba(107, 215, 255, 0.24);
+      font-size: 0.82rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.9rem, 3vw, 2.4rem);
+    }
+
+    .muted {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.5;
+      font-size: 0.88rem;
+    }
+
+    .top-actions {
+      display: flex;
+      gap: 10px;
+      align-items: center;
+      flex-wrap: wrap;
+      margin-left: auto;
+    }
+
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 11px 15px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #04101d;
+    }
+
+    .secondary-btn {
+      background: rgba(255, 255, 255, 0.06);
+      color: var(--text);
+      border: 1px solid var(--line);
+    }
+
+    button[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .status-note {
+      margin: 0;
+      padding: 10px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      line-height: 1.4;
+      font-size: 0.82rem;
+    }
+
+    .status-note.success {
+      color: var(--ok);
+      background: rgba(142, 240, 177, 0.08);
+      border-color: rgba(142, 240, 177, 0.18);
+    }
+
+    .status-note.error {
+      color: var(--warn);
+      background: rgba(255, 210, 140, 0.08);
+      border-color: rgba(255, 210, 140, 0.18);
+    }
+
+    .table-area {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    .table-wrap {
+      overflow: auto;
+      max-height: 62vh;
+      scrollbar-width: none;
+    }
+
+    .table-wrap::-webkit-scrollbar {
+      display: none;
+    }
+
+    table {
+      width: 100%;
+      min-width: 940px;
+      border-collapse: separate;
+      border-spacing: 0;
+      background: #ffffff;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+
+    th,
+    td {
+      padding: 12px 10px;
+      border: 0;
+      font-size: 0.94rem;
+      min-width: 130px;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      background: rgba(107, 215, 255, 0.12);
+      color: var(--accent);
+      text-transform: none;
+      letter-spacing: normal;
+      font-size: 0.94rem;
+      font-weight: 700;
+      text-align: center;
+    }
+
+    thead th.sticky-col {
+      z-index: 5;
+      text-align: left;
+    }
+
+    tbody th {
+      position: sticky;
+      left: 0;
+      z-index: 3;
+      background: rgba(107, 215, 255, 0.12);
+      color: var(--accent);
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-align: left;
+    }
+
+    td {
+      color: var(--blue-text);
+      background: #ffffff;
+      font-weight: 600;
+      vertical-align: middle;
+      text-align: center;
+    }
+
+    .action-header,
+    .row-action-cell {
+      background: #ffffff;
+      text-align: center;
+      position: sticky;
+      right: 0;
+      z-index: 2;
+    }
+
+    .cell-chip {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      min-height: calc(1em + 3px);
+      padding: 1px 6px;
+      border-radius: 8px;
+    }
+
+    .data-cell.is-editable,
+    .header-cell.is-editable,
+    .row-label.is-editable {
+      cursor: text;
+    }
+
+    .data-cell.is-editable:focus,
+    .header-cell.is-editable:focus,
+    .row-label.is-editable:focus {
+      outline: 2px solid rgba(107, 215, 255, 0.85);
+      outline-offset: -3px;
+    }
+
+    .cell-chip.is-expired {
+      border: 1.5px dashed #db4b4b;
+      color: #c62828;
+      font-weight: 700;
+    }
+
+    .cell-chip.is-soon {
+      border: 1.5px dotted #e89a34;
+      color: #8a5a13;
+      background: rgba(255, 236, 120, 0.55);
+    }
+
+    .horizontal-scroll-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 12px;
+    }
+
+    .vertical-scroll-controls {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .scroll-arrow {
+      width: 40px;
+      padding: 8px 0;
+    }
+
+    .scroll-range {
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+    }
+
+    .horizontal-range {
+      flex: 1;
+      min-width: 25mm;
+      height: 18px;
+    }
+
+    .vertical-range {
+      appearance: slider-vertical;
+      -webkit-appearance: slider-vertical;
+      width: 18px;
+      height: 120px;
+      min-height: 10mm;
+    }
+
+    .scroll-range::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .vertical-range::-webkit-slider-runnable-track {
+      width: 6px;
+      height: 100%;
+    }
+
+    .scroll-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      border-radius: 999px;
+      border: 1px solid rgba(7, 17, 31, 0.18);
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      cursor: pointer;
+      margin-top: -5px;
+    }
+
+    .horizontal-range::-webkit-slider-thumb {
+      width: var(--thumb-width, 96px);
+      height: 16px;
+    }
+
+    .vertical-range::-webkit-slider-thumb {
+      width: 16px;
+      height: var(--thumb-height, 40px);
+      margin-top: 0;
+    }
+
+    .scroll-range::-moz-range-track {
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .scroll-range::-moz-range-thumb {
+      border: 1px solid rgba(7, 17, 31, 0.18);
+      border-radius: 999px;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      cursor: pointer;
+    }
+
+    .horizontal-range::-moz-range-thumb {
+      width: var(--thumb-width, 96px);
+      height: 16px;
+    }
+
+    .vertical-range::-moz-range-thumb {
+      width: 16px;
+      height: var(--thumb-height, 40px);
+    }
+
+    .table-footer-actions {
+      display: flex;
+      justify-content: flex-start;
+      margin-top: 12px;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(3, 9, 18, 0.72);
+      z-index: 1000;
+      padding: 16px;
+    }
+
+    .modal-card {
+      width: min(420px, 100%);
+      background: #ffffff;
+      color: #0f2244;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+    }
+
+    .modal-card h2 {
+      margin: 0 0 10px;
+      font-size: 1.2rem;
+    }
+
+    .modal-card p {
+      margin: 0;
+      line-height: 1.5;
+      color: #27436d;
+      font-size: 0.95rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      margin-top: 16px;
+    }
+
+    @media (max-width: 900px) {
+      .manager-shell {
+        width: min(100vw - 20px, 100%);
+      }
+
+      .toolbar-row {
+        align-items: flex-start;
+      }
+
+      .top-actions {
+        margin-left: 0;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="manager-shell">
+    <section class="panel header-panel">
+      <div class="toolbar-row">
+        <span id="todayBadge" class="tag">Date:</span>
+
+        <div class="top-actions">
+          <button id="eventLogBtn" type="button" class="secondary-btn">Event Log</button>
+          <button id="returnBaseBtn" type="button" class="secondary-btn">Return to Base</button>
+          <button id="loadBtn" type="button" class="secondary-btn">Load</button>
+          <button id="saveBtn" type="button" class="secondary-btn">Save</button>
+          <input id="loadFileInput" type="file" accept=".json,application/json" hidden />
+          <input id="csvFileInput" type="file" accept=".csv,text/csv" hidden />
+          <button id="importVesselBtn" type="button" class="primary-btn">Import Vessel</button>
+        </div>
+      </div>
+
+      <div>
+        <h1>Certificate Manager</h1>
+        <p class="muted">Import a vessel CSV file to populate the matching column in the certificate array.</p>
+      </div>
+    </section>
+
+    <p id="statusNote" class="status-note">Choose a `.csv` file to import vessel dates into the table below.</p>
+
+    <section class="panel">
+      <div class="table-area">
+        <div id="tableWrap" class="table-wrap">
+          <table>
+            <thead id="tableHead"></thead>
+            <tbody id="tableBody"></tbody>
+          </table>
+        </div>
+
+        <div class="vertical-scroll-controls">
+          <button id="scrollUpBtn" type="button" class="secondary-btn scroll-arrow">▲</button>
+          <input id="verticalScroll" class="scroll-range vertical-range" type="range" min="0" max="0" value="0" step="1" />
+          <button id="scrollDownBtn" type="button" class="secondary-btn scroll-arrow">▼</button>
+        </div>
+      </div>
+
+      <div class="horizontal-scroll-controls">
+        <button id="scrollLeftBtn" type="button" class="secondary-btn scroll-arrow">◀</button>
+        <input id="horizontalScroll" class="scroll-range horizontal-range" type="range" min="0" max="0" value="0" step="1" />
+        <button id="scrollRightBtn" type="button" class="secondary-btn scroll-arrow">▶</button>
+      </div>
+
+      <div class="table-footer-actions">
+        <button id="addRowBtn" type="button" class="secondary-btn">Add Row</button>
+      </div>
+    </section>
+  </main>
+
+  <div id="modalOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <h2 id="modalTitle">Note</h2>
+      <p id="modalMessage"></p>
+      <div class="modal-actions">
+        <button id="modalCancelBtn" type="button" class="secondary-btn hidden">No</button>
+        <button id="modalConfirmBtn" type="button" class="primary-btn">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const SESSION_KEY = 'FPA_DEV_CERTMAN_session';
+    const STATE_KEY = 'FPA_DEV_CERTMAN_state';
+    const LEGACY_MATRIX_KEY = 'FPA_DEV_CERTMAN_matrix';
+    const EVENT_LOG_KEY = 'FPA_DEV_CERTMAN_eventLog';
+    const DEFAULT_VESSEL_HEADERS = ['Vessel 1', 'Vessel 2', 'Vessel 3', 'Vessel 4', 'Vessel 5'];
+    const DEFAULT_CERT_LABELS = Array.from({ length: 10 }, (_, index) => `Cert ${index + 1}`);
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    const todayBadge = document.getElementById('todayBadge');
+    const eventLogBtn = document.getElementById('eventLogBtn');
+    const returnBaseBtn = document.getElementById('returnBaseBtn');
+    const loadBtn = document.getElementById('loadBtn');
+    const saveBtn = document.getElementById('saveBtn');
+    const addRowBtn = document.getElementById('addRowBtn');
+    const loadFileInput = document.getElementById('loadFileInput');
+    const importVesselBtn = document.getElementById('importVesselBtn');
+    const csvFileInput = document.getElementById('csvFileInput');
+    const statusNote = document.getElementById('statusNote');
+    const tableWrap = document.getElementById('tableWrap');
+    const tableHead = document.getElementById('tableHead');
+    const tableBody = document.getElementById('tableBody');
+    const horizontalScroll = document.getElementById('horizontalScroll');
+    const verticalScroll = document.getElementById('verticalScroll');
+    const scrollLeftBtn = document.getElementById('scrollLeftBtn');
+    const scrollRightBtn = document.getElementById('scrollRightBtn');
+    const scrollUpBtn = document.getElementById('scrollUpBtn');
+    const scrollDownBtn = document.getElementById('scrollDownBtn');
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMessage = document.getElementById('modalMessage');
+    const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+    const modalCancelBtn = document.getElementById('modalCancelBtn');
+
+    const currentSession = getSession();
+    const currentRole = currentSession?.role || 'User';
+    const canEditCells = ['Frontend Developer', 'Backend Developer', 'Project Admin'].includes(currentRole);
+    const canViewEventLog = ['Frontend Developer', 'Backend Developer', 'QA Tester'].includes(currentRole);
+
+    let { certificateHeader, vesselHeaders, certLabels, matrixData } = loadState();
+    let eventLogEntries = loadEventLog();
+    let continueAction = null;
+    let cancelAction = null;
+
+    function getSession() {
+      try {
+        return JSON.parse(localStorage.getItem(SESSION_KEY) || 'null');
+      } catch {
+        return null;
+      }
+    }
+
+    function mmToPx(mm) {
+      return Math.round(mm * 3.78);
+    }
+
+    function setStatus(text, tone = '') {
+      statusNote.textContent = text;
+      statusNote.className = `status-note${tone ? ` ${tone}` : ''}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[char]));
+    }
+
+    function normalizeName(value) {
+      return String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+    }
+
+    function startOfDay(date) {
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    }
+
+    function formatBadgeDate(date) {
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${day}-${monthNames[date.getMonth()]}-${date.getFullYear()}`;
+    }
+
+    function formatFileDate(date) {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      return `${day}${month}${date.getFullYear()}`;
+    }
+
+    function formatTimestamp(date) {
+      const hours = String(date.getHours()).padStart(2, '0');
+      const minutes = String(date.getMinutes()).padStart(2, '0');
+      const seconds = String(date.getSeconds()).padStart(2, '0');
+      return `${formatBadgeDate(date)} ${hours}:${minutes}:${seconds}`;
+    }
+
+    function formatDateObject(date) {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+
+    function parseDisplayDate(value) {
+      const raw = String(value ?? '').trim();
+      if (!raw) return null;
+
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+        const [day, month, year] = raw.split('/').map(Number);
+        const date = new Date(year, month - 1, day);
+        if (date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
+          return startOfDay(date);
+        }
+      }
+
+      const parsed = new Date(raw);
+      if (!Number.isNaN(parsed.getTime())) {
+        return startOfDay(parsed);
+      }
+
+      return null;
+    }
+
+    function getDateState(value) {
+      const parsed = parseDisplayDate(value);
+      if (!parsed) return '';
+
+      const today = startOfDay(new Date());
+      const diffDays = Math.round((parsed.getTime() - today.getTime()) / 86400000);
+      if (diffDays < 0) return 'is-expired';
+      if (diffDays <= 30) return 'is-soon';
+      return '';
+    }
+
+    function formatDateValue(value) {
+      const raw = String(value ?? '').trim();
+      if (!raw) return '';
+
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+        return raw;
+      }
+
+      if (/^\d+(\.\d+)?$/.test(raw)) {
+        const serial = Number(raw);
+        if (serial > 20000) {
+          const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+          excelEpoch.setUTCDate(excelEpoch.getUTCDate() + Math.floor(serial));
+          return formatDateObject(excelEpoch);
+        }
+      }
+
+      const parsed = new Date(raw);
+      if (!Number.isNaN(parsed.getTime())) {
+        return formatDateObject(parsed);
+      }
+
+      const parts = raw.split(/[.\/-]/);
+      if (parts.length === 3) {
+        const [first, second, third] = parts.map((part) => Number(part));
+        if ([first, second, third].every((part) => Number.isFinite(part))) {
+          const year = third < 100 ? 2000 + third : third;
+          const date = new Date(year, second - 1, first);
+          if (!Number.isNaN(date.getTime())) {
+            return formatDateObject(date);
+          }
+        }
+      }
+
+      return raw;
+    }
+
+    function makeDefaultMatrix(rowLabels = DEFAULT_CERT_LABELS, headers = DEFAULT_VESSEL_HEADERS) {
+      return rowLabels.map(() => Array(headers.length).fill(''));
+    }
+
+    function normalizeState(raw = {}) {
+      const nextCertificateHeader = String(raw?.certificateHeader || 'Certificate').trim() || 'Certificate';
+      const nextHeaders = Array.isArray(raw?.vesselHeaders) && raw.vesselHeaders.length
+        ? raw.vesselHeaders.map((header, index) => String(header ?? '').trim() || `Vessel ${index + 1}`)
+        : [...DEFAULT_VESSEL_HEADERS];
+      const nextLabels = Array.isArray(raw?.certLabels) && raw.certLabels.length
+        ? raw.certLabels.map((label, index) => String(label ?? '').trim() || `Cert ${index + 1}`)
+        : [...DEFAULT_CERT_LABELS];
+      const sourceMatrix = raw?.matrixData ?? raw?.data ?? (Array.isArray(raw) ? raw : []);
+      const nextMatrix = nextLabels.map((_, rowIndex) => (
+        nextHeaders.map((_, colIndex) => formatDateValue(sourceMatrix?.[rowIndex]?.[colIndex] ?? ''))
+      ));
+
+      return {
+        certificateHeader: nextCertificateHeader,
+        vesselHeaders: nextHeaders,
+        certLabels: nextLabels,
+        matrixData: nextMatrix
+      };
+    }
+
+    function loadState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(STATE_KEY) || 'null');
+        if (saved) {
+          return normalizeState(saved);
+        }
+      } catch {
+        // Ignore malformed saved state
+      }
+
+      try {
+        const legacy = JSON.parse(localStorage.getItem(LEGACY_MATRIX_KEY) || 'null');
+        if (legacy) {
+          return normalizeState({ matrixData: legacy });
+        }
+      } catch {
+        // Ignore malformed legacy matrix
+      }
+
+      return normalizeState();
+    }
+
+    function saveState() {
+      matrixData = certLabels.map((_, rowIndex) => (
+        vesselHeaders.map((_, colIndex) => formatDateValue(matrixData?.[rowIndex]?.[colIndex] ?? ''))
+      ));
+
+      localStorage.setItem(STATE_KEY, JSON.stringify({
+        certificateHeader,
+        vesselHeaders,
+        certLabels,
+        matrixData
+      }));
+    }
+
+    function loadEventLog() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(EVENT_LOG_KEY) || '[]');
+        return Array.isArray(saved) ? saved : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveEventLog() {
+      localStorage.setItem(EVENT_LOG_KEY, JSON.stringify(eventLogEntries));
+    }
+
+    function makeCellId(rowNumber, colNumber) {
+      return `R${rowNumber}C${colNumber}`;
+    }
+
+    function addEventLogEntry(cellId, oldValue, newValue) {
+      if (String(oldValue ?? '') === String(newValue ?? '')) {
+        return;
+      }
+
+      eventLogEntries.push({
+        timestamp: new Date().toISOString(),
+        role: currentRole,
+        cellId,
+        oldValue: String(oldValue ?? ''),
+        newValue: String(newValue ?? '')
+      });
+      saveEventLog();
+    }
+
+    function makeEventLogText() {
+      if (!eventLogEntries.length) {
+        return 'EventLog\n\nNo edits have been recorded yet.';
+      }
+
+      const lines = eventLogEntries.map((entry) => {
+        const stamp = formatTimestamp(new Date(entry.timestamp));
+        return `${stamp} | ${entry.role} | ${entry.cellId} | ${entry.oldValue || '(blank)'} | ${entry.newValue || '(blank)'}`;
+      });
+
+      return ['EventLog', 'Date / Time | Access Level | Cell ID | Old Value | New Value', ...lines].join('\n');
+    }
+
+    function renderTable() {
+      const editableAttr = canEditCells ? 'contenteditable="true" spellcheck="false"' : '';
+      const editableClass = canEditCells ? 'is-editable' : '';
+
+      tableHead.innerHTML = `
+        <tr>
+          <th class="top-left-cell sticky-col header-cell ${editableClass}" data-header-type="corner" ${editableAttr}>${escapeHtml(certificateHeader)}</th>
+          ${vesselHeaders.map((header, colIndex) => `
+            <th class="vessel-header header-cell ${editableClass}" data-header-type="vessel" data-col-index="${colIndex}" ${editableAttr}>${escapeHtml(header)}</th>
+          `).join('')}
+          <th class="action-header"><button id="addColumnBtn" type="button" class="secondary-btn" ${canEditCells ? '' : 'disabled'}>Add Column</button></th>
+        </tr>
+      `;
+
+      tableBody.innerHTML = certLabels.map((label, rowIndex) => `
+        <tr>
+          <th scope="row" class="row-label ${editableClass}" data-row-label-index="${rowIndex}" ${editableAttr}>${escapeHtml(label)}</th>
+          ${vesselHeaders.map((_, colIndex) => {
+            const value = matrixData[rowIndex]?.[colIndex] || '';
+            const stateClass = getDateState(value);
+            return `
+              <td class="data-cell ${editableClass}" data-row-index="${rowIndex}" data-col-index="${colIndex}" data-cell-id="${makeCellId(rowIndex + 2, colIndex + 2)}" ${editableAttr}>
+                <span class="cell-chip ${stateClass}">${escapeHtml(value)}</span>
+              </td>
+            `;
+          }).join('')}
+          <td class="row-action-cell"><button type="button" class="secondary-btn row-delete-btn" data-delete-row-index="${rowIndex}" ${canEditCells ? '' : 'disabled'}>Delete Row</button></td>
+        </tr>
+      `).join('');
+
+      saveState();
+      requestAnimationFrame(syncScrollControls);
+    }
+
+    function commitDataCell(cell) {
+      const rowIndex = Number(cell.dataset.rowIndex);
+      const colIndex = Number(cell.dataset.colIndex);
+      const oldValue = matrixData[rowIndex]?.[colIndex] ?? '';
+      const nextValue = formatDateValue(cell.textContent.trim());
+
+      if (oldValue === nextValue) {
+        renderTable();
+        return;
+      }
+
+      matrixData[rowIndex][colIndex] = nextValue;
+      saveState();
+      addEventLogEntry(makeCellId(rowIndex + 2, colIndex + 2), oldValue, nextValue);
+      renderTable();
+      setStatus(`Updated ${makeCellId(rowIndex + 2, colIndex + 2)} from "${oldValue || '(blank)'}" to "${nextValue || '(blank)'}".`, 'success');
+    }
+
+    function commitHeaderCell(cell) {
+      const headerType = cell.dataset.headerType;
+      const nextValue = cell.textContent.trim() || (headerType === 'corner' ? 'Certificate' : 'Vessel Name');
+
+      if (headerType === 'corner') {
+        const oldValue = certificateHeader;
+        if (oldValue === nextValue) {
+          renderTable();
+          return;
+        }
+        certificateHeader = nextValue;
+        saveState();
+        addEventLogEntry(makeCellId(1, 1), oldValue, nextValue);
+        renderTable();
+        setStatus(`Updated ${makeCellId(1, 1)} from "${oldValue}" to "${nextValue}".`, 'success');
+        return;
+      }
+
+      const colIndex = Number(cell.dataset.colIndex);
+      const oldValue = vesselHeaders[colIndex] ?? '';
+      if (oldValue === nextValue) {
+        renderTable();
+        return;
+      }
+
+      vesselHeaders[colIndex] = nextValue;
+      saveState();
+      addEventLogEntry(makeCellId(1, colIndex + 2), oldValue, nextValue);
+      renderTable();
+      setStatus(`Updated ${makeCellId(1, colIndex + 2)} from "${oldValue}" to "${nextValue}".`, 'success');
+    }
+
+    function commitRowLabelCell(cell) {
+      const rowIndex = Number(cell.dataset.rowLabelIndex);
+      const oldValue = certLabels[rowIndex] ?? '';
+      const nextValue = cell.textContent.trim() || `Cert ${rowIndex + 1}`;
+
+      if (oldValue === nextValue) {
+        renderTable();
+        return;
+      }
+
+      certLabels[rowIndex] = nextValue;
+      saveState();
+      addEventLogEntry(makeCellId(rowIndex + 2, 1), oldValue, nextValue);
+      renderTable();
+      setStatus(`Updated ${makeCellId(rowIndex + 2, 1)} from "${oldValue}" to "${nextValue}".`, 'success');
+    }
+
+    function extractImportValues(rows) {
+      const valueCount = certLabels.length;
+      const verticalValues = Array.from({ length: valueCount }, (_, index) => rows[index + 1]?.[1] ?? rows[index + 1]?.[0] ?? '');
+      const horizontalValues = Array.from({ length: valueCount }, (_, index) => rows[1]?.[index + 1] ?? '');
+
+      const verticalCount = verticalValues.filter((value) => String(value).trim() !== '').length;
+      const horizontalCount = horizontalValues.filter((value) => String(value).trim() !== '').length;
+      const chosenValues = horizontalCount > verticalCount ? horizontalValues : verticalValues;
+
+      return Array.from({ length: valueCount }, (_, index) => formatDateValue(chosenValues[index] ?? ''));
+    }
+
+    function showModal({ title, message, confirmText = 'Continue', cancelText = '', onConfirm = null, onCancel = null }) {
+      modalTitle.textContent = title;
+      modalMessage.textContent = message;
+      modalConfirmBtn.textContent = confirmText;
+      modalCancelBtn.textContent = cancelText || 'No';
+      modalCancelBtn.classList.toggle('hidden', !cancelText);
+      continueAction = onConfirm;
+      cancelAction = onCancel;
+      modalOverlay.classList.remove('hidden');
+      modalConfirmBtn.focus();
+    }
+
+    function closeModal(runCancel = false) {
+      const pendingCancel = cancelAction;
+      modalOverlay.classList.add('hidden');
+      continueAction = null;
+      cancelAction = null;
+      if (runCancel && typeof pendingCancel === 'function') {
+        pendingCancel();
+      }
+    }
+
+    function saveJsonFile() {
+      const filename = `CertStatus${formatFileDate(new Date())}.json`;
+      const payload = {
+        savedAt: new Date().toISOString(),
+        certificateHeader,
+        vesselHeaders,
+        certLabels,
+        matrixData,
+        eventLogEntries
+      };
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 1000);
+
+      showModal({
+        title: 'Data Saved',
+        message: `Data saved in file ${filename}`,
+        confirmText: 'Continue'
+      });
+    }
+
+    function applyLoadedState(parsed) {
+      const nextState = normalizeState(parsed);
+      certificateHeader = nextState.certificateHeader;
+      vesselHeaders = [...nextState.vesselHeaders];
+      certLabels = [...nextState.certLabels];
+      matrixData = nextState.matrixData.map((row) => [...row]);
+      saveState();
+      renderTable();
+    }
+
+    function addRow() {
+      certLabels.push(`Cert ${certLabels.length + 1}`);
+      matrixData.push(Array(vesselHeaders.length).fill(''));
+      saveState();
+      renderTable();
+      setStatus('A new certificate row has been added.', 'success');
+    }
+
+    function deleteRow(rowIndex) {
+      const removedLabel = certLabels[rowIndex] || `Row ${rowIndex + 1}`;
+      certLabels.splice(rowIndex, 1);
+      matrixData.splice(rowIndex, 1);
+      saveState();
+      addEventLogEntry(makeCellId(rowIndex + 2, 1), removedLabel, '[row deleted]');
+      renderTable();
+      setStatus(`${removedLabel} has been deleted.`, 'success');
+    }
+
+    function addColumn() {
+      vesselHeaders.push('Vessel Name');
+      matrixData = matrixData.map((row) => [...row, '']);
+      saveState();
+      addEventLogEntry(makeCellId(1, vesselHeaders.length + 1), '', 'Vessel Name');
+      renderTable();
+      setStatus('A new vessel column has been added.', 'success');
+    }
+
+    function makeStepSizes() {
+      const sampleCell = tableBody.querySelector('.data-cell');
+      const sampleRow = tableBody.querySelector('tr');
+      return {
+        horizontal: Math.max(20, Math.round((sampleCell?.getBoundingClientRect().width || 120) / 4)),
+        vertical: Math.max(18, Math.round((sampleRow?.getBoundingClientRect().height || 42) / 2))
+      };
+    }
+
+    function syncScrollControls() {
+      const maxX = Math.max(0, tableWrap.scrollWidth - tableWrap.clientWidth);
+      const maxY = Math.max(0, tableWrap.scrollHeight - tableWrap.clientHeight);
+
+      horizontalScroll.max = String(maxX);
+      horizontalScroll.value = String(Math.min(maxX, Math.round(tableWrap.scrollLeft)));
+      verticalScroll.max = String(maxY);
+      verticalScroll.value = String(Math.min(maxY, Math.round(tableWrap.scrollTop)));
+
+      const horizontalThumb = Math.max(mmToPx(25), Math.round((horizontalScroll.clientWidth || 320) * (maxX ? tableWrap.clientWidth / tableWrap.scrollWidth : 1)));
+      const verticalThumb = Math.max(mmToPx(10), Math.round((verticalScroll.clientHeight || 140) * (maxY ? tableWrap.clientHeight / tableWrap.scrollHeight : 1)));
+
+      horizontalScroll.style.setProperty('--thumb-width', `${horizontalThumb}px`);
+      verticalScroll.style.setProperty('--thumb-height', `${verticalThumb}px`);
+
+      const disableHorizontal = maxX === 0;
+      const disableVertical = maxY === 0;
+      horizontalScroll.disabled = disableHorizontal;
+      scrollLeftBtn.disabled = disableHorizontal;
+      scrollRightBtn.disabled = disableHorizontal;
+      verticalScroll.disabled = disableVertical;
+      scrollUpBtn.disabled = disableVertical;
+      scrollDownBtn.disabled = disableVertical;
+    }
+
+    function ensureSessionNotice() {
+      todayBadge.textContent = `Date: ${formatBadgeDate(new Date())}`;
+      eventLogBtn.disabled = !canViewEventLog;
+      eventLogBtn.title = canViewEventLog ? 'Open the EventLog in a new tab.' : 'Event Log is available only to Developer or QA Tester access levels.';
+      addRowBtn.disabled = !canEditCells;
+
+      if (!currentSession) {
+        setStatus('No active login session found. The grid is available in read-only mode until launched from the landing page.', 'error');
+        return;
+      }
+
+      const editMessage = canEditCells
+        ? 'Live editing is enabled for this access level.'
+        : 'This access level is view-only for the certificate dates.';
+      setStatus(`Logged in as ${currentSession.fullName || currentSession.loginName} (${currentRole}). ${editMessage}`, 'success');
+    }
+
+    tableHead.addEventListener('keydown', (event) => {
+      const cell = event.target.closest('.header-cell[contenteditable="true"]');
+      if (!cell) return;
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        cell.blur();
+      }
+    });
+
+    tableHead.addEventListener('blur', (event) => {
+      const cell = event.target.closest('.header-cell[contenteditable="true"]');
+      if (!cell) return;
+      commitHeaderCell(cell);
+    }, true);
+
+    tableBody.addEventListener('keydown', (event) => {
+      const cell = event.target.closest('.data-cell[contenteditable="true"], .row-label[contenteditable="true"]');
+      if (!cell) return;
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        cell.blur();
+      }
+    });
+
+    tableBody.addEventListener('blur', (event) => {
+      const dataCell = event.target.closest('.data-cell[contenteditable="true"]');
+      if (dataCell) {
+        commitDataCell(dataCell);
+        return;
+      }
+
+      const rowLabel = event.target.closest('.row-label[contenteditable="true"]');
+      if (rowLabel) {
+        commitRowLabelCell(rowLabel);
+      }
+    }, true);
+
+    tableHead.addEventListener('click', (event) => {
+      if (event.target.id === 'addColumnBtn' && canEditCells) {
+        showModal({
+          title: 'Alert',
+          message: 'Are you sure you want to Add a Column?',
+          confirmText: 'Yes',
+          cancelText: 'No',
+          onConfirm: addColumn
+        });
+      }
+    });
+
+    tableBody.addEventListener('click', (event) => {
+      const deleteButton = event.target.closest('.row-delete-btn');
+      if (!deleteButton || !canEditCells) {
+        return;
+      }
+
+      const rowIndex = Number(deleteButton.dataset.deleteRowIndex);
+      showModal({
+        title: 'Alert',
+        message: 'Are you sure you want to delete this row?',
+        confirmText: 'Yes',
+        cancelText: 'No',
+        onConfirm: () => deleteRow(rowIndex)
+      });
+    });
+
+    modalConfirmBtn.addEventListener('click', () => {
+      const nextAction = continueAction;
+      closeModal();
+      if (typeof nextAction === 'function') {
+        nextAction();
+      }
+    });
+
+    modalCancelBtn.addEventListener('click', () => {
+      closeModal(true);
+    });
+
+    modalOverlay.addEventListener('click', (event) => {
+      if (event.target === modalOverlay) {
+        closeModal(true);
+      }
+    });
+
+    document.addEventListener('keydown', (event) => {
+      if (event.key === 'Escape' && !modalOverlay.classList.contains('hidden')) {
+        closeModal(true);
+      }
+    });
+
+    returnBaseBtn.addEventListener('click', () => {
+      window.location.href = './CertMan_landing.html';
+    });
+
+    saveBtn.addEventListener('click', () => {
+      saveJsonFile();
+    });
+
+    loadBtn.addEventListener('click', () => {
+      showModal({
+        title: 'Note',
+        message: 'Load files which start with name "CertStatus" and correct file type only.',
+        confirmText: 'Continue',
+        onConfirm: () => loadFileInput.click()
+      });
+    });
+
+    addRowBtn.addEventListener('click', () => {
+      if (!canEditCells) {
+        return;
+      }
+
+      showModal({
+        title: 'Alert',
+        message: 'Are you sure you want to Add a Row?',
+        confirmText: 'Yes',
+        cancelText: 'No',
+        onConfirm: addRow
+      });
+    });
+
+    loadFileInput.addEventListener('change', async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) {
+        return;
+      }
+
+      if (!file.name.startsWith('CertStatus') || !file.name.toLowerCase().endsWith('.json')) {
+        setStatus('Please load only files that start with "CertStatus" and use the .json file type.', 'error');
+        event.target.value = '';
+        return;
+      }
+
+      try {
+        const parsed = JSON.parse(await file.text());
+        if (Array.isArray(parsed?.eventLogEntries)) {
+          eventLogEntries = parsed.eventLogEntries;
+          saveEventLog();
+        }
+        applyLoadedState(parsed);
+        setStatus(`Loaded ${file.name} into the certificate array.`, 'success');
+      } catch {
+        setStatus('Unable to load the selected data file.', 'error');
+      }
+
+      event.target.value = '';
+    });
+
+    eventLogBtn.addEventListener('click', () => {
+      if (!canViewEventLog) {
+        return;
+      }
+
+      const logWindow = window.open('', '_blank', 'noopener');
+      if (!logWindow) {
+        setStatus('Please allow pop-ups to view the EventLog.', 'error');
+        return;
+      }
+
+      logWindow.document.write(`<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>EventLog</title><style>body{font-family:Menlo,Monaco,Consolas,monospace;padding:18px;line-height:1.5;background:#fff;color:#10294d;}pre{white-space:pre-wrap;word-break:break-word;margin:0;}</style></head><body><pre>${escapeHtml(makeEventLogText())}</pre></body></html>`);
+      logWindow.document.close();
+    });
+
+    importVesselBtn.addEventListener('click', () => {
+      csvFileInput.click();
+    });
+
+    csvFileInput.addEventListener('change', async (event) => {
+      const file = event.target.files?.[0];
+      if (!file) {
+        return;
+      }
+
+      if (!file.name.toLowerCase().endsWith('.csv')) {
+        setStatus('Only .csv files are accepted for import.', 'error');
+        event.target.value = '';
+        return;
+      }
+
+      const text = await file.text();
+      const rows = parseCsv(text).filter((row) => row.some((cell) => String(cell).trim() !== ''));
+      if (!rows.length) {
+        setStatus('The selected CSV file is empty.', 'error');
+        event.target.value = '';
+        return;
+      }
+
+      const vesselName = rows[0]?.[0] ?? '';
+      const targetColumn = vesselHeaders.findIndex((header) => normalizeName(header) === normalizeName(vesselName));
+      if (targetColumn === -1) {
+        setStatus(`No matching vessel column was found for "${vesselName}".`, 'error');
+        event.target.value = '';
+        return;
+      }
+
+      const importedValues = extractImportValues(rows);
+      importedValues.forEach((value, rowIndex) => {
+        const oldValue = matrixData[rowIndex]?.[targetColumn] ?? '';
+        if (oldValue !== value) {
+          matrixData[rowIndex][targetColumn] = value;
+          addEventLogEntry(makeCellId(rowIndex + 2, targetColumn + 2), oldValue, value);
+        }
+      });
+
+      saveState();
+      renderTable();
+      setStatus(`Imported ${importedValues.length} certificate dates into ${vesselHeaders[targetColumn]}.`, 'success');
+      event.target.value = '';
+    });
+
+    horizontalScroll.addEventListener('input', (event) => {
+      tableWrap.scrollLeft = Number(event.target.value);
+    });
+
+    verticalScroll.addEventListener('input', (event) => {
+      tableWrap.scrollTop = Number(event.target.value);
+    });
+
+    scrollLeftBtn.addEventListener('click', () => {
+      tableWrap.scrollBy({ left: -makeStepSizes().horizontal, behavior: 'smooth' });
+    });
+
+    scrollRightBtn.addEventListener('click', () => {
+      tableWrap.scrollBy({ left: makeStepSizes().horizontal, behavior: 'smooth' });
+    });
+
+    scrollUpBtn.addEventListener('click', () => {
+      tableWrap.scrollBy({ top: -makeStepSizes().vertical, behavior: 'smooth' });
+    });
+
+    scrollDownBtn.addEventListener('click', () => {
+      tableWrap.scrollBy({ top: makeStepSizes().vertical, behavior: 'smooth' });
+    });
+
+    tableWrap.addEventListener('scroll', syncScrollControls);
+    window.addEventListener('resize', syncScrollControls);
+
+    renderTable();
+    ensureSessionNotice();
+  </script>
+</body>
+</html>

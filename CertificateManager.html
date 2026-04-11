@@ -15,6 +15,13 @@
       --ok: #8ef0b1;
       --warn: #ffd28c;
       --blue-text: #163b73;
+      --badge-fill: #093046;
+      --badge-line: rgba(107, 215, 255, 0.24);
+      --action-btn-bg: rgba(107, 215, 255, 0.24);
+      --action-btn-text: #163b73;
+      --action-btn-line: rgba(107, 215, 255, 0.5);
+      --cancel-btn-bg: #ffe7a8;
+      --cancel-btn-text: #5d4200;
       --shadow: 0 18px 40px rgba(0, 0, 0, 0.36);
     }
 
@@ -67,8 +74,8 @@
       padding: 7px 12px;
       border-radius: 999px;
       color: var(--accent);
-      background: rgba(107, 215, 255, 0.12);
-      border: 1px solid rgba(107, 215, 255, 0.24);
+      background: var(--badge-fill);
+      border: 1px solid var(--badge-line);
       font-size: 0.82rem;
       font-weight: 700;
       letter-spacing: 0.05em;
@@ -118,6 +125,19 @@
       border: 1px solid var(--line);
     }
 
+    .action-btn {
+      background: var(--action-btn-bg);
+      color: var(--action-btn-text);
+      border: 1px solid var(--action-btn-line);
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
+    }
+
+    .cancel-btn {
+      background: var(--cancel-btn-bg);
+      color: var(--cancel-btn-text);
+      border: 1px solid rgba(93, 66, 0, 0.2);
+    }
+
     button[disabled] {
       opacity: 0.45;
       cursor: not-allowed;
@@ -153,40 +173,142 @@
       align-items: stretch;
     }
 
-    .table-wrap {
-      overflow: auto;
-      max-height: 62vh;
+    .matrix-frame {
+      display: grid;
+      gap: 5px;
+      min-width: 0;
+    }
+
+    .matrix-grid {
+      display: grid;
+      grid-template-columns: 250px minmax(0, 1fr) 150px;
+      grid-template-rows: auto minmax(0, 1fr);
+      min-width: 0;
+      border-radius: 16px;
+      overflow: hidden;
+      background: #ffffff;
+    }
+
+    .corner-wrap,
+    .header-wrap,
+    .action-head-wrap,
+    .label-wrap,
+    .body-viewport,
+    .action-body-wrap {
+      background: #ffffff;
+    }
+
+    .corner-wrap {
+      grid-column: 1;
+      grid-row: 1;
+      overflow: hidden;
+    }
+
+    .header-wrap {
+      grid-column: 2;
+      grid-row: 1;
+      overflow: hidden;
       scrollbar-width: none;
     }
 
-    .table-wrap::-webkit-scrollbar {
+    .action-head-wrap {
+      grid-column: 3;
+      grid-row: 1;
+      overflow: hidden;
+      background: var(--panel);
+    }
+
+    .label-wrap {
+      grid-column: 1;
+      grid-row: 2;
+      overflow: hidden;
+      max-height: 62vh;
+      padding-bottom: 150px;
+      scrollbar-width: none;
+    }
+
+    .body-viewport {
+      grid-column: 2;
+      grid-row: 2;
+      overflow: auto;
+      max-height: 62vh;
+      padding-bottom: 150px;
+      scrollbar-width: none;
+    }
+
+    .action-body-wrap {
+      grid-column: 3;
+      grid-row: 2;
+      overflow: hidden;
+      max-height: 62vh;
+      padding-bottom: 150px;
+      background: var(--panel);
+      scrollbar-width: none;
+    }
+
+    .header-wrap::-webkit-scrollbar,
+    .label-wrap::-webkit-scrollbar,
+    .body-viewport::-webkit-scrollbar,
+    .action-body-wrap::-webkit-scrollbar {
       display: none;
     }
 
-    table {
-      width: 100%;
-      min-width: 940px;
+    .corner-wrap table,
+    .header-wrap table,
+    .action-head-wrap table,
+    .label-wrap table,
+    .body-viewport table,
+    .action-body-wrap table {
       border-collapse: separate;
       border-spacing: 0;
       background: #ffffff;
-      border-radius: 16px;
-      overflow: hidden;
+    }
+
+    .corner-wrap table,
+    .label-wrap table {
+      width: 250px;
+      min-width: 250px;
+    }
+
+    .action-head-wrap table,
+    .action-body-wrap table {
+      width: 150px;
+      min-width: 150px;
+      background: var(--panel);
+    }
+
+    .header-wrap table,
+    .body-viewport table {
+      width: max-content;
+      min-width: 100%;
     }
 
     th,
     td {
-      padding: 12px 10px;
-      border: 0;
+      padding: 5px 10px;
+      border-right: 1px dashed #1a243a;
+      border-bottom: 1px dashed #1a243a;
       font-size: 0.94rem;
       min-width: 130px;
+      height: 25px;
     }
 
-    thead th {
-      position: sticky;
-      top: 0;
-      z-index: 4;
-      background: rgba(107, 215, 255, 0.12);
+    .corner-wrap th,
+    .label-wrap th {
+      width: 250px;
+      min-width: 250px;
+      background: var(--badge-fill);
       color: var(--accent);
+      font-size: 0.9rem;
+      font-weight: 700;
+      text-align: left;
+    }
+
+    .header-wrap th {
+      width: 130px;
+      min-width: 130px;
+      background: var(--badge-fill);
+      color: #6bd7ff;
       text-transform: none;
       letter-spacing: normal;
       font-size: 0.94rem;
@@ -194,23 +316,9 @@
       text-align: center;
     }
 
-    thead th.sticky-col {
-      z-index: 5;
-      text-align: left;
-    }
-
-    tbody th {
-      position: sticky;
-      left: 0;
-      z-index: 3;
-      background: rgba(107, 215, 255, 0.12);
-      color: var(--accent);
-      font-size: 0.9rem;
-      font-weight: 700;
-      text-align: left;
-    }
-
-    td {
+    .body-viewport td {
+      width: 130px;
+      min-width: 130px;
       color: var(--blue-text);
       background: #ffffff;
       font-weight: 600;
@@ -220,11 +328,45 @@
 
     .action-header,
     .row-action-cell {
-      background: #ffffff;
+      width: 150px !important;
+      min-width: 150px !important;
+      background: var(--panel) !important;
       text-align: center;
-      position: sticky;
-      right: 0;
-      z-index: 2;
+      color: var(--text);
+    }
+
+    .action-head-wrap th,
+    .action-body-wrap td {
+      width: 150px;
+      min-width: 150px;
+      background: var(--panel);
+      color: var(--text);
+      text-align: center;
+    }
+
+    .row-label {
+      vertical-align: top;
+    }
+
+    .row-label.is-item {
+      padding-left: calc(10px + 4ch);
+    }
+
+    .row-label.is-section {
+      color: #ffffff;
+    }
+
+    .row-label-text {
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      line-clamp: 4;
+      -webkit-line-clamp: 4;
+      overflow: hidden;
+      white-space: normal;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+      line-height: 1.25;
+      min-height: 1.25em;
     }
 
     .cell-chip {
@@ -272,7 +414,11 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      justify-content: space-between;
       gap: 8px;
+      align-self: stretch;
+      min-height: 62vh;
+      padding: 2px 0;
     }
 
     .scroll-arrow {
@@ -295,9 +441,12 @@
     .vertical-range {
       appearance: slider-vertical;
       -webkit-appearance: slider-vertical;
+      writing-mode: bt-lr;
       width: 18px;
-      height: 120px;
-      min-height: 10mm;
+      flex: 1;
+      height: 100%;
+      min-height: 180px;
+      background: transparent;
     }
 
     .scroll-range::-webkit-slider-runnable-track {
@@ -309,6 +458,8 @@
     .vertical-range::-webkit-slider-runnable-track {
       width: 6px;
       height: 100%;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
     }
 
     .scroll-range::-webkit-slider-thumb {
@@ -358,7 +509,9 @@
     .table-footer-actions {
       display: flex;
       justify-content: flex-start;
-      margin-top: 12px;
+      margin-top: 0;
+      padding-top: 0;
+      background: transparent;
     }
 
     .hidden {
@@ -396,9 +549,29 @@
       font-size: 0.95rem;
     }
 
+    .modal-hint {
+      margin-top: 10px;
+      color: #35598a;
+      font-size: 0.84rem;
+    }
+
+    .modal-editor {
+      width: 100%;
+      min-height: 280px;
+      margin-top: 12px;
+      padding: 12px;
+      border: 1px solid rgba(15, 34, 68, 0.18);
+      border-radius: 12px;
+      resize: vertical;
+      font: 0.88rem/1.45 Menlo, Monaco, Consolas, monospace;
+      color: #0f2244;
+      background: #f8fbff;
+    }
+
     .modal-actions {
       display: flex;
       justify-content: flex-end;
+      gap: 5px;
       margin-top: 16px;
     }
 
@@ -428,6 +601,7 @@
           <button id="returnBaseBtn" type="button" class="secondary-btn">Return to Base</button>
           <button id="loadBtn" type="button" class="secondary-btn">Load</button>
           <button id="saveBtn" type="button" class="secondary-btn">Save</button>
+          <button id="dmtBtn" type="button" class="secondary-btn">DMT</button>
           <input id="loadFileInput" type="file" accept=".json,application/json" hidden />
           <input id="csvFileInput" type="file" accept=".csv,text/csv" hidden />
           <button id="importVesselBtn" type="button" class="primary-btn">Import Vessel</button>
@@ -436,19 +610,56 @@
 
       <div>
         <h1>Certificate Manager</h1>
-        <p class="muted">Import a vessel CSV file to populate the matching column in the certificate array.</p>
+        <p class="muted">Import a vessel CSV file to populate the matching vessel column with certificate due dates using the saved DMT.</p>
       </div>
     </section>
 
-    <p id="statusNote" class="status-note">Choose a `.csv` file to import vessel dates into the table below.</p>
+    <p id="statusNote" class="status-note">Choose a `.csv` file to import certificate due dates into the table below using the saved DMT.</p>
 
     <section class="panel">
       <div class="table-area">
-        <div id="tableWrap" class="table-wrap">
-          <table>
-            <thead id="tableHead"></thead>
-            <tbody id="tableBody"></tbody>
-          </table>
+        <div class="matrix-frame">
+          <div class="matrix-grid">
+            <div class="corner-wrap">
+              <table>
+                <thead id="cornerHead"></thead>
+              </table>
+            </div>
+
+            <div id="headerWrap" class="header-wrap">
+              <table>
+                <thead id="tableHead"></thead>
+              </table>
+            </div>
+
+            <div class="action-head-wrap">
+              <table>
+                <thead id="actionHead"></thead>
+              </table>
+            </div>
+
+            <div id="labelWrap" class="label-wrap">
+              <table>
+                <tbody id="labelBody"></tbody>
+              </table>
+            </div>
+
+            <div id="tableWrap" class="body-viewport">
+              <table>
+                <tbody id="tableBody"></tbody>
+              </table>
+            </div>
+
+            <div id="actionBodyWrap" class="action-body-wrap">
+              <table>
+                <tbody id="actionBody"></tbody>
+              </table>
+            </div>
+          </div>
+
+          <div class="table-footer-actions">
+            <button id="addRowBtn" type="button" class="secondary-btn">Add Row</button>
+          </div>
         </div>
 
         <div class="vertical-scroll-controls">
@@ -464,9 +675,6 @@
         <button id="scrollRightBtn" type="button" class="secondary-btn scroll-arrow">▶</button>
       </div>
 
-      <div class="table-footer-actions">
-        <button id="addRowBtn" type="button" class="secondary-btn">Add Row</button>
-      </div>
     </section>
   </main>
 
@@ -474,8 +682,10 @@
     <div class="modal-card">
       <h2 id="modalTitle">Note</h2>
       <p id="modalMessage"></p>
+      <p id="modalHint" class="modal-hint hidden"></p>
+      <textarea id="modalEditor" class="modal-editor hidden" spellcheck="false"></textarea>
       <div class="modal-actions">
-        <button id="modalCancelBtn" type="button" class="secondary-btn hidden">No</button>
+        <button id="modalCancelBtn" type="button" class="secondary-btn cancel-btn hidden">No</button>
         <button id="modalConfirmBtn" type="button" class="primary-btn">Continue</button>
       </div>
     </div>
@@ -486,8 +696,79 @@
     const STATE_KEY = 'FPA_DEV_CERTMAN_state';
     const LEGACY_MATRIX_KEY = 'FPA_DEV_CERTMAN_matrix';
     const EVENT_LOG_KEY = 'FPA_DEV_CERTMAN_eventLog';
+    const DMT_KEY = 'FPA_DEV_CERTMAN_dmt';
+    const DMT_VERSION = '2026-04-11-rev2';
+    const DUE_DATE_RESET_KEY = 'FPA_DEV_CERTMAN_due_date_reset';
+    const DUE_DATE_RESET_VERSION = '2026-04-11-clear-1';
+    const DEFAULT_CERTIFICATE_HEADER = 'Certificate Category / Name';
     const DEFAULT_VESSEL_HEADERS = ['Vessel 1', 'Vessel 2', 'Vessel 3', 'Vessel 4', 'Vessel 5'];
-    const DEFAULT_CERT_LABELS = Array.from({ length: 10 }, (_, index) => `Cert ${index + 1}`);
+    const DEFAULT_CERT_LABELS = [
+      'Flag issued certificates:',
+      'Certificate of Registry',
+      'Ship Radio Station License',
+      'Minimum Safe Manning Certificate',
+      'CoFR for Civil Liabilities Convention 1992 (CLC)',
+      'CoFR for Bunker Civil Liabilities Convention (BCLC)',
+      'CoFR for Wreck Removal Convention (WRC)',
+      'Insurance Issued Documents:',
+      'Certificate of Entry into P&I Club (P&I)',
+      'Blue Card for MLC 2.5.1',
+      'Blue Card for MLC 4.2',
+      'Hull and Machinery Insurance (H&M)',
+      'ITOPF Certificate',
+      'RO/Class Issued Certificates (Some may be issued directly by Flag):',
+      'Certificate of Classification',
+      'Cargo Ship Safety Construction Certificate (SAFCON)',
+      'Cargo Ship Safety Equipment Certificate (SEQ)',
+      'Cargo Ship Safety Radio Certificate (SRT)',
+      'International Oil Pollution Prevention Certificate (IOPPC)',
+      'International Air Pollution Prevention Certificate (IAPPC)',
+      'International Sewage Pollution Prevention Certificate (ISPPC)',
+      'International Ballast Water Management Certificate (IBWMC)',
+      'SOC for MARPOL Annex V',
+      'SOC for Fuel Oil Consumption Reporting (IMO DCS)',
+      'SOC for Inventory of Hazardous Material (HKC)',
+      'Intl. Load Line Certificate',
+      'Audit Related Documents:',
+      'Safety Management Certificate (SMC)',
+      'Maritime Labour Convention Inspection Certificate (MLC)',
+      'Company Document of Compliance (ISM-DOC)',
+      'Shore Based Maintenance Contract (SBMC)'
+    ];
+    const DEFAULT_DMT = [
+      { targetRow: 1, csvCell: 'C2' },
+      { targetRow: 2, csvCell: 'G5' },
+      { targetRow: 3, csvCell: 'G6' },
+      { targetRow: 4, csvCell: 'G7' },
+      { targetRow: 5, csvCell: 'G8' },
+      { targetRow: 6, csvCell: 'G9' },
+      { targetRow: 7, csvCell: 'G10' },
+      { targetRow: 8, csvCell: 'G11' },
+      { targetRow: 9, csvCell: 'G22' },
+      { targetRow: 10, csvCell: 'G23' },
+      { targetRow: 11, csvCell: 'G27' },
+      { targetRow: 12, csvCell: 'G28' },
+      { targetRow: 13, csvCell: 'G29' },
+      { targetRow: 14, csvCell: 'G30' },
+      { targetRow: 15, csvCell: 'G36' },
+      { targetRow: 16, csvCell: 'G37' },
+      { targetRow: 17, csvCell: 'G39' },
+      { targetRow: 18, csvCell: 'G40' },
+      { targetRow: 19, csvCell: 'G42' },
+      { targetRow: 20, csvCell: 'G44' },
+      { targetRow: 21, csvCell: 'G46' },
+      { targetRow: 22, csvCell: 'G47' },
+      { targetRow: 23, csvCell: 'G50' },
+      { targetRow: 24, csvCell: 'G53' },
+      { targetRow: 25, csvCell: 'G54' },
+      { targetRow: 26, csvCell: 'G55' },
+      { targetRow: 27, csvCell: 'G57' },
+      { targetRow: 28, csvCell: 'G68' },
+      { targetRow: 29, csvCell: 'G69' },
+      { targetRow: 30, csvCell: 'G71' }, 
+      { targetRow: 31, csvCell: 'G72' },
+      { targetRow: 32, csvCell: 'G83' }
+    ];
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
     const todayBadge = document.getElementById('todayBadge');
@@ -495,14 +776,22 @@
     const returnBaseBtn = document.getElementById('returnBaseBtn');
     const loadBtn = document.getElementById('loadBtn');
     const saveBtn = document.getElementById('saveBtn');
+    const dmtBtn = document.getElementById('dmtBtn');
     const addRowBtn = document.getElementById('addRowBtn');
     const loadFileInput = document.getElementById('loadFileInput');
     const importVesselBtn = document.getElementById('importVesselBtn');
     const csvFileInput = document.getElementById('csvFileInput');
     const statusNote = document.getElementById('statusNote');
+    const headerWrap = document.getElementById('headerWrap');
+    const labelWrap = document.getElementById('labelWrap');
     const tableWrap = document.getElementById('tableWrap');
+    const cornerHead = document.getElementById('cornerHead');
     const tableHead = document.getElementById('tableHead');
+    const actionHead = document.getElementById('actionHead');
+    const labelBody = document.getElementById('labelBody');
     const tableBody = document.getElementById('tableBody');
+    const actionBodyWrap = document.getElementById('actionBodyWrap');
+    const actionBody = document.getElementById('actionBody');
     const horizontalScroll = document.getElementById('horizontalScroll');
     const verticalScroll = document.getElementById('verticalScroll');
     const scrollLeftBtn = document.getElementById('scrollLeftBtn');
@@ -512,6 +801,8 @@
     const modalOverlay = document.getElementById('modalOverlay');
     const modalTitle = document.getElementById('modalTitle');
     const modalMessage = document.getElementById('modalMessage');
+    const modalHint = document.getElementById('modalHint');
+    const modalEditor = document.getElementById('modalEditor');
     const modalConfirmBtn = document.getElementById('modalConfirmBtn');
     const modalCancelBtn = document.getElementById('modalCancelBtn');
 
@@ -519,9 +810,12 @@
     const currentRole = currentSession?.role || 'User';
     const canEditCells = ['Frontend Developer', 'Backend Developer', 'Project Admin'].includes(currentRole);
     const canViewEventLog = ['Frontend Developer', 'Backend Developer', 'QA Tester'].includes(currentRole);
+    const canManageDmt = ['Frontend Developer', 'Backend Developer', 'Project Admin'].includes(currentRole);
 
     let { certificateHeader, vesselHeaders, certLabels, matrixData } = loadState();
+    let dmtMapping = loadDmt();
     let eventLogEntries = loadEventLog();
+    const didClearStoredDueDates = clearStoredDueDatesOnce();
     let continueAction = null;
     let cancelAction = null;
 
@@ -554,6 +848,34 @@
 
     function normalizeName(value) {
       return String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+    }
+
+    function normalizeVesselKey(value) {
+      return normalizeName(value).replace(/[^a-z0-9]/g, '');
+    }
+
+    function findVesselColumn(vesselName) {
+      const normalizedTarget = normalizeName(vesselName);
+      const targetKey = normalizeVesselKey(vesselName);
+
+      const exactIndex = vesselHeaders.findIndex((header) => {
+        const normalizedHeader = normalizeName(header);
+        const headerKey = normalizeVesselKey(header);
+        return normalizedHeader === normalizedTarget || (targetKey && headerKey === targetKey);
+      });
+
+      if (exactIndex !== -1) {
+        return exactIndex;
+      }
+
+      const partialMatches = vesselHeaders
+        .map((header, index) => ({
+          index,
+          headerKey: normalizeVesselKey(header)
+        }))
+        .filter(({ headerKey }) => targetKey && headerKey && (headerKey.includes(targetKey) || targetKey.includes(headerKey)));
+
+      return partialMatches.length === 1 ? partialMatches[0].index : -1;
     }
 
     function startOfDay(date) {
@@ -657,18 +979,57 @@
       return rowLabels.map(() => Array(headers.length).fill(''));
     }
 
+    function buildCertLabels(labels = []) {
+      const normalizedLabels = Array.isArray(labels)
+        ? labels.map((label, index) => String(label ?? '').trim() || `Cert ${index + 1}`)
+        : [];
+
+      return [
+        ...DEFAULT_CERT_LABELS,
+        ...normalizedLabels.slice(DEFAULT_CERT_LABELS.length)
+      ];
+    }
+
+    function makeLabelKey(value) {
+      return String(value ?? '')
+        .replace(/^\s+/, '')
+        .trim()
+        .replace(/:+$/, '')
+        .toLowerCase()
+        .replace(/\s+/g, ' ');
+    }
+
+    function isSectionHeader(value) {
+      return [
+        'flag issued certificates',
+        'insurance issued documents',
+        'ro/class issued certificates (some may be issued directly by flag)',
+        'audit related documents'
+      ].includes(makeLabelKey(value));
+    }
+
     function normalizeState(raw = {}) {
-      const nextCertificateHeader = String(raw?.certificateHeader || 'Certificate').trim() || 'Certificate';
+      const rawCertificateHeader = String(raw?.certificateHeader ?? '').trim();
+      const nextCertificateHeader = !rawCertificateHeader || rawCertificateHeader === 'Certificate'
+        ? DEFAULT_CERTIFICATE_HEADER
+        : rawCertificateHeader;
       const nextHeaders = Array.isArray(raw?.vesselHeaders) && raw.vesselHeaders.length
         ? raw.vesselHeaders.map((header, index) => String(header ?? '').trim() || `Vessel ${index + 1}`)
         : [...DEFAULT_VESSEL_HEADERS];
-      const nextLabels = Array.isArray(raw?.certLabels) && raw.certLabels.length
-        ? raw.certLabels.map((label, index) => String(label ?? '').trim() || `Cert ${index + 1}`)
-        : [...DEFAULT_CERT_LABELS];
+      const nextLabels = buildCertLabels(raw?.certLabels);
+      const sourceLabels = Array.isArray(raw?.certLabels) ? raw.certLabels : [];
+      const hasSourceLabels = sourceLabels.length > 0;
       const sourceMatrix = raw?.matrixData ?? raw?.data ?? (Array.isArray(raw) ? raw : []);
-      const nextMatrix = nextLabels.map((_, rowIndex) => (
-        nextHeaders.map((_, colIndex) => formatDateValue(sourceMatrix?.[rowIndex]?.[colIndex] ?? ''))
-      ));
+      const sourceRowMap = new Map(
+        sourceLabels.map((label, index) => [makeLabelKey(label), sourceMatrix?.[index] ?? []])
+      );
+      const nextMatrix = nextLabels.map((label, rowIndex) => {
+        const sourceRow = hasSourceLabels
+          ? sourceRowMap.get(makeLabelKey(label)) || []
+          : sourceMatrix?.[rowIndex] || [];
+
+        return nextHeaders.map((_, colIndex) => formatDateValue(sourceRow?.[colIndex] ?? ''));
+      });
 
       return {
         certificateHeader: nextCertificateHeader,
@@ -713,6 +1074,25 @@
       }));
     }
 
+    function clearAllDueDateCells() {
+      matrixData = certLabels.map(() => Array(vesselHeaders.length).fill(''));
+      saveState();
+    }
+
+    function clearStoredDueDatesOnce() {
+      try {
+        if (localStorage.getItem(DUE_DATE_RESET_KEY) === DUE_DATE_RESET_VERSION) {
+          return false;
+        }
+
+        clearAllDueDateCells();
+        localStorage.setItem(DUE_DATE_RESET_KEY, DUE_DATE_RESET_VERSION);
+        return true;
+      } catch {
+        return false;
+      }
+    }
+
     function loadEventLog() {
       try {
         const saved = JSON.parse(localStorage.getItem(EVENT_LOG_KEY) || '[]');
@@ -724,6 +1104,209 @@
 
     function saveEventLog() {
       localStorage.setItem(EVENT_LOG_KEY, JSON.stringify(eventLogEntries));
+    }
+
+    function normalizeDmt(raw = []) {
+      const sourceEntries = Array.isArray(raw) ? raw : [];
+      const sourceMap = new Map(
+        sourceEntries.map((entry) => [Number(entry?.targetRow), String(entry?.csvCell ?? '').trim().toUpperCase()])
+      );
+
+      return DEFAULT_DMT.map((entry) => {
+        const savedRef = sourceMap.get(entry.targetRow);
+        return {
+          targetRow: entry.targetRow,
+          csvCell: /^[A-Z]+\d+$/.test(savedRef || '') ? savedRef : entry.csvCell
+        };
+      });
+    }
+
+    function loadDmt() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(DMT_KEY) || 'null');
+        if (saved && !Array.isArray(saved) && saved.version === DMT_VERSION) {
+          return normalizeDmt(saved.mapping);
+        }
+      } catch {
+        // Ignore malformed DMT state
+      }
+
+      return normalizeDmt(DEFAULT_DMT);
+    }
+
+    function saveDmt(mapping = dmtMapping) {
+      dmtMapping = normalizeDmt(mapping);
+      localStorage.setItem(DMT_KEY, JSON.stringify({ version: DMT_VERSION, mapping: dmtMapping }));
+      return dmtMapping;
+    }
+
+    function makeDmtText(mapping = dmtMapping) {
+      return normalizeDmt(mapping)
+        .map((entry) => `R${entry.targetRow}\t${entry.csvCell}`)
+        .join('\n');
+    }
+
+    function parseDmtText(text) {
+      const lines = String(text ?? '')
+        .split(/\r?\n/)
+        .map((line) => line.trim())
+        .filter(Boolean);
+
+      const mappingByRow = new Map();
+      lines.forEach((line, index) => {
+        const match = line.match(/^R(\d+)[,\s\t]+([A-Z]+\d+)$/i);
+        if (!match) {
+          throw new Error(`Invalid DMT entry on line ${index + 1}. Use the format "R2 D2".`);
+        }
+        mappingByRow.set(Number(match[1]), match[2].toUpperCase());
+      });
+
+      const missingRows = DEFAULT_DMT
+        .map((entry) => entry.targetRow)
+        .filter((rowNumber) => !mappingByRow.has(rowNumber));
+
+      if (missingRows.length) {
+        throw new Error(`Missing DMT rows: ${missingRows.map((rowNumber) => `R${rowNumber}`).join(', ')}`);
+      }
+
+      return DEFAULT_DMT.map((entry) => ({
+        targetRow: entry.targetRow,
+        csvCell: mappingByRow.get(entry.targetRow) || entry.csvCell
+      }));
+    }
+
+    function cellRefToIndexes(ref) {
+      const match = String(ref ?? '').trim().toUpperCase().match(/^([A-Z]+)(\d+)$/);
+      if (!match) {
+        return null;
+      }
+
+      const [, letters, rowText] = match;
+      let colIndex = 0;
+      for (const char of letters) {
+        colIndex = (colIndex * 26) + (char.charCodeAt(0) - 64);
+      }
+
+      return {
+        rowIndex: Number(rowText) - 1,
+        colIndex: colIndex - 1
+      };
+    }
+
+    function getCsvValueByRef(rows, ref) {
+      const indexes = cellRefToIndexes(ref);
+      if (!indexes) {
+        return '';
+      }
+
+      return rows?.[indexes.rowIndex]?.[indexes.colIndex] ?? '';
+    }
+
+    function looksLikeCellRef(value) {
+      return /^[A-Z]+\d+$/.test(String(value ?? '').trim().toUpperCase());
+    }
+
+    function isLikelyDateValue(value) {
+      const raw = String(value ?? '').trim();
+      if (!raw) return false;
+      if (/^NA$/i.test(raw)) return true;
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) return true;
+      if (/^\d{1,2}[-\/.][A-Za-z]{3}[-\/.]\d{2,4}$/.test(raw)) return true;
+      if (/^\d{1,2}[-\/.]\d{1,2}[-\/.]\d{2,4}$/.test(raw)) return true;
+
+      const parsed = new Date(raw);
+      return !Number.isNaN(parsed.getTime());
+    }
+
+    function findNamedColumnIndex(rows, headerNames = []) {
+      const targets = headerNames.map((value) => normalizeName(value));
+      for (const row of rows.slice(0, 12)) {
+        for (let index = 0; index < row.length; index += 1) {
+          if (targets.includes(normalizeName(row[index]))) {
+            return index;
+          }
+        }
+      }
+      return -1;
+    }
+
+    function guessDueDateFromRow(row = [], preferredIndex = -1) {
+      const candidateIndexes = [];
+      if (preferredIndex >= 0 && preferredIndex < row.length) {
+        candidateIndexes.push(preferredIndex);
+      }
+      for (let index = row.length - 1; index >= 0; index -= 1) {
+        if (!candidateIndexes.includes(index)) {
+          candidateIndexes.push(index);
+        }
+      }
+
+      for (const index of candidateIndexes) {
+        const candidate = String(row[index] ?? '').trim();
+        if (isLikelyDateValue(candidate)) {
+          return formatDateValue(candidate);
+        }
+      }
+
+      return '';
+    }
+
+    function resolveMappedImportValue(rows, csvCell, dueDateColumnIndex) {
+      const directValue = String(getCsvValueByRef(rows, csvCell) ?? '').trim();
+
+      if (looksLikeCellRef(directValue)) {
+        const dereferencedValue = String(getCsvValueByRef(rows, directValue) ?? '').trim();
+        if (isLikelyDateValue(dereferencedValue)) {
+          return formatDateValue(dereferencedValue);
+        }
+
+        const dereferencedIndexes = cellRefToIndexes(directValue);
+        if (dereferencedIndexes) {
+          const guessedValue = guessDueDateFromRow(rows[dereferencedIndexes.rowIndex] || [], dueDateColumnIndex);
+          if (guessedValue) {
+            return guessedValue;
+          }
+        }
+      }
+
+      if (isLikelyDateValue(directValue)) {
+        return formatDateValue(directValue);
+      }
+
+      const sourceIndexes = cellRefToIndexes(csvCell);
+      if (sourceIndexes) {
+        const guessedValue = guessDueDateFromRow(rows[sourceIndexes.rowIndex] || [], dueDateColumnIndex);
+        if (guessedValue) {
+          return guessedValue;
+        }
+      }
+
+      return formatDateValue(directValue);
+    }
+
+    function extractVesselName(rows, fileName = '') {
+      const vesselRef = dmtMapping.find((entry) => entry.targetRow === 1)?.csvCell || 'C2';
+      const directName = String(getCsvValueByRef(rows, vesselRef) ?? '').trim();
+      if (directName) {
+        return directName;
+      }
+
+      for (const row of rows.slice(0, 12)) {
+        const labelIndex = row.findIndex((cell) => normalizeName(cell) === 'vessel name');
+        if (labelIndex !== -1) {
+          for (let index = labelIndex + 1; index < row.length; index += 1) {
+            const candidate = String(row[index] ?? '').trim();
+            if (candidate) {
+              return candidate;
+            }
+          }
+        }
+      }
+
+      return String(fileName || '')
+        .replace(/\.csv$/i, '')
+        .replace(/\s+vessel certificates status$/i, '')
+        .trim();
     }
 
     function makeCellId(rowNumber, colNumber) {
@@ -762,19 +1345,37 @@
       const editableAttr = canEditCells ? 'contenteditable="true" spellcheck="false"' : '';
       const editableClass = canEditCells ? 'is-editable' : '';
 
+      cornerHead.innerHTML = `
+        <tr>
+          <th class="top-left-cell header-cell ${editableClass}" data-header-type="corner" ${editableAttr}>${escapeHtml(certificateHeader)}</th>
+        </tr>
+      `;
+
       tableHead.innerHTML = `
         <tr>
-          <th class="top-left-cell sticky-col header-cell ${editableClass}" data-header-type="corner" ${editableAttr}>${escapeHtml(certificateHeader)}</th>
           ${vesselHeaders.map((header, colIndex) => `
             <th class="vessel-header header-cell ${editableClass}" data-header-type="vessel" data-col-index="${colIndex}" ${editableAttr}>${escapeHtml(header)}</th>
           `).join('')}
+        </tr>
+      `;
+
+      actionHead.innerHTML = `
+        <tr>
           <th class="action-header"><button id="addColumnBtn" type="button" class="secondary-btn" ${canEditCells ? '' : 'disabled'}>Add Column</button></th>
         </tr>
       `;
 
+      labelBody.innerHTML = certLabels.map((label, rowIndex) => {
+        const sectionClass = isSectionHeader(label) ? 'is-section' : 'is-item';
+        return `
+          <tr>
+            <th scope="row" class="row-label ${editableClass} ${sectionClass}" data-row-label-index="${rowIndex}" ${editableAttr}><span class="row-label-text">${escapeHtml(label)}</span></th>
+          </tr>
+        `;
+      }).join('');
+
       tableBody.innerHTML = certLabels.map((label, rowIndex) => `
         <tr>
-          <th scope="row" class="row-label ${editableClass}" data-row-label-index="${rowIndex}" ${editableAttr}>${escapeHtml(label)}</th>
           ${vesselHeaders.map((_, colIndex) => {
             const value = matrixData[rowIndex]?.[colIndex] || '';
             const stateClass = getDateState(value);
@@ -784,12 +1385,20 @@
               </td>
             `;
           }).join('')}
+        </tr>
+      `).join('');
+
+      actionBody.innerHTML = certLabels.map((_, rowIndex) => `
+        <tr>
           <td class="row-action-cell"><button type="button" class="secondary-btn row-delete-btn" data-delete-row-index="${rowIndex}" ${canEditCells ? '' : 'disabled'}>Delete Row</button></td>
         </tr>
       `).join('');
 
       saveState();
-      requestAnimationFrame(syncScrollControls);
+      requestAnimationFrame(() => {
+        syncPaneHeights();
+        syncScrollControls();
+      });
     }
 
     function commitDataCell(cell) {
@@ -812,7 +1421,7 @@
 
     function commitHeaderCell(cell) {
       const headerType = cell.dataset.headerType;
-      const nextValue = cell.textContent.trim() || (headerType === 'corner' ? 'Certificate' : 'Vessel Name');
+      const nextValue = cell.textContent.trim() || (headerType === 'corner' ? DEFAULT_CERTIFICATE_HEADER : 'Vessel Name');
 
       if (headerType === 'corner') {
         const oldValue = certificateHeader;
@@ -845,7 +1454,7 @@
     function commitRowLabelCell(cell) {
       const rowIndex = Number(cell.dataset.rowLabelIndex);
       const oldValue = certLabels[rowIndex] ?? '';
-      const nextValue = cell.textContent.trim() || `Cert ${rowIndex + 1}`;
+      const nextValue = cell.textContent.trim() || DEFAULT_CERT_LABELS[rowIndex] || `Cert ${rowIndex + 1}`;
 
       if (oldValue === nextValue) {
         renderTable();
@@ -860,32 +1469,64 @@
     }
 
     function extractImportValues(rows) {
-      const valueCount = certLabels.length;
-      const verticalValues = Array.from({ length: valueCount }, (_, index) => rows[index + 1]?.[1] ?? rows[index + 1]?.[0] ?? '');
-      const horizontalValues = Array.from({ length: valueCount }, (_, index) => rows[1]?.[index + 1] ?? '');
+      const dueDateColumnIndex = findNamedColumnIndex(rows, ['Valid Until', 'Due Date', 'Expiry Date', 'Expiry']);
 
-      const verticalCount = verticalValues.filter((value) => String(value).trim() !== '').length;
-      const horizontalCount = horizontalValues.filter((value) => String(value).trim() !== '').length;
-      const chosenValues = horizontalCount > verticalCount ? horizontalValues : verticalValues;
-
-      return Array.from({ length: valueCount }, (_, index) => formatDateValue(chosenValues[index] ?? ''));
+      return dmtMapping
+        .filter((entry) => entry.targetRow >= 2)
+        .map((entry) => {
+          const rowIndex = entry.targetRow - 2;
+          const label = certLabels[rowIndex] || '';
+          return {
+            rowIndex,
+            csvCell: entry.csvCell,
+            value: isSectionHeader(label) ? '' : resolveMappedImportValue(rows, entry.csvCell, dueDateColumnIndex)
+          };
+        })
+        .filter((entry) => entry.rowIndex >= 0 && entry.rowIndex < certLabels.length);
     }
 
-    function showModal({ title, message, confirmText = 'Continue', cancelText = '', onConfirm = null, onCancel = null }) {
+    function showModal({
+      title,
+      message,
+      confirmText = 'Continue',
+      cancelText = '',
+      onConfirm = null,
+      onCancel = null,
+      showEditor = false,
+      editorValue = '',
+      editorReadOnly = false,
+      hintText = ''
+    }) {
       modalTitle.textContent = title;
       modalMessage.textContent = message;
+      modalHint.textContent = hintText;
+      modalHint.classList.toggle('hidden', !hintText);
+      modalEditor.value = editorValue;
+      modalEditor.readOnly = editorReadOnly;
+      modalEditor.classList.toggle('hidden', !showEditor);
       modalConfirmBtn.textContent = confirmText;
       modalCancelBtn.textContent = cancelText || 'No';
       modalCancelBtn.classList.toggle('hidden', !cancelText);
       continueAction = onConfirm;
       cancelAction = onCancel;
       modalOverlay.classList.remove('hidden');
-      modalConfirmBtn.focus();
+
+      if (showEditor) {
+        modalEditor.focus();
+        modalEditor.setSelectionRange(0, modalEditor.value.length);
+      } else {
+        modalConfirmBtn.focus();
+      }
     }
 
     function closeModal(runCancel = false) {
       const pendingCancel = cancelAction;
       modalOverlay.classList.add('hidden');
+      modalHint.textContent = '';
+      modalHint.classList.add('hidden');
+      modalEditor.value = '';
+      modalEditor.readOnly = false;
+      modalEditor.classList.add('hidden');
       continueAction = null;
       cancelAction = null;
       if (runCancel && typeof pendingCancel === 'function') {
@@ -901,7 +1542,8 @@
         vesselHeaders,
         certLabels,
         matrixData,
-        eventLogEntries
+        eventLogEntries,
+        dmtMapping
       };
 
       const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
@@ -927,6 +1569,9 @@
       vesselHeaders = [...nextState.vesselHeaders];
       certLabels = [...nextState.certLabels];
       matrixData = nextState.matrixData.map((row) => [...row]);
+      if (Array.isArray(parsed?.dmtMapping) && canManageDmt) {
+        saveDmt(parsed.dmtMapping);
+      }
       saveState();
       renderTable();
     }
@@ -967,7 +1612,60 @@
       };
     }
 
+    function syncPaneHeights() {
+      const cornerRow = cornerHead.querySelector('tr');
+      const headerRow = tableHead.querySelector('tr');
+      const actionHeaderRow = actionHead.querySelector('tr');
+      const labelRows = Array.from(labelBody.querySelectorAll('tr'));
+      const bodyRows = Array.from(tableBody.querySelectorAll('tr'));
+      const actionRows = Array.from(actionBody.querySelectorAll('tr'));
+
+      if (cornerRow && headerRow && actionHeaderRow) {
+        cornerRow.style.height = 'auto';
+        headerRow.style.height = 'auto';
+        actionHeaderRow.style.height = 'auto';
+        const headerHeight = Math.max(
+          cornerRow.getBoundingClientRect().height,
+          headerRow.getBoundingClientRect().height,
+          actionHeaderRow.getBoundingClientRect().height
+        );
+        cornerRow.style.height = `${headerHeight}px`;
+        headerRow.style.height = `${headerHeight}px`;
+        actionHeaderRow.style.height = `${headerHeight}px`;
+      }
+
+      labelRows.forEach((row) => {
+        row.style.height = 'auto';
+      });
+      bodyRows.forEach((row) => {
+        row.style.height = 'auto';
+      });
+      actionRows.forEach((row) => {
+        row.style.height = 'auto';
+      });
+
+      bodyRows.forEach((bodyRow, index) => {
+        const labelRow = labelRows[index];
+        const actionRow = actionRows[index];
+        if (!labelRow || !actionRow) {
+          return;
+        }
+        const syncedHeight = Math.max(
+          labelRow.getBoundingClientRect().height,
+          bodyRow.getBoundingClientRect().height,
+          actionRow.getBoundingClientRect().height
+        );
+        labelRow.style.height = `${syncedHeight}px`;
+        bodyRow.style.height = `${syncedHeight}px`;
+        actionRow.style.height = `${syncedHeight}px`;
+      });
+    }
+
     function syncScrollControls() {
+      headerWrap.scrollLeft = tableWrap.scrollLeft;
+      labelWrap.scrollTop = tableWrap.scrollTop;
+      actionBodyWrap.scrollTop = tableWrap.scrollTop;
+
       const maxX = Math.max(0, tableWrap.scrollWidth - tableWrap.clientWidth);
       const maxY = Math.max(0, tableWrap.scrollHeight - tableWrap.clientHeight);
 
@@ -977,7 +1675,11 @@
       verticalScroll.value = String(Math.min(maxY, Math.round(tableWrap.scrollTop)));
 
       const horizontalThumb = Math.max(mmToPx(25), Math.round((horizontalScroll.clientWidth || 320) * (maxX ? tableWrap.clientWidth / tableWrap.scrollWidth : 1)));
-      const verticalThumb = Math.max(mmToPx(10), Math.round((verticalScroll.clientHeight || 140) * (maxY ? tableWrap.clientHeight / tableWrap.scrollHeight : 1)));
+      const verticalControlHeight = verticalScroll.clientHeight || 180;
+      const verticalThumb = Math.max(
+        Math.round(verticalControlHeight * 0.1),
+        Math.min(verticalControlHeight, Math.round(verticalControlHeight * (maxY ? tableWrap.clientHeight / tableWrap.scrollHeight : 1)))
+      );
 
       horizontalScroll.style.setProperty('--thumb-width', `${horizontalThumb}px`);
       verticalScroll.style.setProperty('--thumb-height', `${verticalThumb}px`);
@@ -1004,9 +1706,13 @@
       }
 
       const editMessage = canEditCells
-        ? 'Live editing is enabled for this access level.'
-        : 'This access level is view-only for the certificate dates.';
-      setStatus(`Logged in as ${currentSession.fullName || currentSession.loginName} (${currentRole}). ${editMessage}`, 'success');
+        ? 'Live editing of certificate due dates is enabled for this access level.'
+        : 'This access level is view-only for the certificate due dates.';
+      const resetMessage = didClearStoredDueDates ? ' Previous due date data has been cleared.' : '';
+      dmtBtn.title = canManageDmt
+        ? 'View or update the saved DMT used for CSV imports.'
+        : 'The saved DMT is view-only for this access level.';
+      setStatus(`Logged in as ${currentSession.fullName || currentSession.loginName} (${currentRole}). ${editMessage} CSV imports use the saved DMT mapping.${resetMessage}`, 'success');
     }
 
     tableHead.addEventListener('keydown', (event) => {
@@ -1024,8 +1730,24 @@
       commitHeaderCell(cell);
     }, true);
 
+    labelBody.addEventListener('keydown', (event) => {
+      const cell = event.target.closest('.row-label[contenteditable="true"]');
+      if (!cell) return;
+      if (event.key === 'Enter') {
+        event.preventDefault();
+        cell.blur();
+      }
+    });
+
+    labelBody.addEventListener('blur', (event) => {
+      const rowLabel = event.target.closest('.row-label[contenteditable="true"]');
+      if (rowLabel) {
+        commitRowLabelCell(rowLabel);
+      }
+    }, true);
+
     tableBody.addEventListener('keydown', (event) => {
-      const cell = event.target.closest('.data-cell[contenteditable="true"], .row-label[contenteditable="true"]');
+      const cell = event.target.closest('.data-cell[contenteditable="true"]');
       if (!cell) return;
       if (event.key === 'Enter') {
         event.preventDefault();
@@ -1037,12 +1759,6 @@
       const dataCell = event.target.closest('.data-cell[contenteditable="true"]');
       if (dataCell) {
         commitDataCell(dataCell);
-        return;
-      }
-
-      const rowLabel = event.target.closest('.row-label[contenteditable="true"]');
-      if (rowLabel) {
-        commitRowLabelCell(rowLabel);
       }
     }, true);
 
@@ -1076,9 +1792,10 @@
 
     modalConfirmBtn.addEventListener('click', () => {
       const nextAction = continueAction;
+      const editorValue = modalEditor.value;
       closeModal();
       if (typeof nextAction === 'function') {
-        nextAction();
+        nextAction(editorValue);
       }
     });
 
@@ -1104,6 +1821,33 @@
 
     saveBtn.addEventListener('click', () => {
       saveJsonFile();
+    });
+
+    dmtBtn.addEventListener('click', () => {
+      showModal({
+        title: 'DMT — Data Matching Table',
+        message: canManageDmt
+          ? 'Edit the saved row-to-cell mapping used for every CSV import. Use one line per entry, for example "R2 D2".'
+          : 'This saved row-to-cell mapping is view-only for your current access level.',
+        confirmText: canManageDmt ? 'Save DMT' : 'Close',
+        cancelText: canManageDmt ? 'Cancel' : '',
+        showEditor: true,
+        editorValue: makeDmtText(),
+        editorReadOnly: !canManageDmt,
+        hintText: canManageDmt
+          ? 'Developer-level access is required to change the DMT.'
+          : 'Only Developer-level access can change the DMT.',
+        onConfirm: canManageDmt
+          ? (editorValue) => {
+            try {
+              saveDmt(parseDmtText(editorValue));
+              setStatus('DMT saved. All future CSV imports will use the updated Data Matching Table.', 'success');
+            } catch (error) {
+              setStatus(error.message || 'Unable to save the DMT.', 'error');
+            }
+          }
+          : null
+      });
     });
 
     loadBtn.addEventListener('click', () => {
@@ -1195,16 +1939,17 @@
         return;
       }
 
-      const vesselName = rows[0]?.[0] ?? '';
-      const targetColumn = vesselHeaders.findIndex((header) => normalizeName(header) === normalizeName(vesselName));
+      const vesselName = extractVesselName(rows, file.name);
+      const targetColumn = findVesselColumn(vesselName);
       if (targetColumn === -1) {
-        setStatus(`No matching vessel column was found for "${vesselName}".`, 'error');
+        const availableHeaders = vesselHeaders.map((header) => String(header).trim()).filter(Boolean).join(', ');
+        setStatus(`No matching vessel column was found for "${vesselName || 'unknown vessel'}". Row 1 currently contains: ${availableHeaders || 'no vessel names'}.`, 'error');
         event.target.value = '';
         return;
       }
 
       const importedValues = extractImportValues(rows);
-      importedValues.forEach((value, rowIndex) => {
+      importedValues.forEach(({ rowIndex, value }) => {
         const oldValue = matrixData[rowIndex]?.[targetColumn] ?? '';
         if (oldValue !== value) {
           matrixData[rowIndex][targetColumn] = value;
@@ -1214,7 +1959,7 @@
 
       saveState();
       renderTable();
-      setStatus(`Imported ${importedValues.length} certificate dates into ${vesselHeaders[targetColumn]}.`, 'success');
+      setStatus(`Imported DMT-mapped certificate due dates into ${vesselHeaders[targetColumn]} across ${importedValues.length} certificate rows.`, 'success');
       event.target.value = '';
     });
 
@@ -1243,7 +1988,10 @@
     });
 
     tableWrap.addEventListener('scroll', syncScrollControls);
-    window.addEventListener('resize', syncScrollControls);
+    window.addEventListener('resize', () => {
+      syncPaneHeights();
+      syncScrollControls();
+    });
 
     renderTable();
     ensureSessionNotice();

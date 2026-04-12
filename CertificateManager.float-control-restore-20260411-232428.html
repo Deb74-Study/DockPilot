@@ -56,26 +56,17 @@
     }
 
     .header-panel {
-      position: relative;
-      z-index: 3;
       display: grid;
       gap: 8px;
-      min-height: 94px;
       padding: 14px 16px;
-      overflow: visible;
     }
 
     .toolbar-row {
       display: flex;
-      justify-content: flex-start;
+      justify-content: space-between;
       align-items: flex-start;
       gap: 10px;
-      min-height: 20px;
       flex-wrap: wrap;
-    }
-
-    .header-copy {
-      max-width: calc(100% - 300px);
     }
 
     .tag {
@@ -110,23 +101,18 @@
       --control-small-width: 52px;
       --control-import-width: 120px;
       --control-row-width: calc((var(--control-small-width) * 2) + var(--control-import-width) + (var(--control-gap) * 2));
-      position: absolute;
-      top: 10px;
-      right: 16px;
-      margin-left: 0;
+      margin-left: auto;
       width: fit-content;
-      max-width: calc(100% - 32px);
-      z-index: 10;
+      max-width: 100%;
     }
 
     .control-box {
       padding: 6px;
       border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      background: rgba(26, 43, 70, 0.88);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.04);
       width: fit-content;
       max-width: 100%;
-      box-shadow: 0 10px 24px rgba(0, 0, 0, 0.28);
     }
 
     .control-layout {
@@ -204,7 +190,7 @@
       color: #4f2800;
       border: 1px solid rgba(120, 59, 0, 0.24);
       box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
-      font-size: 2rem;
+      font-size: 1rem;
       font-weight: 900;
       line-height: 1;
     }
@@ -621,7 +607,6 @@
     .table-footer-actions {
       display: flex;
       justify-content: flex-start;
-      gap: 8px;
       margin-top: 0;
       padding-top: 0;
       background: transparent;
@@ -693,22 +678,12 @@
         width: min(100vw - 20px, 100%);
       }
 
-      .header-panel {
-        min-height: auto;
-      }
-
       .toolbar-row {
         align-items: flex-start;
       }
 
-      .header-copy {
-        max-width: 100%;
-      }
-
       .top-actions {
-        position: static;
         margin-left: 0;
-        max-width: 100%;
       }
     }
   </style>
@@ -730,7 +705,7 @@
 
               <div class="control-row control-row-equal control-optional">
                 <button id="quickLookBtn" type="button" class="secondary-btn control-btn" disabled>Quick Look</button>
-                <button id="overdueListBtn" type="button" class="secondary-btn control-btn">Overdue List</button>
+                <button id="overdueListBtn" type="button" class="secondary-btn control-btn" disabled>Overdue List</button>
               </div>
 
               <div class="control-row control-row-equal control-optional">
@@ -744,14 +719,14 @@
               </div>
             </div>
 
-            <button id="controlToggleBtn" type="button" class="toggle-btn control-btn" aria-expanded="false" aria-label="Show more controls" title="Show more controls">V</button>
+            <button id="controlToggleBtn" type="button" class="toggle-btn control-btn" aria-expanded="false" aria-label="Show more controls" title="Show more controls">˅</button>
           </div>
           <input id="loadFileInput" type="file" accept=".json,application/json" hidden />
           <input id="csvFileInput" type="file" accept=".csv,text/csv" hidden />
         </div>
       </div>
 
-      <div class="header-copy">
+      <div>
         <h1>Certificate Manager</h1>
         <p class="muted">Import a vessel CSV file to populate the matching vessel column with certificate due dates using the saved DMT.</p>
       </div>
@@ -802,8 +777,6 @@
 
           <div class="table-footer-actions">
             <button id="addRowBtn" type="button" class="secondary-btn">Add Row</button>
-            <button id="deleteLastColumnBtn" type="button" class="secondary-btn">Delete Last Column</button>
-            <button id="clearDueDatesBtn" type="button" class="secondary-btn">Clear All Due Dates</button>
           </div>
         </div>
 
@@ -923,12 +896,9 @@
     const saveBtn = document.getElementById('saveBtn');
     const dmtBtn = document.getElementById('dmtBtn');
     const addRowBtn = document.getElementById('addRowBtn');
-    const deleteLastColumnBtn = document.getElementById('deleteLastColumnBtn');
-    const clearDueDatesBtn = document.getElementById('clearDueDatesBtn');
     const loadFileInput = document.getElementById('loadFileInput');
     const importVesselBtn = document.getElementById('importVesselBtn');
     const csvFileInput = document.getElementById('csvFileInput');
-    const overdueListBtn = document.getElementById('overdueListBtn');
     const statusNote = document.getElementById('statusNote');
     const controlBox = document.getElementById('controlBox');
     const controlToggleBtn = document.getElementById('controlToggleBtn');
@@ -959,9 +929,8 @@
     const currentSession = getSession();
     const currentRole = currentSession?.role || 'User';
     const canEditCells = ['Frontend Developer', 'Backend Developer', 'Project Admin'].includes(currentRole);
-    const canManageRows = ['Frontend Developer', 'Backend Developer'].includes(currentRole);
     const canViewEventLog = ['Frontend Developer', 'Backend Developer', 'QA Tester'].includes(currentRole);
-    const canManageDmt = ['Frontend Developer', 'Backend Developer'].includes(currentRole);
+    const canManageDmt = ['Frontend Developer', 'Backend Developer', 'Project Admin'].includes(currentRole);
     const MANUAL_EDIT_PAUSE_MS = 700;
 
     let { certificateHeader, vesselHeaders, certLabels, matrixData } = loadState();
@@ -1662,7 +1631,7 @@
 
       actionBody.innerHTML = certLabels.map((_, rowIndex) => `
         <tr>
-          <td class="row-action-cell"><button type="button" class="secondary-btn row-delete-btn" data-delete-row-index="${rowIndex}" ${canManageRows ? '' : 'disabled'}>Delete Row</button></td>
+          <td class="row-action-cell"><button type="button" class="secondary-btn row-delete-btn" data-delete-row-index="${rowIndex}" ${canEditCells ? '' : 'disabled'}>Delete Row</button></td>
         </tr>
       `).join('');
 
@@ -1902,24 +1871,6 @@
       setStatus('A new vessel column has been added.', 'success');
     }
 
-    function deleteLastColumn() {
-      if (!vesselHeaders.length) {
-        setStatus('No vessel columns are available to delete.', 'error');
-        return;
-      }
-
-      const removedHeader = vesselHeaders[vesselHeaders.length - 1] || `Column ${vesselHeaders.length}`;
-      const deletedColumnCellId = makeCellId(1, vesselHeaders.length + 1);
-
-      vesselHeaders.pop();
-      matrixData = matrixData.map((row) => row.slice(0, vesselHeaders.length));
-
-      saveState();
-      addEventLogEntry(deletedColumnCellId, removedHeader, '[column deleted]');
-      renderTable();
-      setStatus(`Last vessel column "${removedHeader}" has been deleted.`, 'success');
-    }
-
     function makeStepSizes() {
       const sampleCell = tableBody.querySelector('.data-cell');
       const sampleRow = tableBody.querySelector('tr');
@@ -2015,9 +1966,7 @@
       todayBadge.textContent = `Date: ${formatBadgeDate(new Date())}`;
       eventLogBtn.disabled = !canViewEventLog;
       eventLogBtn.title = canViewEventLog ? 'Open the EventLog in a new tab.' : 'Event Log is available only to Developer or QA Tester access levels.';
-      addRowBtn.disabled = !canManageRows;
-      deleteLastColumnBtn.disabled = !canEditCells;
-      clearDueDatesBtn.disabled = !canEditCells;
+      addRowBtn.disabled = !canEditCells;
 
       if (!currentSession) {
         setStatus('No active login session found. The grid is available in read-only mode until launched from the landing page.', 'error');
@@ -2095,7 +2044,7 @@
 
     actionBody.addEventListener('click', (event) => {
       const deleteButton = event.target.closest('.row-delete-btn');
-      if (!deleteButton || !canManageRows) {
+      if (!deleteButton || !canEditCells) {
         return;
       }
 
@@ -2156,7 +2105,7 @@
 
     controlToggleBtn?.addEventListener('click', () => {
       const isExpanded = controlBox?.classList.toggle('is-expanded');
-      controlToggleBtn.textContent = isExpanded ? 'Λ' : 'V';
+      controlToggleBtn.textContent = isExpanded ? '˄' : '˅';
       controlToggleBtn.setAttribute('aria-expanded', String(Boolean(isExpanded)));
       controlToggleBtn.setAttribute('aria-label', isExpanded ? 'Collapse controls' : 'Show more controls');
       controlToggleBtn.title = isExpanded ? 'Collapse controls' : 'Show more controls';
@@ -2207,7 +2156,7 @@
     });
 
     addRowBtn.addEventListener('click', () => {
-      if (!canManageRows) {
+      if (!canEditCells) {
         return;
       }
 
@@ -2218,45 +2167,6 @@
         cancelText: 'No',
         onConfirm: addRow
       });
-    });
-
-    deleteLastColumnBtn.addEventListener('click', () => {
-      if (!canEditCells) {
-        return;
-      }
-
-      showModal({
-        title: 'Alert',
-        message: 'Are you sure you want to delete the last column on the right hand size of the table?',
-        confirmText: 'Yes',
-        cancelText: 'No',
-        onConfirm: deleteLastColumn
-      });
-    });
-
-    clearDueDatesBtn.addEventListener('click', () => {
-      if (!canEditCells) {
-        return;
-      }
-
-      showModal({
-        title: 'Alert',
-        message: 'Are you sure you want to clear all due dates from the table? This cannot be undone.',
-        confirmText: 'Yes',
-        cancelText: 'No',
-        onConfirm: () => {
-          clearAllDueDateCells();
-          renderTable();
-        }
-      });
-    });
-
-    overdueListBtn?.addEventListener('click', () => {
-      const targetUrl = './CertificateManager_OverdueList.html';
-      const popup = window.open(targetUrl, '_blank');
-      if (!popup) {
-        window.location.href = targetUrl;
-      }
     });
 
     loadFileInput.addEventListener('change', async (event) => {

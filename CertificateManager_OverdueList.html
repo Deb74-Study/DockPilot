@@ -1,0 +1,518 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Overdue List</title>
+  <style>
+    :root {
+      --a4-width: 210mm;
+      --a4-height: 297mm;
+      --writing-width: 186mm;
+      --writing-height: 255mm;
+      --writing-top-offset: 12mm;
+      --canvas-bg: #eef1f6;
+      --sheet-bg: #ffffff;
+      --line: #1f2937;
+      --table-line: #d1d5db;
+      --muted: #4b5563;
+      --heading-bg: #e5e7eb;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 14px;
+      background: var(--canvas-bg);
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      color: #111827;
+    }
+
+    #pageStack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12px;
+      margin: 0 auto;
+    }
+
+    .sheet-page {
+      position: relative;
+      width: var(--a4-width);
+      min-width: var(--a4-width);
+      max-width: var(--a4-width);
+      height: var(--a4-height);
+      min-height: var(--a4-height);
+      max-height: var(--a4-height);
+      background: var(--sheet-bg);
+      box-shadow: 0 8px 24px rgba(10, 14, 26, 0.14);
+      overflow: hidden;
+    }
+
+    .writing-area {
+      position: absolute;
+      top: var(--writing-top-offset);
+      left: 0;
+      right: 0;
+      width: var(--writing-width);
+      height: var(--writing-height);
+      margin: 0 auto;
+      border: 1px solid var(--line);
+      padding: 4mm;
+      background: #ffffff;
+      overflow: hidden;
+    }
+
+    .page-content {
+      height: 100%;
+      overflow: hidden;
+    }
+
+    .report-header {
+      margin-bottom: 6px;
+    }
+
+    .report-title {
+      margin: 0;
+      font-size: 16px;
+      line-height: 1.2;
+      font-weight: 700;
+    }
+
+    .report-meta {
+      margin: 2px 0 0;
+      font-size: 10px;
+      color: var(--muted);
+    }
+
+    .page-footer {
+      position: absolute;
+      bottom: 8mm;
+      left: 0;
+      right: 0;
+      width: var(--writing-width);
+      margin: 0 auto;
+      text-align: center;
+      font-size: 10px;
+      color: var(--muted);
+      border-top: 1px solid var(--table-line);
+      padding-top: 3mm;
+    }
+
+    @media print {
+      .page-footer {
+        border-top: none;
+      }
+    }
+
+    .actions {
+      display: flex;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .btn {
+      border: 1px solid #1d4ed8;
+      background: #2563eb;
+      color: #ffffff;
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 10px;
+      font-weight: 700;
+      cursor: pointer;
+    }
+
+    .btn.secondary {
+      border-color: #6b7280;
+      background: #6b7280;
+    }
+
+    .vessel-section {
+      margin: 0 0 6px;
+      border: 1px solid var(--table-line);
+      background: #ffffff;
+    }
+
+    .vessel-header {
+      margin: 0;
+      padding: 3px 6px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.2;
+      background: var(--heading-bg);
+      border-bottom: 1px solid var(--table-line);
+    }
+
+    .vessel-header .contd {
+      font-weight: 700;
+      color: #4b5563;
+      margin-left: 6px;
+      font-size: 10px;
+    }
+
+    .vessel-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+    }
+
+    .vessel-table col:first-child {
+      width: 80%;
+    }
+
+    .vessel-table col:last-child {
+      width: 20%;
+    }
+
+    .vessel-table th,
+    .vessel-table td {
+      border: 1px solid var(--table-line);
+      padding: 3px 6px;
+      font-size: 10px;
+      line-height: 1.2;
+      vertical-align: top;
+      word-break: break-word;
+    }
+
+    .vessel-table th {
+      font-weight: 700;
+      background: #f3f4f6;
+      text-align: left;
+    }
+
+    .empty-note {
+      border: 1px solid var(--table-line);
+      padding: 8px;
+      font-size: 11px;
+      color: var(--muted);
+    }
+
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    @media print {
+      body {
+        margin: 0;
+        padding: 0;
+        background: #ffffff;
+      }
+
+      #pageStack {
+        display: block;
+        width: var(--a4-width);
+      }
+
+      .sheet-page {
+        box-shadow: none;
+        margin: 0;
+        break-after: page;
+        page-break-after: always;
+      }
+
+      .sheet-page:last-child {
+        break-after: auto;
+        page-break-after: auto;
+      }
+
+      .actions {
+        display: none;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="pageStack" aria-label="Overdue list page stack"></main>
+
+  <script>
+    const STATE_KEY = 'FPA_DEV_CERTMAN_state';
+
+    function startOfDay(date) {
+      const safe = new Date(date);
+      safe.setHours(0, 0, 0, 0);
+      return safe;
+    }
+
+    function formatDateObject(date) {
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const year = date.getFullYear();
+      return `${day}/${month}/${year}`;
+    }
+
+    function formatDateValue(value) {
+      const raw = String(value ?? '').trim();
+      if (!raw) return '';
+
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+        return raw;
+      }
+
+      if (/^\d+(\.\d+)?$/.test(raw)) {
+        const serial = Number(raw);
+        if (serial > 20000) {
+          const excelEpoch = new Date(Date.UTC(1899, 11, 30));
+          excelEpoch.setUTCDate(excelEpoch.getUTCDate() + Math.floor(serial));
+          return formatDateObject(excelEpoch);
+        }
+      }
+
+      const parsed = new Date(raw);
+      if (!Number.isNaN(parsed.getTime())) {
+        return formatDateObject(parsed);
+      }
+
+      const parts = raw.split(/[.\/-]/);
+      if (parts.length === 3) {
+        const [first, second, third] = parts.map((part) => Number(part));
+        if ([first, second, third].every((part) => Number.isFinite(part))) {
+          const year = third < 100 ? 2000 + third : third;
+          const date = new Date(year, second - 1, first);
+          if (!Number.isNaN(date.getTime())) {
+            return formatDateObject(date);
+          }
+        }
+      }
+
+      return raw;
+    }
+
+    function parseDisplayDate(value) {
+      const raw = String(value ?? '').trim();
+      if (!raw) return null;
+
+      if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
+        const [day, month, year] = raw.split('/').map(Number);
+        const date = new Date(year, month - 1, day);
+        if (date.getFullYear() === year && date.getMonth() === month - 1 && date.getDate() === day) {
+          return startOfDay(date);
+        }
+      }
+
+      const parsed = new Date(raw);
+      if (!Number.isNaN(parsed.getTime())) {
+        return startOfDay(parsed);
+      }
+
+      return null;
+    }
+
+    function loadState() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(STATE_KEY) || '{}');
+        return {
+          certLabels: Array.isArray(parsed.certLabels) ? parsed.certLabels : [],
+          vesselHeaders: Array.isArray(parsed.vesselHeaders) ? parsed.vesselHeaders : [],
+          matrixData: Array.isArray(parsed.matrixData) ? parsed.matrixData : []
+        };
+      } catch {
+        return { certLabels: [], vesselHeaders: [], matrixData: [] };
+      }
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#39;');
+    }
+
+    function collectVesselOverdueData() {
+      const state = loadState();
+      const today = startOfDay(new Date());
+      const groups = [];
+
+      state.vesselHeaders.forEach((header, colIndex) => {
+        const vesselName = String(header ?? '').trim();
+        if (!vesselName) return;
+
+        const overdueRows = [];
+
+        state.certLabels.forEach((label, rowIndex) => {
+          const certName = String(label ?? '').trim() || `Cert ${rowIndex + 1}`;
+          const rawValue = state.matrixData?.[rowIndex]?.[colIndex] ?? '';
+          const parsedDate = parseDisplayDate(rawValue);
+          if (!parsedDate) return;
+
+          const diffDays = Math.round((parsedDate.getTime() - today.getTime()) / 86400000);
+          if (diffDays < 0) {
+            overdueRows.push({
+              certName,
+              dueDate: formatDateValue(rawValue)
+            });
+          }
+        });
+
+        if (overdueRows.length) {
+          groups.push({
+            vesselName,
+            rows: overdueRows
+          });
+        }
+      });
+
+      groups.sort((a, b) => a.vesselName.localeCompare(b.vesselName, undefined, { sensitivity: 'base' }));
+      return groups;
+    }
+
+    function buildVesselSection(vesselName, rows, continuation = false) {
+      const section = document.createElement('section');
+      section.className = 'vessel-section';
+
+      const continuationText = continuation
+        ? `<span class="contd">(Contd. from previous page)</span>`
+        : '';
+
+      section.innerHTML = `
+        <h2 class="vessel-header">${escapeHtml(vesselName)}${continuationText}</h2>
+        <table class="vessel-table" aria-label="Overdue certificates for ${escapeHtml(vesselName)}">
+          <colgroup>
+            <col />
+            <col />
+          </colgroup>
+          <thead>
+            <tr>
+              <th>Certificate Name</th>
+              <th>Due dates</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${rows.map((row) => `
+              <tr>
+                <td>${escapeHtml(row.certName)}</td>
+                <td>${escapeHtml(row.dueDate)}</td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+
+      return section;
+    }
+
+    function createPage(pageStack, includeHeader = false) {
+      const page = document.createElement('section');
+      page.className = 'sheet-page';
+
+      const generatedAt = new Date().toLocaleString();
+      page.innerHTML = `
+        <div class="writing-area">
+          <div class="page-content">
+            ${includeHeader ? `
+              <div class="report-header">
+                <h1 class="report-title">List of Overdue Certificates for vessels</h1>
+                <p class="report-meta">Generated: ${escapeHtml(generatedAt)}</p>
+              </div>
+              <div class="actions">
+                <button id="printBtn" class="btn" type="button">Print</button>
+                <button id="refreshBtn" class="btn secondary" type="button">Refresh</button>
+              </div>
+            ` : ''}
+          </div>
+          <div class="page-footer"></div>
+        </div>
+      `;
+
+      pageStack.appendChild(page);
+      return page.querySelector('.page-content');
+    }
+
+    function canFit(contentHost, element) {
+      contentHost.appendChild(element);
+      const fits = contentHost.scrollHeight <= contentHost.clientHeight + 0.5;
+      element.remove();
+      return fits;
+    }
+
+    function hasRenderableContent(host) {
+      return host.children.length > 0;
+    }
+
+    function renderReport() {
+      const pageStack = document.getElementById('pageStack');
+      const groups = collectVesselOverdueData();
+      pageStack.innerHTML = '';
+
+      let pageContent = createPage(pageStack, true);
+
+      if (!groups.length) {
+        const empty = document.createElement('div');
+        empty.className = 'empty-note';
+        empty.textContent = 'No overdue certificates found in the current saved data.';
+        pageContent.appendChild(empty);
+        bindActions();
+        return;
+      }
+
+      groups.forEach((group) => {
+        let startIndex = 0;
+        let continuation = false;
+
+        while (startIndex < group.rows.length) {
+          const remaining = group.rows.slice(startIndex);
+          let maxFit = 0;
+          let low = 1;
+          let high = remaining.length;
+
+          if (!canFit(pageContent, buildVesselSection(group.vesselName, [remaining[0]], continuation))) {
+            if (hasRenderableContent(pageContent)) {
+              pageContent = createPage(pageStack, false);
+              continue;
+            }
+          }
+
+          while (low <= high) {
+            const mid = Math.floor((low + high) / 2);
+            const probe = buildVesselSection(group.vesselName, remaining.slice(0, mid), continuation);
+            if (canFit(pageContent, probe)) {
+              maxFit = mid;
+              low = mid + 1;
+            } else {
+              high = mid - 1;
+            }
+          }
+
+          const takeCount = Math.max(1, maxFit);
+          pageContent.appendChild(buildVesselSection(group.vesselName, remaining.slice(0, takeCount), continuation));
+          startIndex += takeCount;
+          continuation = startIndex < group.rows.length;
+
+          if (continuation) {
+            pageContent = createPage(pageStack, false);
+          }
+        }
+      });
+
+      // Add page numbering
+      const pages = pageStack.querySelectorAll('.sheet-page');
+      const totalPages = pages.length;
+      pages.forEach((page, index) => {
+        const footer = page.querySelector('.page-footer');
+        if (footer) {
+          footer.textContent = `Page ${index + 1} of ${totalPages}`;
+        }
+      });
+
+      bindActions();
+    }
+
+    function bindActions() {
+      document.querySelectorAll('#printBtn').forEach((button) => {
+        button.addEventListener('click', () => window.print());
+      });
+
+      document.querySelectorAll('#refreshBtn').forEach((button) => {
+        button.addEventListener('click', () => renderReport());
+      });
+    }
+
+    renderReport();
+  </script>
+</body>
+</html>

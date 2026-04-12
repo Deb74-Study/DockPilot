@@ -158,12 +158,6 @@
       border: 1px solid var(--line);
     }
 
-    .csv-btn {
-      background: linear-gradient(135deg, #ffd36a, #6de4cf);
-      color: #082033;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-    }
-
     .message {
       margin: 16px 0 0;
       padding: 12px 14px;
@@ -293,10 +287,7 @@
 
       <p id="message" class="message">Use credentials provided by Developer. First-time sign-ins will be asked to set a new password.</p>
 
-      <div class="action-row" style="margin-top:14px;justify-content:flex-start;">
-        <button id="launchCertManBtn" type="button" class="primary-btn hidden">Launch CertMan</button>
-        <button id="csvGeneratorBtn" type="button" class="csv-btn hidden">CSV Generator</button>
-      </div>
+      <button id="launchCertManBtn" type="button" class="primary-btn hidden" style="margin-top:14px;justify-self:start;">Launch CertMan</button>
 
       <form id="loginForm" class="login-form">
         <label for="loginInput">Login name</label>
@@ -318,17 +309,6 @@
           <button id="cancelLoginBtn" class="secondary-btn">Cancel</button>
         </div>
       </div>
-
-      <div id="csvGeneratorPopup" class="session-card hidden" style="position:fixed;top:50%;left:50%;transform:translate(-50%,-50%);z-index:1000;background:var(--panel);border:2px solid var(--accent);padding:28px 24px;box-shadow:0 8px 32px #0008;min-width:340px;max-width:94vw;">
-        <h2 style="color:var(--accent);margin-bottom:12px;">CSV Generator Module</h2>
-        <p class="note-text" style="margin:0;">Do you want to convert Excel Data files to CSV files? You can choose upto 10 Excel files at a time and generate separate CSV files in the same file directory.</p>
-        <div class="action-row" style="margin-top:18px;justify-content:flex-end;">
-          <button id="selectExcelFilesBtn" class="primary-btn" type="button">Select Files</button>
-          <button id="cancelCsvGeneratorBtn" class="secondary-btn" type="button">No</button>
-        </div>
-      </div>
-
-      <input id="excelFilesInput" type="file" accept=".xls,.xlsx,.xlsm,.xlsb,application/vnd.ms-excel,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel.sheet.macroEnabled.12,application/vnd.ms-excel.sheet.binary.macroEnabled.12" multiple class="hidden" />
     </section>
 
     <aside class="details-card">
@@ -393,9 +373,6 @@
     </aside>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
-
   <script type="module">
     import { supabase } from './supabaseClient.js';
 
@@ -408,11 +385,6 @@
     const passwordInput = document.getElementById('passwordInput');
     const message = document.getElementById('message');
     const launchCertManBtn = document.getElementById('launchCertManBtn');
-    const csvGeneratorBtn = document.getElementById('csvGeneratorBtn');
-    const csvGeneratorPopup = document.getElementById('csvGeneratorPopup');
-    const selectExcelFilesBtn = document.getElementById('selectExcelFilesBtn');
-    const cancelCsvGeneratorBtn = document.getElementById('cancelCsvGeneratorBtn');
-    const excelFilesInput = document.getElementById('excelFilesInput');
     const sessionCard = document.getElementById('sessionCard');
     const resultName = document.getElementById('resultName');
     const resultRole = document.getElementById('resultRole');
@@ -541,7 +513,6 @@
       pageShell.classList.toggle('logged-in', isLoggedIn);
       setLoginFormVisible(!isLoggedIn);
       launchCertManBtn.classList.toggle('hidden', !isLoggedIn);
-      csvGeneratorBtn.classList.toggle('hidden', !isLoggedIn);
       if (isLoggedIn) {
         loginStatus.textContent = `Logged in as ${name}`;
         loginStatus.style.color = 'var(--ok)';
@@ -556,79 +527,6 @@
     }
     function hideLoginFailPopup() {
       loginFailPopup.classList.add('hidden');
-    }
-
-    function showCsvGeneratorPopup() {
-      csvGeneratorPopup.classList.remove('hidden');
-    }
-
-    function hideCsvGeneratorPopup() {
-      csvGeneratorPopup.classList.add('hidden');
-    }
-
-    function getBaseName(fileName) {
-      return fileName.replace(/\.[^.]+$/, '');
-    }
-
-    function triggerDownload(blob, fileName) {
-      const url = URL.createObjectURL(blob);
-      const anchor = document.createElement('a');
-      anchor.href = url;
-      anchor.download = fileName;
-      document.body.appendChild(anchor);
-      anchor.click();
-      anchor.remove();
-      URL.revokeObjectURL(url);
-    }
-
-    function makeTimestamp() {
-      const now = new Date();
-      const y = now.getFullYear();
-      const m = String(now.getMonth() + 1).padStart(2, '0');
-      const d = String(now.getDate()).padStart(2, '0');
-      const hh = String(now.getHours()).padStart(2, '0');
-      const mm = String(now.getMinutes()).padStart(2, '0');
-      const ss = String(now.getSeconds()).padStart(2, '0');
-      return `${y}${m}${d}_${hh}${mm}${ss}`;
-    }
-
-    async function convertExcelToCsvRecords(files) {
-      if (!window.XLSX) {
-        throw new Error('Excel parser is not available. Please refresh and try again.');
-      }
-
-      const records = [];
-      for (const file of files) {
-        const arrayBuffer = await file.arrayBuffer();
-        const workbook = window.XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
-        const firstSheetName = workbook.SheetNames?.[0];
-        if (!firstSheetName) {
-          continue;
-        }
-        const worksheet = workbook.Sheets[firstSheetName];
-        const csvBody = window.XLSX.utils.sheet_to_csv(worksheet);
-        const csvText = `\uFEFF${csvBody}`;
-        records.push({
-          sourceName: file.name,
-          csvName: `${getBaseName(file.name)}.csv`,
-          csvText
-        });
-      }
-      return records;
-    }
-
-    async function generateCsvZip(records) {
-      if (!window.JSZip) {
-        return false;
-      }
-
-      const zip = new window.JSZip();
-      records.forEach((record) => {
-        zip.file(record.csvName, record.csvText);
-      });
-      const zipBlob = await zip.generateAsync({ type: 'blob' });
-      triggerDownload(zipBlob, `csv_generator_output_${makeTimestamp()}.zip`);
-      return true;
     }
 
     form.addEventListener('submit', async (event) => {
@@ -722,65 +620,6 @@
       window.location.href = './CertificateManager.html';
     });
 
-    csvGeneratorBtn.addEventListener('click', () => {
-      showCsvGeneratorPopup();
-    });
-
-    cancelCsvGeneratorBtn.addEventListener('click', () => {
-      hideCsvGeneratorPopup();
-    });
-
-    selectExcelFilesBtn.addEventListener('click', () => {
-      excelFilesInput.click();
-    });
-
-    excelFilesInput.addEventListener('change', async (event) => {
-      hideCsvGeneratorPopup();
-
-      const files = Array.from(event.target.files || []);
-      excelFilesInput.value = '';
-
-      if (!files.length) {
-        setMessage('CSV generation cancelled.', 'success');
-        return;
-      }
-
-      if (files.length > 10) {
-        setMessage('Please select up to 10 Excel files at a time.', 'error');
-        return;
-      }
-
-      const allowedPattern = /\.(xls|xlsx|xlsm|xlsb)$/i;
-      const invalidFile = files.find((file) => !allowedPattern.test(file.name));
-      if (invalidFile) {
-        setMessage(`Invalid file selected: ${invalidFile.name}. Please choose only Excel files.`, 'error');
-        return;
-      }
-
-      try {
-        setMessage('Converting Excel files to CSV UTF-8...', 'success');
-        const records = await convertExcelToCsvRecords(files);
-        if (!records.length) {
-          setMessage('No readable worksheet found in the selected files.', 'error');
-          return;
-        }
-
-        const zipped = await generateCsvZip(records);
-        if (zipped) {
-          setMessage(`Generated ${records.length} CSV file(s) and downloaded one ZIP package.`, 'success');
-          return;
-        }
-
-        records.forEach((record) => {
-          const csvBlob = new Blob([record.csvText], { type: 'text/csv;charset=utf-8;' });
-          triggerDownload(csvBlob, record.csvName);
-        });
-        setMessage(`Generated ${records.length} CSV file(s). ZIP packaging is unavailable in this browser, so files were downloaded individually.`, 'success');
-      } catch (error) {
-        setMessage(error?.message || 'CSV generation failed. Please try again.', 'error');
-      }
-    });
-
     openPasswordChangeBtn.addEventListener('click', () => {
       showPasswordCard(false);
       setMessage('Enter and save a new password for this login.', 'success');
@@ -795,17 +634,9 @@
       clearSession();
       sessionCard.classList.add('hidden');
       hidePasswordCard();
-      hideCsvGeneratorPopup();
       form.reset();
       setLoginStatus(false);
       setMessage('You have been signed out.', 'success');
-    });
-
-    window.addEventListener('keydown', (event) => {
-      if (event.key === 'Escape') {
-        hideLoginFailPopup();
-        hideCsvGeneratorPopup();
-      }
     });
 
     window.addEventListener('DOMContentLoaded', () => {

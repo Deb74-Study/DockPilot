@@ -1,5 +1,5 @@
 // supabaseClient.js
-// This file initializes the Supabase client for use in your HTML files.
+// This file initializes the Supabase client for use in DockPilot HTML files.
 
 import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
 

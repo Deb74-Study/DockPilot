@@ -1,0 +1,530 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Job Index</title>
+  <style>
+    body { font-family: Arial, sans-serif; margin: 20px; }
+    table { border-collapse: collapse; width: 100%; max-width: 1200px; }
+    th, td { border: 1px solid #888; padding: 6px 8px; text-align: left; }
+    th { background: #f2f2f2; }
+    input[type=text] { width: 100%; box-sizing: border-box; }
+    select { width: 100%; box-sizing: border-box; }
+    .small-btn { padding: 4px 8px; cursor: pointer; }
+    .button-cell { border: none; padding: 8px; text-align: left; }
+    .button-cell-header { border: none; }
+  </style>
+</head>
+<body>
+  <h1 style="display:inline-block; margin-right: 20px;">Job Index</h1>
+  <button id="saveJsonBtn" class="small-btn">Save JSON</button>
+  <button id="loadJsonBtn" class="small-btn">Load JSON</button>
+  <button id="loadHtmlBtn" class="small-btn">Load from HTML</button>
+  <button id="saveHtmlBtn" class="small-btn">Save as HTML</button>
+  <input type="file" id="loadJsonInput" accept="application/json" style="display: none;" />
+  <input type="file" id="loadHtmlInput" accept="text/html" style="display: none;" />
+  <table id="jobTable">
+    <thead>
+      <tr id="headerRow">
+        <th>Sl. No.</th>
+        <th>Reqd.</th>
+        <th>Section</th>
+        <th>Section Code</th>
+        <th>Job ID</th><th>Col 6</th><th>Col 7</th><th>Col 8</th><th>Col 9</th><th>Col 10</th>
+        <th class="button-cell-header" id="addColHeader"></th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+    <tfoot>
+      <tr id="addRowFooter">
+        <td colspan="11" class="button-cell" id="addRowCell"></td>
+      </tr>
+    </tfoot>
+  </table>
+
+  <script>
+    const sectionMap = {
+      Docking: 'K',
+      General: 'GS',
+      'Hull Husbandry': 'HH',
+      Rudder: 'RD',
+      'Propeller/Shafting': 'PS',
+      'Anchor/Chain': 'AC',
+      'Sea-chests/Anodes': 'SA',
+      Deck: 'D',
+      Steel: 'S',
+      'Deck/WBT Coating': 'C',
+      'Piping-Deck': 'PD',
+      Machinery: 'M',
+      Electrical: 'E',
+      'Piping-Engine': 'PD',
+      'Radio/Navigation': 'RN'
+    };
+
+    const reqdOptions = ['Yes', 'No', 'Maybe', 'Mandatory'];
+    const sectionOptions = Object.keys(sectionMap);
+
+    const table = document.getElementById('jobTable');
+    const tbody = table.querySelector('tbody');
+    const addRowCell = document.getElementById('addRowCell');
+    const addColHeader = document.getElementById('addColHeader');
+    const sectionCodeCounter = {}; // Track highest number for each section code
+
+    let nextRowId = 1001;
+    let nextColId = 1001;
+
+    // Assign initial column IDs
+    const headerRow = table.tHead.rows[0];
+    for (let i = 0; i < headerRow.cells.length - 1; i++) { // exclude add col button
+      headerRow.cells[i].dataset.colId = nextColId++;
+    }
+
+    function refreshSerials() {
+      Array.from(tbody.rows).forEach((row, i) => {
+        row.cells[0].textContent = i + 1;
+      });
+    }
+
+    function updateColspan() {
+      const headerCellCount = table.rows[0].cells.length;
+      const addRowFooter = document.getElementById('addRowFooter');
+      addRowFooter.cells[0].colSpan = headerCellCount;
+    }
+
+    function updateSectionCodeCounter() {
+      // Reset and recalculate all section code counters
+      Object.keys(sectionCodeCounter).forEach(key => sectionCodeCounter[key] = 0);
+      Array.from(tbody.rows).forEach(row => {
+        const jobIdCell = row.cells[4];
+        const jobId = jobIdCell.textContent;
+        if (jobId) {
+          const match = jobId.match(/([A-Z]+)-(\d+)/);
+          if (match) {
+            const code = match[1];
+            const num = parseInt(match[2], 10);
+            if (!sectionCodeCounter[code] || sectionCodeCounter[code] < num) {
+              sectionCodeCounter[code] = num;
+            }
+          }
+        }
+      });
+    }
+
+    function getNextJobID(sectionCode) {
+      if (!sectionCode) return '';
+      if (!sectionCodeCounter[sectionCode]) {
+        sectionCodeCounter[sectionCode] = 1;
+      } else {
+        sectionCodeCounter[sectionCode]++;
+      }
+      const num = String(sectionCodeCounter[sectionCode]).padStart(3, '0');
+      return `${sectionCode}-${num}`;
+    }
+
+    function updateAllJobIDs() {
+      // Reset counters
+      Object.keys(sectionCodeCounter).forEach(key => sectionCodeCounter[key] = 0);
+      
+      // Regenerate all Job IDs sequentially based on section code order
+      Array.from(tbody.rows).forEach(row => {
+        const sectionCodeCell = row.cells[3];
+        const sectionCode = sectionCodeCell.textContent;
+        const jobIdCell = row.cells[4];
+        
+        if (sectionCode) {
+          // Generate next Job ID for this section code
+          jobIdCell.textContent = getNextJobID(sectionCode);
+        } else {
+          jobIdCell.textContent = '';
+        }
+      });
+    }
+
+    function serializeTable() {
+      const columns = table.tHead.rows[0].cells.length - 1; // exclude add-column header
+      const rows = Array.from(tbody.rows).map(row => {
+        const rowData = {
+          reqd: row.cells[1].querySelector('select')?.value || '',
+          section: row.cells[2].querySelector('select')?.value || '',
+          sectionCode: row.cells[3].textContent || '',
+          jobId: row.cells[4].textContent || '',
+          values: []
+        };
+        for (let i = 5; i < row.cells.length - 1; i++) {
+          rowData.values.push(row.cells[i].querySelector('input')?.value || '');
+        }
+        return rowData;
+      });
+      return { columns, rows };
+    }
+
+    function downloadJson(filename, data) {
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function getCurrentTimestamp() {
+      const d = new Date();
+      const pad = n => String(n).padStart(2, '0');
+      return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}-${pad(d.getMinutes())}-${pad(d.getSeconds())}`;
+    }
+
+    function saveTableJson() {
+      const payload = serializeTable();
+      const timestamp = getCurrentTimestamp();
+      downloadJson(`Job Index ${timestamp}.json`, payload);
+    }
+
+    function generateHtmlContent() {
+      const exportTimestamp = new Date().toLocaleString();
+      const styles = `
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        table { border-collapse: collapse; width: 100%; max-width: 1200px; }
+        th, td { border: 1px solid #888; padding: 6px 8px; text-align: left; }
+        th { background: #f2f2f2; }
+      `;
+
+      const headerCells = Array.from(table.tHead.rows[0].cells)
+        .slice(0, -1)
+        .map(cell => `<th>${cell.textContent || ''}</th>`)
+        .join('');
+
+      const bodyRows = Array.from(tbody.rows).map(row => {
+        const cells = Array.from(row.cells).slice(0, -1);
+        return `<tr>${cells.map(c => `<td>${c.querySelector('input')?.value || c.querySelector('select')?.value || c.textContent || ''}</td>`).join('')}</tr>`;
+      }).join('');
+
+      return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Job Index Export</title>
+  <style>${styles}</style>
+</head>
+<body>
+  <h1>Job Index Export</h1>
+  <p>Exported on: ${exportTimestamp}</p>
+  <table>
+    <thead>
+      <tr>${headerCells}</tr>
+    </thead>
+    <tbody>
+      ${bodyRows}
+    </tbody>
+  </table>
+</body>
+</html>`;
+    }
+
+    function saveTableHtml() {
+      const html = generateHtmlContent();
+      const timestamp = getCurrentTimestamp();
+      const blob = new Blob([html], { type: 'text/html' });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `Job Index Export ${timestamp}.html`;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      URL.revokeObjectURL(url);
+    }
+
+    function clearTableRows() {
+      while (tbody.firstChild) tbody.removeChild(tbody.firstChild);
+    }
+
+    function loadTableData(data) {
+      if (!data || !Array.isArray(data.rows)) return;
+
+      // Ensure exact column count
+      const currentColumns = table.tHead.rows[0].cells.length - 1;
+      if (currentColumns < data.columns) {
+        for (let i = currentColumns; i < data.columns; i++) {
+          addColumn();
+        }
+      } else if (currentColumns > data.columns) {
+        const headerRow = table.tHead.rows[0];
+        for (let i = currentColumns; i > data.columns; i--) {
+          headerRow.deleteCell(i - 1);
+        }
+        Array.from(tbody.rows).forEach(r => {
+          for (let i = currentColumns; i > data.columns; i--) {
+            r.deleteCell(i);
+          }
+        });
+        updateColspan();
+      }
+
+      clearTableRows();
+      data.rows.forEach(rowData => {
+        addRow();
+        const r = tbody.rows[tbody.rows.length - 1];
+
+        const reqdSel = r.cells[1].querySelector('select');
+        const sectionSel = r.cells[2].querySelector('select');
+
+        if (reqdSel) reqdSel.value = rowData.reqd || '';
+        if (sectionSel) sectionSel.value = rowData.section || '';
+
+        r.cells[3].textContent = rowData.sectionCode || '';
+        r.cells[4].textContent = rowData.jobId || '';
+
+        for (let i = 0; i < (rowData.values || []).length; i++) {
+          const cell = r.cells[5 + i];
+          if (cell) {
+            const input = cell.querySelector('input');
+            if (input) input.value = rowData.values[i];
+          }
+        }
+      });
+
+      refreshSerials();
+      updateAllJobIDs();
+    }
+
+    function parseHtmlTable(htmlString) {
+      const parser = new DOMParser();
+      const doc = parser.parseFromString(htmlString, 'text/html');
+      const htmlTable = doc.querySelector('table');
+      if (!htmlTable) throw new Error('No table found in HTML');
+
+      const headerCells = Array.from(htmlTable.querySelectorAll('thead tr th')).map(th => th.textContent.trim());
+      const rows = Array.from(htmlTable.querySelectorAll('tbody tr'));
+      const rowData = rows.map(row => {
+        const cells = Array.from(row.querySelectorAll('td'));
+        const data = { reqd: '', section: '', sectionCode: '', jobId: '', values: [] };
+        if (cells.length >= 5) {
+          data.reqd = cells[1].textContent.trim();
+          data.section = cells[2].textContent.trim();
+          data.sectionCode = cells[3].textContent.trim();
+          data.jobId = cells[4].textContent.trim();
+          for (let i = 5; i < cells.length; i++) {
+            data.values.push(cells[i].textContent.trim());
+          }
+        }
+        return data;
+      });
+
+      return { columns: Math.max(headerCells.length, 5), rows: rowData };
+    }
+
+    function loadTableFromFile(file) {
+      const fr = new FileReader();
+      fr.onload = () => {
+        try {
+          const data = JSON.parse(fr.result);
+          loadTableData(data);
+        } catch (e) {
+          alert('Invalid JSON table file');
+        }
+      };
+      fr.readAsText(file);
+    }
+
+    function loadHtmlFromFile(file) {
+      const proceed = confirm('Warning: loading HTML fallback may overwrite current table content and does not guarantee perfect parsing. Continue?');
+      if (!proceed) return;
+
+      const fr = new FileReader();
+      fr.onload = () => {
+        try {
+          const data = parseHtmlTable(fr.result);
+          loadTableData(data);
+        } catch (e) {
+          alert('Invalid HTML table file');
+        }
+      };
+      fr.readAsText(file);
+    }
+
+    function setCellId(cell, rowId, colId) {
+      const sup = cell.querySelector('sup');
+      if (sup) {
+        sup.textContent = rowId + 'X' + colId;
+      }
+    }
+
+    function makeTextCell(defaultVal = '') {
+      const td = document.createElement('td');
+      const sup = document.createElement('sup');
+      sup.style.color = 'pink';
+      td.appendChild(sup);
+      const input = document.createElement('input');
+      input.type = 'text';
+      input.value = defaultVal;
+      td.appendChild(input);
+      return td;
+    }
+
+    function makeSelectCell(options, onChange) {
+      const td = document.createElement('td');
+      const sup = document.createElement('sup');
+      sup.style.color = 'pink';
+      td.appendChild(sup);
+      const sel = document.createElement('select');
+      options.forEach(opt => {
+        const o = document.createElement('option');
+        o.value = opt;
+        o.textContent = opt;
+        sel.appendChild(o);
+      });
+      sel.addEventListener('change', onChange);
+      td.appendChild(sel);
+      return td;
+    }
+
+    function addRow() {
+      const r = tbody.insertRow();
+      r.dataset.rowId = nextRowId++;
+
+      const slNo = r.insertCell();
+      const slNoSup = document.createElement('sup');
+      slNoSup.style.color = 'pink';
+      slNo.appendChild(slNoSup);
+      slNo.textContent = tbody.rows.length;
+      slNo.style.fontWeight = 'bold';
+
+      const reqdCell = r.insertCell();
+      const reqdSup = document.createElement('sup');
+      reqdSup.style.color = 'pink';
+      reqdCell.appendChild(reqdSup);
+      const reqdSel = document.createElement('select');
+      reqdOptions.forEach(val => {
+        const o = document.createElement('option'); o.value = val; o.textContent = val; reqdSel.appendChild(o);
+      });
+      reqdCell.appendChild(reqdSel);
+
+      const sectionCell = r.insertCell();
+      const sectionSup = document.createElement('sup');
+      sectionSup.style.color = 'pink';
+      sectionCell.appendChild(sectionSup);
+      const sectionSel = document.createElement('select');
+      const emptyOption = document.createElement('option');
+      emptyOption.value = '';
+      emptyOption.textContent = '';
+      sectionSel.appendChild(emptyOption);
+      sectionOptions.forEach(val => {
+        const o = document.createElement('option'); o.value = val; o.textContent = val; sectionSel.appendChild(o);
+      });
+      sectionCell.appendChild(sectionSel);
+
+      const sectionCodeCell = r.insertCell();
+      const sectionCodeSup = document.createElement('sup');
+      sectionCodeSup.style.color = 'pink';
+      sectionCodeCell.appendChild(sectionCodeSup);
+      sectionCodeCell.textContent = '';
+
+      const jobIdCell = r.insertCell();
+      const jobIdSup = document.createElement('sup');
+      jobIdSup.style.color = 'pink';
+      jobIdCell.appendChild(jobIdSup);
+      jobIdCell.textContent = '';
+
+      sectionSel.addEventListener('change', () => {
+        const code = sectionMap[sectionSel.value] || '';
+        sectionCodeCell.textContent = code;
+
+        // Recompute all job IDs sequentially across the table whenever a section changes.
+        updateAllJobIDs();
+      });
+
+      const colCount = table.rows[0].cells.length - 1; // -1 for add col button
+      for (let i = 5; i < colCount; i++) {
+        r.appendChild(makeTextCell(''));
+      }
+
+      const deleteButtonCell = r.insertCell();
+      const deleteBtn = document.createElement('button');
+      deleteBtn.textContent = 'Delete';
+      deleteBtn.className = 'small-btn';
+      deleteBtn.addEventListener('click', () => {
+        tbody.removeChild(r);
+        refreshSerials();
+        updateAllJobIDs();
+      });
+      deleteButtonCell.appendChild(deleteBtn);
+
+      // Set cell IDs for all cells
+      for (let i = 0; i < r.cells.length - 1; i++) { // exclude delete button cell
+        setCellId(r.cells[i], r.dataset.rowId, headerRow.cells[i].dataset.colId);
+      }
+    }
+
+    function addColumn() {
+      const headRow = table.tHead.rows[0];
+      const nextIndex = headRow.cells.length; // before the Add Col button
+      const newHead = document.createElement('th');
+      newHead.textContent = `Col ${nextIndex}`;
+      newHead.dataset.colId = nextColId++;
+      headRow.insertBefore(newHead, addColHeader);
+      Array.from(tbody.rows).forEach(r => {
+        const td = document.createElement('td');
+        const sup = document.createElement('sup');
+        sup.style.color = 'pink';
+        sup.textContent = r.dataset.rowId + 'X' + newHead.dataset.colId;
+        td.appendChild(sup);
+        const inp = document.createElement('input');
+        inp.type = 'text';
+        td.appendChild(inp);
+        r.insertBefore(td, r.lastElementChild);
+      });
+      updateColspan();
+    }
+
+    // Initialize "Add Row" button in footer
+    const addRowBtn = document.createElement('button');
+    addRowBtn.id = 'addRowBtn';
+    addRowBtn.className = 'small-btn';
+    addRowBtn.textContent = 'Add Row';
+    addRowBtn.addEventListener('click', addRow);
+    addRowCell.appendChild(addRowBtn);
+
+    // Initialize "Add Column" button in header
+    const addColBtn = document.createElement('button');
+    addColBtn.id = 'addColBtn';
+    addColBtn.className = 'small-btn';
+    addColBtn.textContent = 'Add Column';
+    addColBtn.addEventListener('click', addColumn);
+    addColHeader.appendChild(addColBtn);
+
+    // Initialize save/load buttons
+    const saveJsonBtn = document.getElementById('saveJsonBtn');
+    const loadJsonBtn = document.getElementById('loadJsonBtn');
+    const saveHtmlBtn = document.getElementById('saveHtmlBtn');
+    const loadHtmlBtn = document.getElementById('loadHtmlBtn');
+    const loadJsonInput = document.getElementById('loadJsonInput');
+    const loadHtmlInput = document.getElementById('loadHtmlInput');
+
+    saveJsonBtn.addEventListener('click', saveTableJson);
+    saveHtmlBtn.addEventListener('click', saveTableHtml);
+    loadJsonBtn.addEventListener('click', () => loadJsonInput.click());
+    loadHtmlBtn.addEventListener('click', () => loadHtmlInput.click());
+
+    loadJsonInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        loadTableFromFile(file);
+      }
+      loadJsonInput.value = '';
+    });
+
+    loadHtmlInput.addEventListener('change', (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        loadHtmlFromFile(file);
+      }
+      loadHtmlInput.value = '';
+    });
+
+    addRow();
+  </script>
+</body>
+</html>

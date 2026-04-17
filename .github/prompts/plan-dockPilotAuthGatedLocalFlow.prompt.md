@@ -50,14 +50,14 @@ Implement a shared client-side guard plus backend token validation so every loca
 1. Verify failure behavior: invalid re-check keeps lock active without losing page state; full refresh still enforces guard.
 
 **Relevant files**
-- /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject/DockPilot_landing.html - reuse existing login/session functions and update launcher button labels/targets and post-login routing.
-- /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject/fpadevDockPilot.html - keep developer-only issuance/admin flow; add explicit scope cues.
-- /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject/supabaseClient.js - shared Supabase initialization used by landing and protected pages.
-- /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject/Frontpage.html - add auth guard bootstrap and idle lock integration.
-- /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject/job_index.html - add auth guard bootstrap and idle lock integration preserving current in-memory edits.
-- /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject/spec_template.html - add auth guard bootstrap and idle lock integration preserving current in-memory edits.
-- /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject/2nd Page.html - add auth guard bootstrap and future-page template alignment.
-- /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/newprojectProject/CertMan_landing.html - reference only for layout/interaction parity for DockPilot landing.
+- /Users/debdeeptochattopadhyay/Supabase A/DockPilot/DockPilot_landing.html - reuse existing login/session functions and update launcher button labels/targets and post-login routing.
+- /Users/debdeeptochattopadhyay/Supabase A/DockPilot/fpadevDockPilot.html - keep developer-only issuance/admin flow; add explicit scope cues.
+- /Users/debdeeptochattopadhyay/Supabase A/DockPilot/supabaseClient.js - shared Supabase initialization used by landing and protected pages.
+- /Users/debdeeptochattopadhyay/Supabase A/DockPilot/Frontpage.html - add auth guard bootstrap and idle lock integration.
+- /Users/debdeeptochattopadhyay/Supabase A/DockPilot/job_index.html - add auth guard bootstrap and idle lock integration preserving current in-memory edits.
+- /Users/debdeeptochattopadhyay/Supabase A/DockPilot/spec_template.html - add auth guard bootstrap and idle lock integration preserving current in-memory edits.
+- /Users/debdeeptochattopadhyay/Supabase A/DockPilot/2nd Page.html - add auth guard bootstrap and future-page template alignment.
+- /Users/debdeeptochattopadhyay/Supabase B/newprojectProject/CertMan_landing.html - reference only for layout/interaction parity for DockPilot landing.
 
 **Verification**
 1. Manual browser matrix from local files: direct-open each protected file, confirm redirect to landing, login, return path works.

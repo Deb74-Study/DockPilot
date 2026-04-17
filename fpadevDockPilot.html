@@ -732,11 +732,45 @@
       return new Date(`${account.expiry}T23:59:59`).getTime() < Date.now();
     }
 
+    async function getAccessToken() {
+      if (!supabase) {
+        return { token: null, error: new Error('Supabase is unavailable') };
+      }
+
+      const { data, error } = await supabase.auth.getSession();
+      if (error) {
+        return { token: null, error: new Error(error.message || 'Unable to read Supabase session.') };
+      }
+
+      const token = data?.session?.access_token || null;
+      if (!token) {
+        return {
+          token: null,
+          error: new Error('Admin actions now require a signed-in Supabase user session (JWT access token).')
+        };
+      }
+
+      return { token, error: null };
+    }
+
+    async function invokeAdminFunction(functionName, body) {
+      const { token, error: tokenError } = await getAccessToken();
+      if (tokenError || !token) {
+        return { data: null, error: tokenError || new Error('Access token is missing.') };
+      }
+
+      return supabase.functions.invoke(functionName, {
+        body: body || {},
+        headers: {
+          apikey: SUPABASE_ANON_KEY,
+          Authorization: `Bearer ${token}`
+        }
+      });
+    }
+
     async function getAccounts() {
       if (!supabase) return [];
-      const { data, error } = await supabase.functions.invoke('dockpilot-admin-list-credentials', {
-        body: {}
-      });
+      const { data, error } = await invokeAdminFunction('dockpilot-admin-list-credentials', {});
       if (error || !data?.ok) return [];
       return Array.isArray(data.accounts) ? data.accounts : [];
     }
@@ -745,9 +779,7 @@
       if (!supabase) {
         return { data: null, error: new Error('Supabase is unavailable') };
       }
-      const { data, error } = await supabase.functions.invoke('dockpilot-admin-issue-credential', {
-        body: account
-      });
+      const { data, error } = await invokeAdminFunction('dockpilot-admin-issue-credential', account);
 
       if (error || !data?.ok) {
         return {
@@ -763,8 +795,9 @@
       if (!supabase) {
         return { data: null, error: new Error('Supabase is unavailable') };
       }
-      const { data, error } = await supabase.functions.invoke('dockpilot-admin-extend-credential', {
-        body: { loginName, newExpiry }
+      const { data, error } = await invokeAdminFunction('dockpilot-admin-extend-credential', {
+        loginName,
+        newExpiry
       });
 
       if (error || !data?.ok) {
@@ -808,11 +841,9 @@
         return { data: null, error: new Error('Supabase is unavailable') };
       }
 
-      const { data, error } = await supabase.functions.invoke('dockpilot-admin-reset-password', {
-        body: {
-          loginName,
-          newPassword
-        }
+      const { data, error } = await invokeAdminFunction('dockpilot-admin-reset-password', {
+        loginName,
+        newPassword
       });
 
       if (error || !data?.ok) {

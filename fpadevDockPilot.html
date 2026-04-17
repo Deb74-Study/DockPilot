@@ -115,6 +115,25 @@
       line-height: 1.6;
     }
 
+    .warning-banner {
+      padding: 14px;
+      border-radius: 14px;
+      border: 1px solid rgba(255, 168, 102, 0.55);
+      background: rgba(255, 168, 102, 0.16);
+      color: #ffe5c3;
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .warning-banner strong {
+      display: block;
+      margin-bottom: 4px;
+      color: #ffd8a8;
+      text-transform: uppercase;
+      letter-spacing: 0.04em;
+      font-size: 0.82rem;
+    }
+
     .main-content {
       display: grid;
       gap: 18px;
@@ -368,6 +387,11 @@
       <div>
         <h1>FPA Developer DockPilot Access Manager</h1>
         <p class="muted">Issue time-bound login names, passwords, and project file access for DockPilot users from one screen.</p>
+      </div>
+
+      <div class="warning-banner" role="alert" aria-live="polite">
+        <strong>Developer Machine Only</strong>
+        Non-user operational tooling. Use only on trusted developer/admin machines. Do not share this page with end users.
       </div>
 
       <div class="stat-grid">

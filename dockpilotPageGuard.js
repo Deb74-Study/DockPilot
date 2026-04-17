@@ -11,7 +11,7 @@ import {
 } from './dockpilotAuthContract.js';
 import { SUPABASE_ANON_KEY, SUPABASE_URL } from './supabaseClient.js';
 
-const DEFAULT_IDLE_TIMEOUT_MS = 3 * 60 * 1000;
+const DEFAULT_IDLE_TIMEOUT_MS = 15 * 60 * 1000;
 const DEFAULT_IDLE_POLL_MS = 30 * 1000;
 
 async function invokeEdgeJson(functionName, payload) {

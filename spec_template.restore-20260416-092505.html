@@ -1,0 +1,3885 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Spec Template</title>
+  <style>
+    :root {
+      --a4-width: 210mm;
+      --a4-height: 297mm;
+      --writing-width: 186mm;
+      --writing-height: 255mm;
+      --writing-top-offset: 12mm;
+      --page-bg: #ffffff;
+      --canvas-bg: #f0f1f5;
+      --dash-color: #5f6673;
+      --sheet-box-color: #1b1f2a;
+      --sheet-box-width: 1px;
+      --section-border-color: #1f2937;
+      --section-gap: 3mm;
+      --section-box-bg: #ffffff;
+      --section-box-border: #e0e0e0;
+      --section-header-bg: #e5e5e5;
+      --section-header-border: #d7d7d7;
+      --section-header-text: #111827;
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    body {
+      margin: 0;
+      padding: 16px;
+      background: var(--canvas-bg);
+      font-family: "Segoe UI", Tahoma, sans-serif;
+      color: #111827;
+    }
+
+    #pageStack {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0;
+      margin: 0 auto;
+    }
+
+    .sheet-page {
+      position: relative;
+      width: var(--a4-width);
+      min-width: var(--a4-width);
+      max-width: var(--a4-width);
+      background: var(--page-bg);
+      box-shadow: 0 6px 24px rgba(10, 14, 26, 0.12);
+      overflow: hidden;
+    }
+
+    .sheet-page + .sheet-page {
+      margin-top: 18px;
+    }
+
+    .sheet-page + .sheet-page::before {
+      content: "";
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: -9px;
+      border-top: 2px dashed var(--dash-color);
+      pointer-events: none;
+    }
+
+    .intro-page {
+      height: 60mm;
+      min-height: 60mm;
+      max-height: 60mm;
+      padding: 0;
+    }
+
+    .first-page-toolbar {
+      width: 100%;
+      background: #fff7bf;
+      border: 1px solid #000000;
+      height: 10mm;
+      padding: 0 12mm;
+      display: flex;
+      gap: 3mm;
+      align-items: center;
+      justify-content: flex-start;
+      flex-wrap: nowrap;
+    }
+
+    .intro-progress-box {
+      position: absolute;
+      left: 12mm;
+      right: 12mm;
+      top: calc(10mm + 5mm);
+      bottom: 7mm;
+      border: 1px solid var(--section-box-border);
+      border-radius: 1.5mm;
+      background: var(--section-box-bg);
+      overflow: hidden;
+    }
+
+    .intro-progress-header {
+      height: 5.6mm;
+      background: var(--section-header-bg);
+      border-bottom: 1px solid var(--section-header-border);
+      border-top: 1px solid var(--section-header-border);
+      border-left: 1px solid var(--section-header-border);
+      border-right: 1px solid var(--section-header-border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      padding: 0 3mm;
+    }
+
+    .intro-progress-title {
+      margin: 0;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--section-header-text);
+      line-height: 1;
+      flex: 0 1 auto;
+      min-width: 0;
+    }
+
+    .intro-progress-status {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+      color: #7f1d1d;
+      text-align: right;
+      white-space: nowrap;
+      flex: 0 0 auto;
+    }
+
+    .intro-progress-status.is-complete {
+      color: #111111;
+    }
+
+    .intro-progress-body {
+      height: calc(100% - 5.6mm);
+      box-sizing: border-box;
+      padding: 5mm 9px 5mm 5mm;
+      display: flex;
+      justify-content: flex-start;
+      align-items: flex-start;
+      gap: 10px;
+      overflow: visible;
+    }
+
+    .intro-attachments-box,
+    .intro-attachments-extra-box {
+      height: 100px;
+      min-height: 100px;
+      max-height: 100px;
+      align-self: center;
+      padding: 8px 10px;
+      border: 1px dashed #9ca3af;
+      border-radius: 6px;
+      background: #ffffff;
+      box-sizing: border-box;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-start;
+      gap: 4px;
+      overflow: hidden;
+    }
+
+    .intro-attachments-box {
+      flex: 0 0 392px;
+      width: 392px;
+      min-width: 392px;
+      max-width: 392px;
+      align-items: stretch;
+      padding: 7px 12px 8px;
+    }
+
+    .intro-attachments-extra-box {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .intro-attachments-complete {
+      align-self: stretch;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin: 0;
+      text-align: left;
+      white-space: normal;
+    }
+
+    .intro-attachments-complete .job-details-complete-text {
+      flex: 1 1 180px;
+      min-width: 0;
+    }
+
+    .intro-attachments-complete .inclusions-check-option {
+      flex: 0 0 auto;
+    }
+
+    .intro-attachments-input {
+      display: none;
+    }
+
+    .intro-attachments-actions {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr);
+      align-items: center;
+      column-gap: 10px;
+      row-gap: 4px;
+    }
+
+    #btnAttachFiles {
+      position: relative;
+      top: -10px;
+    }
+
+    .intro-attachments-count {
+      min-width: 0;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #111827;
+      white-space: normal;
+      position: relative;
+      top: -10px;
+    }
+
+    .intro-attachments-note {
+      margin-top: auto;
+      font-size: 9.5px;
+      line-height: 1.15;
+      color: #4b5563;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+      position: relative;
+      top: -8px;
+    }
+
+    .intro-attachments-extra-box {
+      align-items: flex-start;
+      text-align: left;
+    }
+
+    .intro-attachments-summary-line {
+      margin: 0;
+      font-size: 10px;
+      line-height: 1.35;
+      color: #111827;
+      white-space: normal;
+      word-break: break-word;
+      overflow-wrap: anywhere;
+    }
+
+    .intro-attachments-summary-line strong {
+      font-weight: 700;
+    }
+
+    .intro-attachments-summary-value {
+      margin: 0;
+      font-size: 10px;
+      line-height: 1.25;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .attachment-limit-modal[hidden] {
+      display: none !important;
+    }
+
+    .attachment-limit-modal {
+      position: fixed;
+      inset: 0;
+      z-index: 9999;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(17, 24, 39, 0.45);
+      box-sizing: border-box;
+    }
+
+    .attachment-limit-dialog {
+      width: min(460px, 100%);
+      border: 1px solid #9ca3af;
+      border-radius: 8px;
+      background: #ffffff;
+      box-shadow: 0 18px 40px rgba(15, 23, 42, 0.28);
+      padding: 16px;
+      box-sizing: border-box;
+    }
+
+    .attachment-limit-title {
+      margin: 0 0 10px;
+      font-size: 14px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .attachment-limit-message {
+      margin: 0;
+      font-size: 12px;
+      line-height: 1.45;
+      color: #111827;
+      white-space: pre-line;
+    }
+
+    .attachment-limit-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 8px;
+      margin-top: 14px;
+    }
+
+    .intro-vessel-section {
+      width: 100%;
+      border: 1px solid var(--section-box-border);
+      border-radius: 2mm;
+      background: var(--section-box-bg);
+      overflow: hidden;
+    }
+
+    .flow-box.intro-vessel-section {
+      padding: 0;
+      border: 1px solid var(--section-box-border);
+      width: calc(100% - 2px);
+      max-width: calc(100% - 2px);
+    }
+
+    .intro-vessel-header,
+    .inclusions-title,
+    .spec-details-header,
+    .equip-details-header,
+    .job-details-header,
+    .yd-header {
+      margin: 0;
+      padding: 2px 8px;
+      font-size: 12px;
+      line-height: 1.2;
+      font-weight: 700;
+      color: var(--section-header-text);
+      background: var(--section-header-bg);
+      border-bottom: 1px solid var(--section-header-border);
+    }
+
+    .equip-details-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .equip-details-header-title {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .equip-details-header .inclusions-check-option.answer-yes input[type="checkbox"],
+    .equip-details-header .inclusions-check-option.answer-no input[type="checkbox"] {
+      background: #ffffff;
+      border-color: #d1d5db;
+    }
+
+    .equip-details-header .inclusions-check-option.answer-yes input[type="checkbox"]:checked,
+    .equip-details-header .inclusions-check-option.answer-no input[type="checkbox"]:checked {
+      background: yellow;
+      border-color: #d4b106;
+    }
+
+    .intro-vessel-row {
+      display: flex;
+      gap: 12px;
+      padding: 6px 8px 6px;
+      align-items: flex-start;
+    }
+
+    .intro-vessel-field {
+      min-width: 0;
+    }
+
+    .intro-vessel-field.field-40 {
+      flex: 0 0 calc(40% - 8px);
+      max-width: calc(40% - 8px);
+    }
+
+    .intro-vessel-field.field-30 {
+      flex: 0 0 calc(30% - 8px);
+      max-width: calc(30% - 8px);
+    }
+
+    .intro-vessel-field.field-50 {
+      flex: 0 0 calc(50% - 6px);
+      max-width: calc(50% - 6px);
+    }
+
+    .intro-vessel-field.field-full {
+      flex: 1 1 100%;
+    }
+
+    .intro-vessel-field select {
+      width: 100%;
+      height: 28px;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      padding: 0 8px;
+      font-size: 11px;
+      background: #f7f7f7;
+      color: #111827;
+      cursor: pointer;
+    }
+
+    .intro-vessel-field label {
+      display: block;
+      margin-bottom: 3px;
+      font-size: 11px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .intro-vessel-field input[type="text"] {
+      width: 100%;
+      height: 28px;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      padding: 5px 10px;
+      font-size: 11px;
+      background: #f7f7f7;
+      color: #111827;
+    }
+
+    .flow-box.spec-details-section {
+      padding: 0;
+      border: 1px solid var(--section-box-border);
+      border-radius: 2mm;
+      overflow: hidden;
+      background: var(--section-box-bg);
+      width: calc(100% - 2px);
+      max-width: calc(100% - 2px);
+    }
+
+    .spec-details-section .intro-vessel-field {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .spec-details-section .intro-vessel-row {
+      padding-top: 3px;
+      padding-bottom: 3px;
+    }
+
+    .spec-details-section .intro-vessel-row:first-of-type {
+      padding-top: 5px;
+    }
+
+    .spec-details-section .intro-vessel-row:last-of-type {
+      padding-bottom: 6px;
+    }
+
+    .spec-details-section .intro-vessel-field label {
+      display: inline;
+      white-space: nowrap;
+      margin-bottom: 0;
+      flex-shrink: 0;
+    }
+
+    .spec-details-section .intro-vessel-field input[type="text"],
+    .spec-details-section .intro-vessel-field select {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .flow-box.equip-details-section {
+      padding: 0;
+      border: 1px solid var(--section-box-border);
+      border-radius: 2mm;
+      overflow: hidden;
+      background: var(--section-box-bg);
+      width: calc(100% - 2px);
+      max-width: calc(100% - 2px);
+    }
+
+    .equip-details-section .intro-vessel-field {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      min-width: 0;
+    }
+
+    .equip-details-section .intro-vessel-row {
+      padding-top: 3px;
+      padding-bottom: 3px;
+    }
+
+    .equip-details-section .intro-vessel-row:first-of-type {
+      padding-top: 5px;
+    }
+
+    .equip-details-section .intro-vessel-row:last-of-type {
+      padding-bottom: 6px;
+    }
+
+    .equip-details-section .intro-vessel-field label {
+      display: inline;
+      white-space: nowrap;
+      margin-bottom: 0;
+      flex-shrink: 0;
+    }
+
+    .equip-details-section .intro-vessel-field input[type="text"] {
+      flex: 1;
+      min-width: 0;
+    }
+
+    .intro-vessel-section:not(.h1-repeat) input[type="text"],
+    .spec-details-section:not(.h2-repeat) input[type="text"],
+    .spec-details-section:not(.h2-repeat) select,
+    .equip-details-section input[type="text"],
+    .sp-status-select,
+    .sp-po-input,
+    .job-status-select {
+      padding-right: 17px;
+      background-image: radial-gradient(circle, #f59e0b 0 2.5px, transparent 2.6px);
+      background-repeat: no-repeat;
+      background-size: 5px 5px;
+      background-position: right 2.5px top 2.5px;
+      background-origin: border-box;
+    }
+
+    .intro-vessel-section:not(.h1-repeat) input[type="text"].status-dot-dirty,
+    .spec-details-section:not(.h2-repeat) input[type="text"].status-dot-dirty,
+    .spec-details-section:not(.h2-repeat) select.status-dot-dirty,
+    .equip-details-section input[type="text"].status-dot-dirty,
+    .sp-status-select.status-dot-dirty,
+    .sp-po-input.status-dot-dirty,
+    .job-status-select.status-dot-dirty {
+      background-image: radial-gradient(circle, #22c55e 0 2.5px, transparent 2.6px);
+    }
+
+    .flow-box.job-details-section {
+      padding: 0;
+      border: 1px solid var(--section-box-border);
+      border-radius: 2mm;
+      overflow: hidden;
+      background: var(--section-box-bg);
+      width: calc(100% - 2px);
+      max-width: calc(100% - 2px);
+    }
+
+    .job-details-body {
+      padding: 6px 8px 8px;
+    }
+
+    .job-details-label-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+      margin-bottom: 4px;
+    }
+
+    .job-details-label {
+      display: block;
+      font-size: 11px;
+      font-weight: 700;
+      color: #111827;
+      margin-bottom: 0;
+    }
+
+    .job-details-complete {
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-end;
+      gap: 5px;
+      margin-left: auto;
+      text-align: right;
+      white-space: nowrap;
+    }
+
+    .job-details-complete-text,
+    .job-details-complete .inclusions-check-option,
+    .job-details-complete .inclusions-check-option span {
+      font-size: 8px;
+      line-height: 1;
+    }
+
+    .job-details-complete-text {
+      font-weight: 700;
+    }
+
+    .job-details-complete .inclusions-check-option {
+      gap: 3px;
+    }
+
+    .job-details-complete .inclusions-check-option input[type="checkbox"] {
+      width: 10px;
+      height: 10px;
+    }
+
+    .job-details-complete .inclusions-check-option input[type="checkbox"]:checked::after {
+      top: -2px;
+      left: 1px;
+      font-size: 8px;
+      line-height: 10px;
+    }
+
+    .yd-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 8px;
+    }
+
+    .yd-header-title {
+      flex: 1 1 auto;
+      min-width: 0;
+    }
+
+    .job-details-note {
+      font-size: 10px;
+      color: #4b5563;
+      font-style: italic;
+      line-height: 1.3;
+    }
+
+    .job-details-note[hidden] {
+      display: none;
+    }
+
+    .job-details-note-from {
+      text-align: left;
+      margin: 0 0 4px;
+    }
+
+    .job-details-note-to {
+      text-align: right;
+      margin: 4px 0 0;
+    }
+
+    .job-details-textarea {
+      width: 100%;
+      min-height: 80px;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      padding: 6px 10px;
+      font-size: 11px;
+      line-height: 1.35;
+      font-family: inherit;
+      background: #f7f7f7;
+      color: #111827;
+      resize: none;
+      overflow: hidden;
+      box-sizing: border-box;
+    }
+
+    .flow-box.yd-section {
+      padding: 0;
+      border: 1px solid var(--section-box-border);
+      border-radius: 2mm;
+      overflow: hidden;
+      background: var(--section-box-bg);
+      width: calc(100% - 2px);
+      max-width: calc(100% - 2px);
+    }
+
+    .yd-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #ffffff;
+    }
+
+    .yd-table col.yd-col-sl {
+      width: 9%;
+    }
+
+    .yd-table col.yd-col-job {
+      width: 64%;
+    }
+
+    .yd-table col.yd-col-quote {
+      width: 27%;
+    }
+
+    .yd-table th,
+    .yd-table td {
+      border: 1px solid #d9d9d9;
+      padding: 0;
+      vertical-align: top;
+    }
+
+    .yd-table th {
+      padding: 4px 6px;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1.15;
+      color: #111827;
+      background: #ffffff;
+      text-align: center;
+    }
+
+    .yd-sl-input,
+    .yd-job-textarea,
+    .yd-quote-input {
+      width: 100%;
+      border: 0;
+      border-radius: 0;
+      padding: 3px 6px;
+      font-size: 11px;
+      line-height: 1.2;
+      font-family: inherit;
+      color: #111827;
+      background: #f7f7f7;
+      box-sizing: border-box;
+    }
+
+    .yd-sl-input {
+      min-height: 24px;
+      text-align: center;
+      font-weight: 700;
+    }
+
+    .yd-job-textarea {
+      min-height: 24px;
+      max-height: calc((1.2em * 5) + 6px);
+      resize: none;
+      overflow: hidden;
+    }
+
+    .yd-quote-input {
+      height: 24px;
+      padding: 3px 4px;
+      font-size: 11px;
+      line-height: 1;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: clip;
+    }
+
+    .yd-job-textarea:focus,
+    .yd-quote-input:focus {
+      outline: none;
+      background: #f9fbff;
+    }
+
+    .flow-box.sp-section {
+      padding: 4px 6px 6px;
+      border: 1px solid var(--section-box-border);
+      border-radius: 2mm;
+      overflow: hidden;
+      background: var(--section-box-bg);
+      width: calc(100% - 2px);
+      max-width: calc(100% - 2px);
+    }
+
+    .sp-table {
+      width: 100%;
+      border-collapse: collapse;
+      table-layout: fixed;
+      background: #ffffff;
+    }
+
+    .sp-table col.sp-col-scope {
+      width: 23%;
+    }
+
+    .sp-table col.sp-col-status {
+      width: 24%;
+    }
+
+    .sp-table col.sp-col-po {
+      width: 53%;
+    }
+
+    .sp-table thead th {
+      padding: 3px 8px 4px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.2;
+      text-align: center;
+      color: #111827;
+      background: #dcdcdc;
+      border-top: 1px solid #9ca3af;
+      border-bottom: 1px solid #9ca3af;
+    }
+
+    .sp-table tbody td {
+      padding: 4px 6px;
+      vertical-align: middle;
+      background: #ffffff;
+      border-bottom: 1px solid #9ca3af;
+    }
+
+    .sp-scope-label {
+      display: block;
+      padding: 0 4px;
+      font-size: 11px;
+      font-weight: 700;
+      text-align: center;
+      color: #111827;
+    }
+
+    .sp-status-select,
+    .sp-po-input {
+      width: 100%;
+      height: 28px;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      padding: 0 8px;
+      font-size: 11px;
+      line-height: 1.2;
+      font-family: inherit;
+      color: #111827;
+      background-color: #f7f7f7;
+      box-sizing: border-box;
+    }
+
+    .sp-po-input {
+      text-align: center;
+    }
+
+    .intro-vessel-section input[type="text"]::placeholder,
+    .spec-details-section input[type="text"]::placeholder,
+    .equip-details-section input[type="text"]::placeholder,
+    .job-details-textarea::placeholder,
+    .yd-sl-input::placeholder,
+    .yd-job-textarea::placeholder,
+    .yd-quote-input::placeholder,
+    .sp-po-input::placeholder,
+    .job-completion-date::placeholder {
+      color: #9ca3af;
+      opacity: 1;
+    }
+
+    .sp-status-select:focus,
+    .sp-po-input:focus {
+      outline: none;
+      background-color: #f9fbff;
+    }
+
+    .flow-box.job-status-section {
+      padding: 8px 10px;
+      border: 1px solid var(--section-box-border);
+      border-radius: 2mm;
+      overflow: hidden;
+      background: #ffffff;
+      width: calc(100% - 2px);
+      max-width: calc(100% - 2px);
+    }
+
+    .job-status-row {
+      display: grid;
+      grid-template-columns: auto minmax(0, 1fr) auto minmax(0, 1fr);
+      gap: 8px 12px;
+      align-items: center;
+    }
+
+    .job-status-label {
+      font-size: 11px;
+      font-weight: 700;
+      color: #111827;
+      white-space: nowrap;
+    }
+
+    .job-status-select,
+    .job-completion-date {
+      width: 100%;
+      height: 28px;
+      border: 1px solid #d9d9d9;
+      border-radius: 4px;
+      padding: 0 10px;
+      font-size: 11px;
+      line-height: 1.2;
+      font-family: inherit;
+      color: #111827;
+      background-color: #f7f7f7;
+      box-sizing: border-box;
+    }
+
+    .job-status-select:focus,
+    .job-completion-date:focus {
+      outline: none;
+      background-color: #f9fbff;
+    }
+
+    .job-completion-date:disabled {
+      color: #6b7280;
+      background-color: #f3f4f6;
+      cursor: not-allowed;
+    }
+
+    .page-actions {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      margin-top: 5px;
+      width: calc(100% - 2px);
+      max-width: calc(100% - 2px);
+    }
+
+    .page-actions-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      flex-wrap: wrap;
+      width: 100%;
+    }
+
+    .icl-widget {
+      position: relative;
+      display: inline-flex;
+      align-items: stretch;
+      justify-content: flex-start;
+      align-self: center;
+      width: 130px;
+      min-height: 0;
+      height: auto;
+      flex: 0 0 130px;
+      overflow: visible;
+      margin-top: 1px;
+    }
+
+    .icl-ring-chart {
+      width: 100px;
+      height: 100px;
+      aspect-ratio: 1 / 1;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: conic-gradient(from -90deg, #000 0deg 1deg, #f59e0b 1deg 360deg);
+      box-shadow: inset 0 0 0 1px rgba(17, 24, 39, 0.1);
+      flex-shrink: 0;
+    }
+
+    .icl-ring-hole {
+      width: 75%;
+      height: 75%;
+      border-radius: 50%;
+      background: #ffffff;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .icl-ring-center {
+      width: 83.3333%;
+      height: 83.3333%;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      font-weight: 700;
+      line-height: 1;
+      background: #facc15;
+      color: #dc2626;
+      text-align: center;
+    }
+
+    .icl-ring-center.is-complete {
+      background: #ffffff;
+      color: #111111;
+    }
+
+    .icl-widget-meta {
+      position: absolute;
+      top: -2px;
+      left: 91px;
+      min-width: 34px;
+      padding: 2px 6px;
+      border: 1px solid #111111;
+      border-radius: 3px;
+      background: #ffffff;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #111111;
+      text-align: center;
+      white-space: nowrap;
+      box-sizing: border-box;
+    }
+
+    .page-action-btn {
+      border: 0;
+      border-radius: 4px;
+      padding: 7px 14px;
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1;
+      color: #ffffff;
+      cursor: pointer;
+    }
+
+    .page-action-btn-print {
+      background: #2563eb;
+    }
+
+    .page-action-btn-top {
+      background: #8b5e3c;
+      margin-left: auto;
+    }
+
+    @media print {
+      .page-actions,
+      .inclusions-check-section,
+      .job-details-complete,
+      .rhs-auto-header-column {
+        display: none !important;
+      }
+    }
+
+    .rhs-column {
+      /* 1px left gap from the 80% dividing line — independent of TC */
+      flex: 0 0 calc(20% - 1px);
+      width: calc(20% - 1px);
+      max-width: calc(20% - 1px);
+      height: 100%;
+      min-height: 0;
+      margin-left: 1px;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      min-width: 0;
+      box-sizing: border-box;
+    }
+
+    .rhs-auto-header-column {
+      position: relative;
+      justify-content: center;
+      align-items: flex-start;
+      align-self: flex-start;
+      height: auto;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .rhs-auto-header-column::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 5px;
+      width: 4px;
+      background: #9ca3af;
+      border-radius: 2px;
+      pointer-events: none;
+    }
+
+    .rhs-auto-header-marker {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%);
+      width: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1px 0;
+      background: #ffffff;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .rhs-auto-header-text {
+      font-size: 9px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 0.4px;
+      color: #6b7280;
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      white-space: nowrap;
+    }
+
+    .flow-box.inclusions-section,
+    .flow-box.inclusions-check-section,
+    .flow-box.rhs-fill-box {
+      padding: 0;
+      border: 1px solid var(--section-box-border);
+      border-radius: 2mm;
+      overflow: hidden;
+      background: var(--section-box-bg);
+      width: 100%;
+      max-width: 100%;
+    }
+
+    .flow-box.rhs-fill-box {
+      flex: 0 0 230px;
+      height: 230px;
+      min-height: 230px;
+      max-height: 230px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .rhs-fill-header {
+      margin: 0;
+      padding: 2px 8px;
+      font-size: 12px;
+      line-height: 1.2;
+      font-weight: 700;
+      color: var(--section-header-text);
+      background: var(--section-header-bg);
+      border-bottom: 1px solid var(--section-header-border);
+    }
+
+    .rhs-fill-body {
+      flex: 1 1 auto;
+      min-height: 0;
+      padding: 6px 8px;
+      background: #ffffff;
+      overflow: auto;
+      box-sizing: border-box;
+    }
+
+    .rhs-file-empty {
+      font-size: 10px;
+      line-height: 1.35;
+      color: #6b7280;
+    }
+
+    .rhs-file-list {
+      margin: 0;
+      padding-left: 0;
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 3px;
+    }
+
+    .rhs-file-list li {
+      font-size: 9px;
+      line-height: 1.15;
+      color: #111827;
+      white-space: nowrap;
+    }
+
+    .rhs-file-entry {
+      display: flex;
+      align-items: center;
+      gap: 3px;
+      min-width: 0;
+      width: 100%;
+    }
+
+    .rhs-file-index {
+      flex: 0 0 auto;
+      min-width: 12px;
+      font-size: 9px;
+      line-height: 1.15;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .rhs-file-link {
+      display: inline-block;
+      flex: 1 1 auto;
+      min-width: 0;
+      max-width: 100%;
+      font-size: 9px;
+      line-height: 1.15;
+      color: #2563eb;
+      text-decoration: underline;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      vertical-align: top;
+      cursor: pointer;
+    }
+
+    .rhs-file-delete-btn {
+      flex: 0 0 auto;
+      min-width: 22px;
+      height: 15px;
+      padding: 0 4px;
+      border: 1px solid #fb923c;
+      border-radius: 3px;
+      background: #fdba74;
+      color: #000000;
+      font-size: 8px;
+      font-weight: 700;
+      line-height: 1;
+      cursor: pointer;
+    }
+
+    /* H1 repeat: read-only copy on pages 3+ */
+    .h1-repeat .intro-vessel-field input[type="text"],
+    .h2-repeat .intro-vessel-field input[type="text"] {
+      background: #ffffff;
+      color: #111827;
+      cursor: default;
+      pointer-events: none;
+      user-select: text;
+    }
+
+    .inclusions-body {
+      padding: 6px 8px 8px;
+    }
+
+    .inclusions-check-body {
+      padding: 8px;
+    }
+
+    .inclusions-check-question {
+      margin: 0 0 8px;
+      font-size: 10px;
+      font-weight: 700;
+      line-height: 1.35;
+      color: #111827;
+    }
+
+    .inclusions-check-options {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .inclusions-check-option {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 10px;
+      font-weight: 700;
+      color: #111827;
+    }
+
+    .inclusions-check-option input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 12px;
+      height: 12px;
+      margin: 0;
+      border: 1px solid #9ca3af;
+      border-radius: 2px;
+      background: #e5e7eb;
+      position: relative;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .inclusions-check-option input[type="checkbox"]:checked::after {
+      content: "✓";
+      position: absolute;
+      top: -2px;
+      left: 1px;
+      font-size: 10px;
+      line-height: 12px;
+      color: #111111;
+      font-weight: 700;
+    }
+
+    .inclusions-check-option.answer-yes input[type="checkbox"] {
+      background: #e5e7eb;
+      border-color: #9ca3af;
+    }
+
+    .inclusions-check-option.answer-yes input[type="checkbox"]:checked {
+      background: #22c55e;
+      border-color: #16a34a;
+    }
+
+    .inclusions-check-option.answer-no input[type="checkbox"] {
+      background: #ffffff;
+      border-color: #d1d5db;
+    }
+
+    .inclusions-check-option.answer-no input[type="checkbox"]:checked {
+      background: #f59e0b;
+      border-color: #d97706;
+    }
+
+    .inclusions-strip {
+      margin: 0 0 6px;
+      padding: 1px 8px;
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid #9a9a9a;
+      background: var(--section-header-bg);
+      color: var(--section-header-text);
+    }
+
+    .inclusion-group {
+      margin: 4px 0 2px;
+      font-size: 10px;
+      font-weight: 700;
+      text-transform: uppercase;
+      color: #111827;
+    }
+
+    .inclusion-row {
+      display: flex;
+      align-items: flex-start;
+      gap: 6px;
+      margin-bottom: 3px;
+      font-size: 11px;
+      line-height: 1.2;
+    }
+
+    .inclusion-row input[type="checkbox"] {
+      appearance: none;
+      -webkit-appearance: none;
+      width: 11px;
+      height: 11px;
+      min-width: 11px;
+      margin: 1px 0 0;
+      border: 1px solid #9ca3af;
+      border-radius: 2px;
+      background: #e5e7eb;
+      cursor: pointer;
+      flex-shrink: 0;
+      position: relative;
+    }
+
+    .inclusion-row input[type="checkbox"]:checked {
+      background: #22c55e;
+      border-color: #16a34a;
+    }
+
+    .inclusion-row input[type="checkbox"]:checked::after {
+      content: "✓";
+      position: absolute;
+      top: -1px;
+      left: 1px;
+      font-size: 9px;
+      line-height: 11px;
+      color: #111111;
+    }
+
+    .toolbar-left,
+    .toolbar-right {
+      display: flex;
+      align-items: center;
+      gap: 3mm;
+    }
+
+    .toolbar-right {
+      margin-left: auto;
+    }
+
+    .toolbar-btn {
+      border: 1px solid #1d4ed8;
+      background: #2563eb;
+      color: #ffffff;
+      font-size: 12px;
+      line-height: 1;
+      font-weight: 600;
+      padding: 7px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      min-width: 72px;
+    }
+
+    .toolbar-btn:disabled {
+      background: #d1d5db;
+      border-color: #d1d5db;
+      color: #ffffff;
+      cursor: not-allowed;
+    }
+
+    .a4-page {
+      height: var(--a4-height);
+      min-height: var(--a4-height);
+      max-height: var(--a4-height);
+    }
+
+    .sheet-writing-area {
+      position: absolute;
+      top: var(--writing-top-offset);
+      left: 0;
+      right: 0;
+      width: var(--writing-width);
+      height: var(--writing-height);
+      margin-left: auto;
+      margin-right: auto;
+      overflow: hidden;
+      background: #fff;
+    }
+
+    .tc-sheet-writing-box .sheet-writing-area {
+      border: var(--sheet-box-width) solid var(--sheet-box-color);
+    }
+
+    .tc-writing-split-line .a4-page .sheet-writing-area::after {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 80%;
+      border-left: 1px solid var(--sheet-box-color);
+      pointer-events: none;
+    }
+
+    .page-flow {
+      display: flex;
+      flex-direction: row;
+      align-items: flex-start;
+      gap: 0;
+      width: 100%;
+      height: 100%;
+    }
+
+    .lhs-column {
+      flex: 0 0 80%;
+      width: 80%;
+      display: flex;
+      flex-direction: column;
+      gap: 5px;
+      align-items: stretch;
+      min-width: 0;
+    }
+
+    .flow-box {
+      width: 100%;
+      max-width: 100%;
+      border: 1px solid var(--section-box-border);
+      padding: 4mm;
+      overflow-wrap: break-word;
+      background: var(--section-box-bg);
+    }
+
+    .flow-box[data-overflow-status="oversize"] {
+      border-color: #b91c1c;
+      outline: 1px dashed #b91c1c;
+      outline-offset: -2px;
+    }
+
+    .page-title {
+      margin: 0;
+      font-size: 20px;
+      letter-spacing: 0.3px;
+    }
+
+    .page-copy {
+      margin-top: 12px;
+      font-size: 14px;
+      line-height: 1.45;
+      color: #2f3642;
+    }
+
+    @page {
+      size: A4;
+      margin: 0;
+    }
+
+    @media print {
+      html,
+      body {
+        margin: 0;
+        padding: 0;
+        background: #fff;
+        width: var(--a4-width);
+      }
+
+      #pageStack {
+        display: block !important;
+        width: var(--a4-width);
+        margin: 0 auto !important;
+        gap: 0 !important;
+      }
+
+      .intro-page {
+        display: none !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        max-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+      }
+
+      .sheet-page {
+        box-shadow: none;
+        margin: 0 !important;
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
+
+      .a4-page {
+        display: block;
+        width: var(--a4-width);
+        min-width: var(--a4-width);
+        max-width: var(--a4-width);
+        height: var(--a4-height);
+        min-height: var(--a4-height);
+        max-height: var(--a4-height);
+      }
+
+      .a4-page:not(:last-of-type) {
+        break-after: page;
+        page-break-after: always;
+      }
+
+      .a4-page:last-of-type {
+        break-after: auto;
+        page-break-after: auto;
+      }
+
+      .intro-vessel-section:not(.h1-repeat) input[type="text"],
+      .spec-details-section:not(.h2-repeat) input[type="text"],
+      .spec-details-section:not(.h2-repeat) select,
+      .equip-details-section input[type="text"],
+      .sp-status-select,
+      .sp-po-input,
+      .job-status-select {
+        background-image: none !important;
+      }
+
+      .tc-sheet-writing-box .sheet-writing-area {
+        border: none !important;
+      }
+
+      .tc-writing-split-line .a4-page .sheet-writing-area::after {
+        display: none !important;
+      }
+
+      .sheet-page + .sheet-page {
+        margin-top: 0;
+      }
+
+      .sheet-page + .sheet-page::before {
+        display: none;
+      }
+
+      body.safari-browser .sheet-page {
+        overflow: visible !important;
+        break-inside: auto !important;
+        page-break-inside: auto !important;
+      }
+
+      body.safari-browser .sheet-page {
+        overflow: visible !important;
+        break-inside: auto !important;
+        page-break-inside: auto !important;
+      }
+
+      body.safari-browser .a4-page {
+        box-sizing: border-box !important;
+        width: calc(var(--a4-width) - 10mm) !important;
+        min-width: calc(var(--a4-width) - 10mm) !important;
+        max-width: calc(var(--a4-width) - 10mm) !important;
+        height: calc(var(--a4-height) - 10mm) !important;
+        min-height: calc(var(--a4-height) - 10mm) !important;
+        max-height: calc(var(--a4-height) - 10mm) !important;
+        margin: 5mm auto 0 !important;
+        padding-top: var(--writing-top-offset) !important;
+        overflow: hidden !important;
+        break-after: auto !important;
+        page-break-after: auto !important;
+      }
+
+      body.safari-browser .a4-page:last-of-type {
+        height: auto !important;
+        min-height: 0 !important;
+        max-height: none !important;
+        margin: 5mm auto 0 !important;
+        padding-bottom: 0 !important;
+      }
+
+      body.safari-browser .sheet-writing-area {
+        position: static !important;
+        top: auto !important;
+        left: auto !important;
+        right: auto !important;
+        width: var(--writing-width) !important;
+        min-width: var(--writing-width) !important;
+        max-width: var(--writing-width) !important;
+        margin: 0 auto !important;
+        min-height: var(--writing-height) !important;
+        height: var(--writing-height) !important;
+        overflow: hidden !important;
+      }
+
+      body.safari-browser .page-flow {
+        height: var(--writing-height) !important;
+        min-height: var(--writing-height) !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main id="pageStack" aria-label="A4 page stack">
+    <section class="sheet-page intro-page" data-page-number="1" aria-label="Page 1 HTML-only intro">
+      <div class="first-page-toolbar" role="toolbar" aria-label="Page controls">
+        <div class="toolbar-left">
+          <button class="toolbar-btn" type="button" id="btnBack1" disabled>← 1</button>
+          <button class="toolbar-btn" type="button" id="btnFront1">1 →</button>
+        </div>
+        <div class="toolbar-right">
+          <button class="toolbar-btn" type="button" id="btnSave">Save</button>
+          <button class="toolbar-btn" type="button" id="btnLoad">Load</button>
+          <button class="toolbar-btn" type="button" id="btnClearAll">Clear all</button>
+        </div>
+      </div>
+      <section class="intro-progress-box" aria-label="Spec progress panel">
+        <header class="intro-progress-header">
+          <h2 class="intro-progress-title">Spec. Progress</h2>
+          <span id="iclHeaderStatus" class="intro-progress-status">Spec. details are incomplete!</span>
+        </header>
+        <div class="intro-progress-body">
+          <div class="icl-widget" aria-live="polite">
+            <div id="iclRingChart" class="icl-ring-chart" role="img" aria-label="ICL completion 0%">
+              <div class="icl-ring-hole">
+                <div id="iclRingPercent" class="icl-ring-center">0%</div>
+              </div>
+            </div>
+            <div id="iclRingCounts" class="icl-widget-meta">0/21</div>
+          </div>
+          <div class="intro-attachments-box" aria-label="Attachment upload box">
+            <div class="job-details-complete intro-attachments-complete" role="group" aria-label="Attachment upload completion confirmation">
+              <span class="job-details-complete-text">Are all attachments uploaded?</span>
+              <label class="inclusions-check-option answer-yes">
+                <input type="checkbox" name="attachmentsComplete" data-attachments-answer="yes" />
+                <span>Yes</span>
+              </label>
+              <label class="inclusions-check-option answer-no">
+                <input type="checkbox" name="attachmentsComplete" data-attachments-answer="no" checked />
+                <span>No</span>
+              </label>
+            </div>
+            <input id="specAttachmentInput" class="intro-attachments-input" type="file" accept=".doc,.docx,.pdf,.pptx,.ppt,.xpf,.jpg,.jpeg,.png,.gif" multiple />
+            <div class="intro-attachments-actions">
+              <button class="toolbar-btn" type="button" id="btnAttachFiles">Upload files</button>
+              <span id="specAttachmentCount" class="intro-attachments-count">No files selected</span>
+            </div>
+            <div class="intro-attachments-note">Upload up to 10 `.doc`, `.docx`, `.pdf`, `.pptx`, `.ppt`, `.xpf`, `.jpg`, `.jpeg`, `.png`, or `.gif` files. Their clickable names will appear in the `Files Attached to Spec.` box.</div>
+          </div>
+          <div class="intro-attachments-extra-box" aria-label="Attachment summary box">
+            <p class="intro-attachments-summary-line">This Spec. has <strong id="specAttachmentSummaryCount">0</strong> attachments.</p>
+            <p class="intro-attachments-summary-line">Total File Size uploaded</p>
+            <p id="specAttachmentSummarySize" class="intro-attachments-summary-value">0 B</p>
+          </div>
+        </div>
+      </section>
+    </section>
+    <section class="sheet-page a4-page" data-page-number="2">
+      <div class="sheet-writing-area">
+        <div class="page-flow">
+          <div class="lhs-column">
+
+          <section class="flow-box intro-vessel-section" aria-label="Vessel Information section">
+            <h3 class="intro-vessel-header">Vessel Information</h3>
+            <div class="intro-vessel-row">
+              <div class="intro-vessel-field field-40">
+                <label for="specVesselName">Vessel Name:</label>
+                <input type="text" id="specVesselName" placeholder="Enter vessel name" />
+              </div>
+              <div class="intro-vessel-field field-30">
+                <label for="specImo">IMO:</label>
+                <input type="text" id="specImo" placeholder="IMO" />
+              </div>
+              <div class="intro-vessel-field field-30">
+                <label for="specClassRo">Class / RO:</label>
+                <input type="text" id="specClassRo" placeholder="Class / RO" />
+              </div>
+            </div>
+          </section>
+
+          <section class="flow-box spec-details-section" aria-label="Spec Details section">
+            <h3 class="spec-details-header">Spec. Details</h3>
+            <div class="intro-vessel-row">
+              <div class="intro-vessel-field field-50">
+                <label for="specDepartment">Department:</label>
+                <select id="specDepartment">
+                  <option value="">Select Department</option>
+                  <option>Electrical</option>
+                  <option>Mechanical</option>
+                  <option>Hull &amp; Structure</option>
+                  <option>Piping</option>
+                  <option>Deck</option>
+                  <option>Engine Room</option>
+                  <option>Safety &amp; Fire</option>
+                  <option>Painting</option>
+                  <option>Sub-Contractor</option>
+                </select>
+              </div>
+              <div class="intro-vessel-field field-50">
+                <label for="specJobId">Job ID:</label>
+                <input type="text" id="specJobId" placeholder="e.g., EL007" />
+              </div>
+            </div>
+            <div class="intro-vessel-row">
+              <div class="intro-vessel-field field-50">
+                <label for="specDoneBy">To be done by:</label>
+                <input type="text" id="specDoneBy" placeholder="Department/Contractor" />
+              </div>
+              <div class="intro-vessel-field field-50">
+                <label for="specDoneWhen">Done when:</label>
+                <input type="text" id="specDoneWhen" placeholder="Condition or timeline" />
+              </div>
+            </div>
+            <div class="intro-vessel-row">
+              <div class="intro-vessel-field field-full">
+                <label for="specJobDesc">Job Description:</label>
+                <input type="text" id="specJobDesc" placeholder="Brief description" />
+              </div>
+            </div>
+          </section>
+
+          <section class="flow-box equip-details-section" aria-label="Equipment Details section">
+            <h3 class="equip-details-header">
+              <span class="equip-details-header-title">Equipment Details</span>
+              <span class="job-details-complete" role="group" aria-label="Equipment relevance confirmation">
+                <span class="job-details-complete-text">Is this relevant to the spec.?</span>
+                <label class="inclusions-check-option answer-yes">
+                  <input type="checkbox" name="equipmentRelevant" data-equipment-relevant="yes" checked />
+                  <span>Yes</span>
+                </label>
+                <label class="inclusions-check-option answer-no">
+                  <input type="checkbox" name="equipmentRelevant" data-equipment-relevant="no" />
+                  <span>No</span>
+                </label>
+              </span>
+            </h3>
+            <div class="intro-vessel-row">
+              <div class="intro-vessel-field field-50">
+                <label for="equipMaker">Maker:</label>
+                <input type="text" id="equipMaker" placeholder="e.g., MITSUBISHI" />
+              </div>
+              <div class="intro-vessel-field field-50">
+                <label for="equipModel">Model:</label>
+                <input type="text" id="equipModel" placeholder="e.g., AE 1250-SS" />
+              </div>
+            </div>
+            <div class="intro-vessel-row">
+              <div class="intro-vessel-field field-50">
+                <label for="equipType">Type:</label>
+                <input type="text" id="equipType" placeholder="Type" />
+              </div>
+              <div class="intro-vessel-field field-50">
+                <label for="equipSerial">Serial Number:</label>
+                <input type="text" id="equipSerial" placeholder="Serial number" />
+              </div>
+            </div>
+          </section>
+
+          <section class="flow-box job-details-section" aria-label="Job Details section" data-job-details="true" data-job-continuation="false">
+            <h3 class="job-details-header">Job Details</h3>
+            <div class="job-details-body">
+              <div class="job-details-label-row">
+                <label class="job-details-label" for="jobFullDesc">Full Description (Scope):</label>
+                <div class="job-details-complete" role="group" aria-label="Job details completion confirmation">
+                  <span class="job-details-complete-text">Are details complete?</span>
+                  <label class="inclusions-check-option answer-yes">
+                    <input type="checkbox" name="jobDetailsComplete" data-job-details-answer="yes" />
+                    <span>Yes</span>
+                  </label>
+                  <label class="inclusions-check-option answer-no">
+                    <input type="checkbox" name="jobDetailsComplete" data-job-details-answer="no" checked />
+                    <span>No</span>
+                  </label>
+                </div>
+              </div>
+              <div class="job-details-note job-details-note-from" hidden>(Contd. from previous page)</div>
+              <textarea id="jobFullDesc" class="job-details-textarea" rows="10" placeholder="Detailed job scope, requirements, and special notes..."></textarea>
+              <div class="job-details-note job-details-note-to" hidden>(contd. to the next page)</div>
+            </div>
+          </section>
+
+          <section class="flow-box yd-section" aria-label="Yard Details section" data-yd="true">
+            <h3 class="yd-header">
+              <span class="yd-header-title">Yard Quote for line items with ALL Ticked Inclusions</span>
+              <span class="job-details-complete" role="group" aria-label="Yard quote completion confirmation">
+                <span class="job-details-complete-text">Are details complete?</span>
+                <label class="inclusions-check-option answer-yes">
+                  <input type="checkbox" name="ydDetailsComplete" data-yd-details-answer="yes" />
+                  <span>Yes</span>
+                </label>
+                <label class="inclusions-check-option answer-no">
+                  <input type="checkbox" name="ydDetailsComplete" data-yd-details-answer="no" checked />
+                  <span>No</span>
+                </label>
+              </span>
+            </h3>
+            <table class="yd-table" aria-label="Yard details table">
+              <colgroup>
+                <col class="yd-col-sl" />
+                <col class="yd-col-job" />
+                <col class="yd-col-quote" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>SL.</th>
+                  <th>JOB DESCRIPTION</th>
+                  <th>YARD QUOTE</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><input class="yd-sl-input" type="text" value="A" data-yd-sl="1" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="1"></textarea></td>
+                  <td><input class="yd-quote-input" type="text" data-yd-quote="1" maxlength="15" /></td>
+                </tr>
+                <tr>
+                  <td><input class="yd-sl-input" type="text" value="" data-yd-sl="2" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="2"></textarea></td>
+                  <td><input class="yd-quote-input" type="text" data-yd-quote="2" maxlength="15" /></td>
+                </tr>
+                <tr>
+                  <td><input class="yd-sl-input" type="text" value="" data-yd-sl="3" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="3"></textarea></td>
+                  <td><input class="yd-quote-input" type="text" data-yd-quote="3" maxlength="15" /></td>
+                </tr>
+                <tr>
+                  <td><input class="yd-sl-input" type="text" value="" data-yd-sl="4" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="4"></textarea></td>
+                  <td><input class="yd-quote-input" type="text" data-yd-quote="4" maxlength="15" /></td>
+                </tr>
+                <tr>
+                  <td><input class="yd-sl-input" type="text" value="" data-yd-sl="5" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="5"></textarea></td>
+                  <td><input class="yd-quote-input" type="text" data-yd-quote="5" maxlength="15" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="flow-box sp-section" aria-label="Scope section" data-sp="true">
+            <table class="sp-table" aria-label="Scope table">
+              <colgroup>
+                <col class="sp-col-scope" />
+                <col class="sp-col-status" />
+                <col class="sp-col-po" />
+              </colgroup>
+              <thead>
+                <tr>
+                  <th>Scope</th>
+                  <th>Status</th>
+                  <th>PO Number</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td><span class="sp-scope-label">Spares</span></td>
+                  <td>
+                    <select class="sp-status-select" data-sp-status="spares">
+                      <option value="">Select Status</option>
+                      <option>Pending</option>
+                      <option>In Progress</option>
+                      <option>Completed</option>
+                      <option>N/A</option>
+                    </select>
+                  </td>
+                  <td><input class="sp-po-input" type="text" placeholder="Insert PO Numbers if Applicable" data-sp-po="spares" /></td>
+                </tr>
+                <tr>
+                  <td><span class="sp-scope-label">Services</span></td>
+                  <td>
+                    <select class="sp-status-select" data-sp-status="services">
+                      <option value="">Select Status</option>
+                      <option>Pending</option>
+                      <option>In Progress</option>
+                      <option>Completed</option>
+                      <option>N/A</option>
+                    </select>
+                  </td>
+                  <td><input class="sp-po-input" type="text" placeholder="Insert PO Numbers if Applicable" data-sp-po="services" /></td>
+                </tr>
+              </tbody>
+            </table>
+          </section>
+
+          <section class="flow-box job-status-section" aria-label="Job status section" data-job-status="true">
+            <div class="job-status-row">
+              <label class="job-status-label" for="jobStatusField">Job Status:</label>
+              <select id="jobStatusField" class="job-status-select">
+                <option value="">Select Status</option>
+                <option>Pending</option>
+                <option>In Progress</option>
+                <option>Completed</option>
+                <option>N/A</option>
+              </select>
+              <label class="job-status-label" for="jobCompletionDateField">Completion Date:</label>
+              <input id="jobCompletionDateField" class="job-completion-date" type="date" disabled />
+            </div>
+          </section>
+
+          <div class="page-actions" data-page-actions="true" aria-label="Page action buttons">
+            <div class="page-actions-controls">
+              <button class="page-action-btn page-action-btn-print" type="button" id="btnPrintAction">Print</button>
+              <button class="page-action-btn page-action-btn-top" type="button" id="btnGoTopAction">Go to the top</button>
+            </div>
+          </div>
+          </div><!-- /.lhs-column -->
+
+          <div class="rhs-column">
+            <section class="flow-box inclusions-section" aria-label="Inclusions section">
+              <h3 class="inclusions-title">Inclusions (Yard to Quote with All Ticked Items)</h3>
+              <div class="inclusions-body">
+                <div class="inclusions-strip">INCLUSIONS</div>
+
+                <h4 class="inclusion-group">Yard Work</h4>
+                <label class="inclusion-row"><input type="checkbox" /> Gasfree certificate</label>
+                <label class="inclusion-row"><input type="checkbox" /> Lighting &amp; ventilation</label>
+                <label class="inclusion-row"><input type="checkbox" /> Cleaning before</label>
+                <label class="inclusion-row"><input type="checkbox" /> Cleaning after</label>
+                <label class="inclusion-row"><input type="checkbox" /> Staging</label>
+                <label class="inclusion-row"><input type="checkbox" /> Crane service</label>
+                <label class="inclusion-row"><input type="checkbox" /> Transport internal</label>
+                <label class="inclusion-row"><input type="checkbox" /> Transport outside</label>
+                <label class="inclusion-row"><input type="checkbox" /> Access work</label>
+                <label class="inclusion-row"><input type="checkbox" /> Corrosion protection</label>
+                <label class="inclusion-row"><input type="checkbox" /> Galvanising</label>
+                <label class="inclusion-row"><input type="checkbox" /> Paintwork (t/u, f/c)</label>
+                <label class="inclusion-row"><input type="checkbox" /> Pressure testing</label>
+                <label class="inclusion-row"><input type="checkbox" /> Function testing</label>
+                <label class="inclusion-row"><input type="checkbox" /> Non-destructive test</label>
+                <label class="inclusion-row"><input type="checkbox" /> Correction drawings</label>
+
+                <h4 class="inclusion-group">Sub-Contract</h4>
+                <label class="inclusion-row"><input type="checkbox" /> Lifting equipment</label>
+
+                <h4 class="inclusion-group">Inspections / Surveys</h4>
+                <label class="inclusion-row"><input type="checkbox" /> Classification society</label>
+                <label class="inclusion-row"><input type="checkbox" /> Flag administration</label>
+                <label class="inclusion-row"><input type="checkbox" /> Owners</label>
+                <label class="inclusion-row"><input type="checkbox" /> Manufacturers</label>
+                <label class="inclusion-row"><input type="checkbox" /> Underwriters</label>
+
+                <h4 class="inclusion-group">Material</h4>
+                <label class="inclusion-row"><input type="checkbox" /> Yard supply</label>
+                <label class="inclusion-row"><input type="checkbox" /> Owner's supply</label>
+                <label class="inclusion-row"><input type="checkbox" /> Maker's supply</label>
+
+                <h4 class="inclusion-group">Enclosures</h4>
+                <label class="inclusion-row"><input type="checkbox" /> Drawing</label>
+                <label class="inclusion-row"><input type="checkbox" /> Sketch</label>
+                <label class="inclusion-row"><input type="checkbox" /> Photograph</label>
+                <label class="inclusion-row"><input type="checkbox" /> Sample</label>
+              </div>
+            </section>
+
+            <section class="flow-box inclusions-check-section" aria-label="Inclusions check confirmation section">
+              <div class="inclusions-check-body">
+                <p class="inclusions-check-question">Have all the INCLUSIONS been correctly checked?</p>
+                <div class="inclusions-check-options" role="group" aria-label="Inclusions confirmation">
+                  <label class="inclusions-check-option answer-yes">
+                    <input type="checkbox" name="inclusionCheckAnswer" data-inclusion-answer="yes" />
+                    <span>Yes</span>
+                  </label>
+                  <label class="inclusions-check-option answer-no">
+                    <input type="checkbox" name="inclusionCheckAnswer" data-inclusion-answer="no" checked />
+                    <span>No</span>
+                  </label>
+                </div>
+              </div>
+            </section>
+
+            <section class="flow-box rhs-fill-box" aria-label="Files attached to spec section">
+              <h3 class="rhs-fill-header">Files Attached to Spec.</h3>
+              <div class="rhs-fill-body">
+                <div id="rhsAttachedFilesList" class="rhs-file-empty">No files attached.</div>
+              </div>
+            </section>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="attachmentLimitModal" class="attachment-limit-modal" hidden aria-hidden="true">
+    <div class="attachment-limit-dialog" role="dialog" aria-modal="true" aria-labelledby="attachmentLimitTitle" aria-describedby="attachmentLimitMessage">
+      <h3 id="attachmentLimitTitle" class="attachment-limit-title">Upload Criteria Not Met</h3>
+      <p id="attachmentLimitMessage" class="attachment-limit-message"></p>
+      <div class="attachment-limit-actions">
+        <button id="attachmentLimitRetry" class="toolbar-btn" type="button">Retry</button>
+        <button id="attachmentLimitCancel" class="toolbar-btn" type="button">Cancel</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="attachmentDeleteModal" class="attachment-limit-modal" hidden aria-hidden="true">
+    <div class="attachment-limit-dialog" role="dialog" aria-modal="true" aria-labelledby="attachmentDeleteTitle" aria-describedby="attachmentDeleteMessage">
+      <h3 id="attachmentDeleteTitle" class="attachment-limit-title">Remove attachment</h3>
+      <p id="attachmentDeleteMessage" class="attachment-limit-message"></p>
+      <div class="attachment-limit-actions">
+        <button id="attachmentDeleteConfirm" class="toolbar-btn" type="button">Yes</button>
+        <button id="attachmentDeleteCancel" class="toolbar-btn" type="button">No</button>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // TM/TC debug helpers are intentionally kept but suspended by default.
+    const TC = [
+      {
+        id: "sheet-writing-area-box",
+        label: "Show a 1px thick line box for each sheet writing area",
+        enabled: true
+      },
+      {
+        id: "writing-area-80-20-split",
+        label: "Draw a 1px vertical 80:20 divider line in writing areas from page 2 onwards",
+        enabled: true
+      }
+    ];
+
+    const pageStack = document.getElementById("pageStack");
+    const userAgent = navigator.userAgent || '';
+    const vendor = navigator.vendor || '';
+    const isSafariBrowser = /Safari/i.test(userAgent)
+      && /Apple/i.test(vendor)
+      && !/Chrome|Chromium|CriOS|Edg|OPR|Firefox|FxiOS|Android/i.test(userAgent);
+
+    if (isSafariBrowser) {
+      document.documentElement.classList.add('safari-browser');
+      document.body.classList.add('safari-browser');
+    }
+
+  const pageTemplate = pageStack.querySelector(".a4-page").cloneNode(false);
+    const writingAreaTemplate = document.createElement("div");
+    writingAreaTemplate.className = "sheet-writing-area";
+    const pageFlowTemplate = document.createElement("div");
+    pageFlowTemplate.className = "page-flow";
+    writingAreaTemplate.appendChild(pageFlowTemplate);
+    let paginationQueued = false;
+    let paginationDelayId = 0;
+    let isPointerSelecting = false;
+    let dropdownResumeDelayId = 0;
+    let isDropdownInteractionActive = false;
+    const DROPDOWN_PAGINATION_RESUME_DELAY = 260;
+
+    function applyTC() {
+      if (!pageStack) return;
+
+      const hasSheetBox = TC.some((item) => item.id === "sheet-writing-area-box" && item.enabled);
+      const hasSplitLine = TC.some((item) => item.id === "writing-area-80-20-split" && item.enabled);
+      pageStack.classList.toggle("tc-sheet-writing-box", hasSheetBox);
+      pageStack.classList.toggle("tc-writing-split-line", hasSplitLine);
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '')
+        .replace(/&/g, '&amp;')
+        .replace(/"/g, '&quot;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+    }
+
+    function buildH1Repeat() {
+      const vesselName = document.getElementById('specVesselName')?.value || '';
+      const imo = document.getElementById('specImo')?.value || '';
+      const classRo = document.getElementById('specClassRo')?.value || '';
+
+      const section = document.createElement('section');
+      section.className = 'flow-box intro-vessel-section h1-repeat';
+      section.setAttribute('aria-label', 'Vessel Information (repeat)');
+      section.dataset.h1Repeat = 'true';
+      section.innerHTML = `
+        <h3 class="intro-vessel-header">Vessel Information</h3>
+        <div class="intro-vessel-row">
+          <div class="intro-vessel-field field-40">
+            <label>Vessel Name:</label>
+            <input type="text" tabindex="-1" readonly value="${escapeHtml(vesselName)}" />
+          </div>
+          <div class="intro-vessel-field field-30">
+            <label>IMO:</label>
+            <input type="text" tabindex="-1" readonly value="${escapeHtml(imo)}" />
+          </div>
+          <div class="intro-vessel-field field-30">
+            <label>Class / RO:</label>
+            <input type="text" tabindex="-1" readonly value="${escapeHtml(classRo)}" />
+          </div>
+        </div>`;
+      return section;
+    }
+
+    function buildH2Repeat() {
+      const department = document.getElementById('specDepartment')?.value || '';
+      const jobId = document.getElementById('specJobId')?.value || '';
+      const doneBy = document.getElementById('specDoneBy')?.value || '';
+      const doneWhen = document.getElementById('specDoneWhen')?.value || '';
+      const jobDesc = document.getElementById('specJobDesc')?.value || '';
+
+      const section = document.createElement('section');
+      section.className = 'flow-box spec-details-section h2-repeat';
+      section.setAttribute('aria-label', 'Spec. Details (repeat)');
+      section.dataset.h2Repeat = 'true';
+      section.innerHTML = `
+        <h3 class="spec-details-header">Spec. Details</h3>
+        <div class="intro-vessel-row">
+          <div class="intro-vessel-field field-50">
+            <label>Department:</label>
+            <input type="text" data-h2-field="department" tabindex="-1" readonly value="${escapeHtml(department)}" />
+          </div>
+          <div class="intro-vessel-field field-50">
+            <label>Job ID:</label>
+            <input type="text" data-h2-field="jobId" tabindex="-1" readonly value="${escapeHtml(jobId)}" />
+          </div>
+        </div>
+        <div class="intro-vessel-row">
+          <div class="intro-vessel-field field-50">
+            <label>To be done by:</label>
+            <input type="text" data-h2-field="doneBy" tabindex="-1" readonly value="${escapeHtml(doneBy)}" />
+          </div>
+          <div class="intro-vessel-field field-50">
+            <label>Done when:</label>
+            <input type="text" data-h2-field="doneWhen" tabindex="-1" readonly value="${escapeHtml(doneWhen)}" />
+          </div>
+        </div>
+        <div class="intro-vessel-row">
+          <div class="intro-vessel-field field-full">
+            <label>Job Description:</label>
+            <input type="text" data-h2-field="jobDesc" tabindex="-1" readonly value="${escapeHtml(jobDesc)}" />
+          </div>
+        </div>`;
+      return section;
+    }
+
+    function buildOverflowAutoHeaderColumn() {
+      const rhs = document.createElement('div');
+      rhs.className = 'rhs-column rhs-auto-header-column';
+      rhs.dataset.autoHeaderOnly = 'true';
+      rhs.setAttribute('aria-hidden', 'true');
+
+      const marker = document.createElement('div');
+      marker.className = 'rhs-auto-header-marker';
+
+      const text = document.createElement('span');
+      text.className = 'rhs-auto-header-text';
+      text.textContent = 'AUTO HEADER';
+
+      marker.appendChild(text);
+      rhs.appendChild(marker);
+      return rhs;
+    }
+
+    function ensureOverflowAutoHeader(page) {
+      const flow = getPageFlow(page);
+      if (!flow) return;
+
+      const pageNumber = Number(page.dataset.pageNumber || '0');
+      let existing = flow.querySelector(':scope > .rhs-auto-header-column');
+
+      if (pageNumber < 3) {
+        if (existing) existing.remove();
+        return;
+      }
+
+      if (!existing) {
+        existing = buildOverflowAutoHeaderColumn();
+        flow.appendChild(existing);
+      }
+
+      const lhs = flow.querySelector(':scope > .lhs-column');
+      const repeatedSections = lhs
+        ? Array.from(lhs.children).filter(
+            (child) => child.dataset.h1Repeat === 'true' || child.dataset.h2Repeat === 'true'
+          )
+        : [];
+
+      if (!repeatedSections.length) {
+        existing.style.height = '0px';
+        return;
+      }
+
+      const firstSection = repeatedSections[0];
+      const lastSection = repeatedSections[repeatedSections.length - 1];
+      const firstTop = firstSection.offsetTop || 0;
+      const lastBottom = (lastSection.offsetTop || 0) + lastSection.offsetHeight;
+      const markerHeight = Math.max(0, Math.ceil(lastBottom - firstTop));
+
+      existing.style.marginTop = `${firstTop}px`;
+      existing.style.height = `${markerHeight}px`;
+    }
+
+    function getTrackedSectionFields() {
+      return Array.from(document.querySelectorAll(
+        '.intro-vessel-section:not(.h1-repeat) input[type="text"], .spec-details-section:not(.h2-repeat) input[type="text"], .spec-details-section:not(.h2-repeat) select, .equip-details-section input[type="text"], .sp-status-select, .sp-po-input, .job-status-select'
+      ));
+    }
+
+    function getEquipmentFields() {
+      return Array.from(document.querySelectorAll('.equip-details-section input[type="text"]'));
+    }
+
+    function isEquipmentMarkedNotRelevant() {
+      return document.querySelector('[data-equipment-relevant="no"]')?.checked === true;
+    }
+
+    function applyEquipmentRelevanceState() {
+      const notRelevant = isEquipmentMarkedNotRelevant();
+
+      getEquipmentFields().forEach((field) => {
+        if (field.dataset.initialValue === undefined) {
+          field.dataset.initialValue = field.value || '';
+        }
+        if (field.dataset.originalPlaceholder === undefined) {
+          field.dataset.originalPlaceholder = field.getAttribute('placeholder') || '';
+        }
+
+        if (notRelevant) {
+          field.readOnly = true;
+          field.value = '';
+          field.placeholder = 'Not Applicable';
+          field.classList.add('status-dot-dirty');
+        } else {
+          field.readOnly = false;
+          field.placeholder = field.dataset.originalPlaceholder || '';
+          updateSectionFieldStatusDot(field);
+        }
+      });
+
+      updateIclChart();
+    }
+
+    const ICL_TOTAL = 21;
+    let attachedSpecFiles = [];
+    let nextAttachedSpecFileId = 1;
+    const MAX_ATTACHED_SPEC_FILES = 10;
+    const MAX_SINGLE_ATTACHMENT_BYTES = 2 * 1024 * 1024;
+    const MAX_TOTAL_ATTACHMENT_BYTES = 10 * 1024 * 1024;
+    const ALLOWED_ATTACHMENT_EXTENSIONS = new Set(['.doc', '.docx', '.pdf', '.pptx', '.ppt', '.xpf', '.jpg', '.jpeg', '.png', '.gif']);
+    const ALLOWED_ATTACHMENT_EXTENSIONS_LABEL = Array.from(ALLOWED_ATTACHMENT_EXTENSIONS).join(', ');
+    let attachmentLimitPrimaryAction = null;
+    let attachmentLimitSecondaryAction = null;
+    let attachmentPendingDeleteId = null;
+
+    function getTotalAttachedSpecFileBytes() {
+      return attachedSpecFiles.reduce((sum, file) => sum + (Number(file.size) || 0), 0);
+    }
+
+    function getAttachmentFileExtension(fileName = '') {
+      const normalizedName = String(fileName || '').trim().toLowerCase();
+      const dotIndex = normalizedName.lastIndexOf('.');
+      if (dotIndex <= 0 || dotIndex === normalizedName.length - 1) return '';
+      return normalizedName.slice(dotIndex);
+    }
+
+    function isAllowedAttachmentFile(file) {
+      return ALLOWED_ATTACHMENT_EXTENSIONS.has(getAttachmentFileExtension(file?.name || ''));
+    }
+
+    function buildUnsupportedAttachmentMessage(fileNames = [], extraMessage = '') {
+      const uniqueNames = Array.from(new Set(fileNames.map((name) => String(name || 'Unnamed file').trim() || 'Unnamed file')));
+      const rejectedList = uniqueNames.map((name) => `• ${name}`).join('\n');
+      const baseMessage = `These files were prevented from being uploaded because their type is not permitted:\n${rejectedList}\n\nAllowed file types: ${ALLOWED_ATTACHMENT_EXTENSIONS_LABEL}`;
+      return extraMessage ? `${baseMessage}\n\n${extraMessage}` : baseMessage;
+    }
+
+    function updateAttachmentUploadState() {
+      const attachBtn = document.getElementById('btnAttachFiles');
+      const input = document.getElementById('specAttachmentInput');
+      if (!attachBtn || !input) return;
+
+      const totalBytes = getTotalAttachedSpecFileBytes();
+      const limitReached = attachedSpecFiles.length >= MAX_ATTACHED_SPEC_FILES || totalBytes >= MAX_TOTAL_ATTACHMENT_BYTES;
+
+      attachBtn.disabled = limitReached;
+      input.disabled = limitReached;
+      attachBtn.setAttribute('aria-disabled', limitReached ? 'true' : 'false');
+
+      if (limitReached) {
+        attachBtn.title = attachedSpecFiles.length >= MAX_ATTACHED_SPEC_FILES
+          ? 'Maximum 10 files uploaded for this spec.'
+          : 'Maximum total upload size of 10 MB reached for this spec.';
+      } else {
+        attachBtn.removeAttribute('title');
+      }
+    }
+
+    function showAttachmentLimitPopup(message, options = {}) {
+      const modal = document.getElementById('attachmentLimitModal');
+      const titleBox = document.getElementById('attachmentLimitTitle');
+      const messageBox = document.getElementById('attachmentLimitMessage');
+      const primaryButton = document.getElementById('attachmentLimitRetry');
+      const secondaryButton = document.getElementById('attachmentLimitCancel');
+      if (!modal || !titleBox || !messageBox || !primaryButton || !secondaryButton) return;
+
+      const {
+        title = 'Upload Criteria Not Met',
+        primaryLabel = 'Retry',
+        secondaryLabel = 'Cancel',
+        primaryAction = null,
+        secondaryAction = null,
+        showSecondary = true
+      } = options;
+
+      titleBox.textContent = title;
+      messageBox.textContent = message;
+      primaryButton.textContent = primaryLabel;
+      secondaryButton.textContent = secondaryLabel;
+      secondaryButton.hidden = !showSecondary;
+      secondaryButton.setAttribute('aria-hidden', showSecondary ? 'false' : 'true');
+      attachmentLimitPrimaryAction = typeof primaryAction === 'function' ? primaryAction : null;
+      attachmentLimitSecondaryAction = typeof secondaryAction === 'function' ? secondaryAction : null;
+      modal.hidden = false;
+      modal.setAttribute('aria-hidden', 'false');
+      primaryButton.focus();
+    }
+
+    function hideAttachmentLimitPopup() {
+      const modal = document.getElementById('attachmentLimitModal');
+      const titleBox = document.getElementById('attachmentLimitTitle');
+      const primaryButton = document.getElementById('attachmentLimitRetry');
+      const secondaryButton = document.getElementById('attachmentLimitCancel');
+      if (!modal) return;
+
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+      attachmentLimitPrimaryAction = null;
+      attachmentLimitSecondaryAction = null;
+
+      if (titleBox) titleBox.textContent = 'Upload Criteria Not Met';
+      if (primaryButton) primaryButton.textContent = 'Retry';
+      if (secondaryButton) {
+        secondaryButton.textContent = 'Cancel';
+        secondaryButton.hidden = false;
+        secondaryButton.setAttribute('aria-hidden', 'false');
+      }
+    }
+
+    function showAttachmentDeletePopup(fileId) {
+      const modal = document.getElementById('attachmentDeleteModal');
+      const messageBox = document.getElementById('attachmentDeleteMessage');
+      const file = attachedSpecFiles.find((item) => item.id === fileId);
+      if (!modal || !messageBox || !file) return;
+
+      attachmentPendingDeleteId = fileId;
+      messageBox.textContent = `Would you like to remove the file ${file.name} as an attachment to this spec?`;
+      modal.hidden = false;
+      modal.setAttribute('aria-hidden', 'false');
+      document.getElementById('attachmentDeleteConfirm')?.focus();
+    }
+
+    function hideAttachmentDeletePopup() {
+      const modal = document.getElementById('attachmentDeleteModal');
+      if (!modal) return;
+
+      modal.hidden = true;
+      modal.setAttribute('aria-hidden', 'true');
+      attachmentPendingDeleteId = null;
+    }
+
+    function removeAttachedSpecFile(fileId) {
+      const fileIndex = attachedSpecFiles.findIndex((item) => item.id === fileId);
+      if (fileIndex < 0) return;
+
+      const [removedFile] = attachedSpecFiles.splice(fileIndex, 1);
+      if (removedFile?.url) {
+        URL.revokeObjectURL(removedFile.url);
+      }
+
+      renderAttachedSpecFiles();
+    }
+
+    function appendAttachedSpecFiles(files) {
+      const incomingFiles = Array.from(files || []);
+      if (!incomingFiles.length) {
+        renderAttachedSpecFiles();
+        return;
+      }
+
+      const unsupportedTypeNames = [];
+      const supportedFiles = incomingFiles.filter((file) => {
+        if (isAllowedAttachmentFile(file)) return true;
+        unsupportedTypeNames.push(file?.name || 'Unnamed file');
+        return false;
+      });
+
+      const acceptedFiles = [];
+      let runningTotalBytes = getTotalAttachedSpecFileBytes();
+      let popupMessage = '';
+
+      for (const file of supportedFiles) {
+        if (attachedSpecFiles.length + acceptedFiles.length >= MAX_ATTACHED_SPEC_FILES) {
+          break;
+        }
+
+        const fileSize = Math.max(0, Number(file.size) || 0);
+
+        if (fileSize > MAX_SINGLE_ATTACHMENT_BYTES) {
+          popupMessage = 'The file being uploaded exceed 2 MB (maximum size). Try to reduce file size or use other methods to send file to recipient.';
+          break;
+        }
+
+        if (runningTotalBytes + fileSize > MAX_TOTAL_ATTACHMENT_BYTES) {
+          popupMessage = 'The last file being uploaded would exceed the maximum file upload limitation of 10 MB per spec. Try to reduce file size or use other methods to send file to recipient.';
+          break;
+        }
+
+        acceptedFiles.push({
+          id: nextAttachedSpecFileId++,
+          name: file.name,
+          type: file.type || '',
+          size: fileSize,
+          url: URL.createObjectURL(file)
+        });
+        runningTotalBytes += fileSize;
+      }
+
+      if (acceptedFiles.length) {
+        attachedSpecFiles.push(...acceptedFiles);
+      }
+
+      renderAttachedSpecFiles();
+
+      if (unsupportedTypeNames.length) {
+        showAttachmentLimitPopup(buildUnsupportedAttachmentMessage(unsupportedTypeNames, popupMessage), {
+          title: 'Upload Criteria Not Met',
+          primaryLabel: 'Continue',
+          showSecondary: false
+        });
+        return;
+      }
+
+      if (popupMessage) {
+        showAttachmentLimitPopup(popupMessage, {
+          title: 'Upload Criteria Not Met',
+          primaryLabel: 'Retry',
+          secondaryLabel: 'Cancel',
+          showSecondary: true,
+          primaryAction: () => {
+            if (document.getElementById('btnAttachFiles')?.disabled) return;
+            document.getElementById('specAttachmentInput')?.click();
+          }
+        });
+      }
+    }
+
+    function formatAttachedSpecFileName(fileName = '') {
+      const trimmedName = String(fileName || '').trim();
+      if (!trimmedName) return '';
+
+      const lastDotIndex = trimmedName.lastIndexOf('.');
+      const hasExtension = lastDotIndex > 0 && lastDotIndex < trimmedName.length - 1;
+      const baseName = hasExtension ? trimmedName.slice(0, lastDotIndex) : trimmedName;
+      const extension = hasExtension ? trimmedName.slice(lastDotIndex + 1) : '';
+      const shortenedBase = baseName.length > 8 ? `${baseName.slice(0, 8)}*` : baseName;
+
+      return extension ? `${shortenedBase}.${extension}` : shortenedBase;
+    }
+
+    function formatAttachedSpecFileSize(totalBytes = 0) {
+      const bytes = Math.max(0, Number(totalBytes) || 0);
+      if (bytes < 1024) return `${bytes} B`;
+
+      const units = ['KB', 'MB', 'GB', 'TB'];
+      let value = bytes;
+      let unitIndex = -1;
+
+      do {
+        value /= 1024;
+        unitIndex += 1;
+      } while (value >= 1024 && unitIndex < units.length - 1);
+
+      const decimals = value >= 100 ? 0 : value >= 10 ? 1 : 2;
+      return `${value.toFixed(decimals)} ${units[unitIndex]}`;
+    }
+
+    function renderAttachedSpecFiles() {
+      const listHost = document.getElementById('rhsAttachedFilesList');
+      const countLabel = document.getElementById('specAttachmentCount');
+      const summaryCount = document.getElementById('specAttachmentSummaryCount');
+      const summarySize = document.getElementById('specAttachmentSummarySize');
+      if (!listHost || !countLabel || !summaryCount || !summarySize) return;
+
+      const totalBytes = getTotalAttachedSpecFileBytes();
+      summaryCount.textContent = String(attachedSpecFiles.length);
+      summarySize.textContent = formatAttachedSpecFileSize(totalBytes);
+      updateAttachmentUploadState();
+
+      if (!attachedSpecFiles.length) {
+        listHost.className = 'rhs-file-empty';
+        listHost.textContent = 'No files attached.';
+        countLabel.textContent = 'No files selected';
+        return;
+      }
+
+      const list = document.createElement('ol');
+      list.className = 'rhs-file-list';
+
+      attachedSpecFiles.forEach((file, index) => {
+        const item = document.createElement('li');
+        const entry = document.createElement('div');
+        entry.className = 'rhs-file-entry';
+
+        const indexLabel = document.createElement('span');
+        indexLabel.className = 'rhs-file-index';
+        indexLabel.textContent = `${index + 1}.`;
+
+        const link = document.createElement('a');
+        link.className = 'rhs-file-link';
+        link.href = file.url;
+        link.target = '_blank';
+        link.rel = 'noopener noreferrer';
+        link.dataset.attachmentId = String(file.id);
+        link.textContent = formatAttachedSpecFileName(file.name);
+        link.title = file.name;
+
+        const deleteBtn = document.createElement('button');
+        deleteBtn.type = 'button';
+        deleteBtn.className = 'rhs-file-delete-btn';
+        deleteBtn.dataset.deleteAttachmentId = String(file.id);
+        deleteBtn.setAttribute('aria-label', `Delete attachment ${file.name}`);
+        deleteBtn.textContent = 'Del';
+
+        entry.appendChild(indexLabel);
+        entry.appendChild(link);
+        entry.appendChild(deleteBtn);
+        item.appendChild(entry);
+        list.appendChild(item);
+      });
+
+      listHost.className = '';
+      listHost.replaceChildren(list);
+      countLabel.textContent = `${attachedSpecFiles.length}/${MAX_ATTACHED_SPEC_FILES} files selected`;
+    }
+
+    function buildAttachmentPreviewHtml(file) {
+      const safeName = escapeHtml(file.name);
+      const extension = (file.name.split('.').pop() || '').toLowerCase();
+      const isImage = ['jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp'].includes(extension) || file.type.startsWith('image/');
+      const isPdf = extension === 'pdf' || file.type === 'application/pdf';
+
+      let viewerMarkup = '';
+      if (isImage) {
+        viewerMarkup = `<div class="attachment-viewer attachment-viewer-image"><img src="${file.url}" alt="${safeName}" /></div>`;
+      } else if (isPdf) {
+        viewerMarkup = `<iframe class="attachment-frame" src="${file.url}" title="${safeName}"></iframe>`;
+      } else {
+        viewerMarkup = `<div class="attachment-viewer attachment-viewer-file"><p>Browser preview is not available for this file type.</p><p><a href="${file.url}" target="_blank" rel="noopener noreferrer">Open or download this file</a></p></div>`;
+      }
+
+      return `<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>${safeName}</title>
+  <style>
+    body { margin: 0; font-family: Arial, sans-serif; color: #111827; background: #f3f4f6; }
+    .attachment-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 10px 14px; background: #e5e7eb; border-bottom: 1px solid #9ca3af; }
+    .attachment-toolbar strong { font-size: 14px; }
+    .attachment-toolbar button { border: 0; border-radius: 4px; padding: 7px 12px; font-size: 12px; font-weight: 700; background: #2563eb; color: #ffffff; cursor: pointer; }
+    .attachment-content { height: calc(100vh - 50px); padding: 10px; box-sizing: border-box; }
+    .attachment-frame { width: 100%; height: 100%; border: 0; background: #ffffff; }
+    .attachment-viewer { width: 100%; height: 100%; display: flex; align-items: center; justify-content: center; background: #ffffff; }
+    .attachment-viewer-image img { max-width: 100%; max-height: 100%; object-fit: contain; }
+    .attachment-viewer-file { flex-direction: column; gap: 8px; text-align: center; font-size: 14px; }
+    .attachment-viewer-file a { color: #2563eb; }
+  </style>
+</head>
+<body>
+  <div class="attachment-toolbar">
+    <strong>${safeName}</strong>
+    <button type="button" onclick="window.print()">Print</button>
+  </div>
+  <div class="attachment-content">${viewerMarkup}</div>
+</body>
+</html>`;
+    }
+
+    function openAttachedSpecFile(fileId) {
+      const file = attachedSpecFiles.find((item) => item.id === fileId);
+      if (!file) return;
+
+      const previewWindow = window.open('', '_blank');
+      if (!previewWindow) {
+        window.open(file.url, '_blank');
+        return;
+      }
+
+      previewWindow.document.open();
+      previewWindow.document.write(buildAttachmentPreviewHtml(file));
+      previewWindow.document.close();
+      previewWindow.focus();
+    }
+
+    window.addEventListener('beforeunload', () => {
+      attachedSpecFiles.forEach((file) => {
+        if (file.url) URL.revokeObjectURL(file.url);
+      });
+    });
+
+    function getIclGreenCount() {
+      let greenCount = getTrackedSectionFields().filter((field) => field.classList.contains('status-dot-dirty')).length;
+
+      if (document.querySelector('[data-inclusion-answer="yes"]')?.checked) greenCount += 1;
+      if (document.querySelector('[data-yd-details-answer="yes"]')?.checked) greenCount += 1;
+      if (jobDetailsCompletionAnswer === 'yes' || document.querySelector('[data-job-details-answer="yes"]')?.checked) greenCount += 1;
+      if (attachmentsCompletionAnswer === 'yes' || document.querySelector('[data-attachments-answer="yes"]')?.checked) greenCount += 1;
+
+      return Math.max(0, Math.min(ICL_TOTAL, greenCount));
+    }
+
+    function buildIclRingBackground(greenPercent) {
+      const greenAngle = Math.max(0, Math.min(360, (greenPercent / 100) * 360));
+      const greenStart = 90;
+      const dividerHalfWidth = 0.5;
+      const greenColor = '#22c55e';
+      const orangeColor = '#f59e0b';
+      const dividerColor = '#000';
+
+      if (greenAngle <= 0) {
+        return `conic-gradient(from -90deg, ${orangeColor} 0deg ${greenStart - dividerHalfWidth}deg, ${dividerColor} ${greenStart - dividerHalfWidth}deg ${greenStart + dividerHalfWidth}deg, ${orangeColor} ${greenStart + dividerHalfWidth}deg 360deg)`;
+      }
+
+      if (greenAngle >= 360) {
+        return `conic-gradient(from -90deg, ${greenColor} 0deg ${greenStart - dividerHalfWidth}deg, ${dividerColor} ${greenStart - dividerHalfWidth}deg ${greenStart + dividerHalfWidth}deg, ${greenColor} ${greenStart + dividerHalfWidth}deg 360deg)`;
+      }
+
+      const greenEnd = greenStart + greenAngle;
+
+      if (greenEnd <= 360) {
+        const startLineStart = greenStart - dividerHalfWidth;
+        const startLineEnd = greenStart + dividerHalfWidth;
+        const endLineStart = Math.max(startLineEnd, greenEnd - dividerHalfWidth);
+        const endLineEnd = Math.min(360, greenEnd + dividerHalfWidth);
+
+        return `conic-gradient(from -90deg, ${orangeColor} 0deg ${startLineStart}deg, ${dividerColor} ${startLineStart}deg ${startLineEnd}deg, ${greenColor} ${startLineEnd}deg ${endLineStart}deg, ${dividerColor} ${endLineStart}deg ${endLineEnd}deg, ${orangeColor} ${endLineEnd}deg 360deg)`;
+      }
+
+      const wrappedEnd = greenEnd - 360;
+      const wrapLineStart = Math.max(0, wrappedEnd - dividerHalfWidth);
+      const wrapLineEnd = Math.min(greenStart - dividerHalfWidth, wrappedEnd + dividerHalfWidth);
+      const startLineStart = greenStart - dividerHalfWidth;
+      const startLineEnd = greenStart + dividerHalfWidth;
+
+      return `conic-gradient(from -90deg, ${greenColor} 0deg ${wrapLineStart}deg, ${dividerColor} ${wrapLineStart}deg ${wrapLineEnd}deg, ${orangeColor} ${wrapLineEnd}deg ${startLineStart}deg, ${dividerColor} ${startLineStart}deg ${startLineEnd}deg, ${greenColor} ${startLineEnd}deg 360deg)`;
+    }
+
+    function updateIclChart() {
+      const ring = document.getElementById('iclRingChart');
+      const percentLabel = document.getElementById('iclRingPercent');
+      const countLabel = document.getElementById('iclRingCounts');
+      const headerStatus = document.getElementById('iclHeaderStatus');
+      if (!ring || !percentLabel || !countLabel) return;
+
+      const greenCount = getIclGreenCount();
+      const orangeCount = ICL_TOTAL - greenCount;
+      const greenPercent = Math.round((greenCount / ICL_TOTAL) * 100);
+      const isComplete = greenPercent === 100;
+
+      ring.style.background = buildIclRingBackground(greenPercent);
+      ring.setAttribute('aria-label', `ICL completion ${greenPercent}% green, ${orangeCount} orange out of ${ICL_TOTAL} checks`);
+      percentLabel.textContent = `${greenPercent}%`;
+      percentLabel.classList.toggle('is-complete', isComplete);
+      countLabel.textContent = `${greenCount}/${ICL_TOTAL}`;
+
+      if (headerStatus) {
+        headerStatus.textContent = isComplete ? '✅ Spec. details complete!' : 'Spec. details are incomplete!';
+        headerStatus.classList.toggle('is-complete', isComplete);
+      }
+    }
+
+    function toLocalIsoDate(date) {
+      const offsetMs = date.getTimezoneOffset() * 60000;
+      return new Date(date.getTime() - offsetMs).toISOString().split('T')[0];
+    }
+
+    function getTodayIsoDate() {
+      return toLocalIsoDate(new Date());
+    }
+
+    function getTomorrowIsoDate() {
+      const tomorrow = new Date();
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      return toLocalIsoDate(tomorrow);
+    }
+
+    function isLeapYear(year) {
+      return (year % 4 === 0 && year % 100 !== 0) || year % 400 === 0;
+    }
+
+    function validateJobCompletionDate({ report = false } = {}) {
+      const dateField = document.getElementById('jobCompletionDateField');
+      if (!dateField) return true;
+
+      const maxDate = getTomorrowIsoDate();
+      dateField.max = maxDate;
+      dateField.setCustomValidity('');
+
+      if (!dateField.value) return true;
+
+      const match = /^(\d{4})-(\d{2})-(\d{2})$/.exec(dateField.value);
+      if (!match) {
+        dateField.setCustomValidity('Enter a valid completion date.');
+      } else {
+        const year = Number(match[1]);
+        const month = Number(match[2]);
+        const day = Number(match[3]);
+        const daysInMonth = [31, isLeapYear(year) ? 29 : 28, 31, 30, 31, 30, 31, 31, 30, 31, 30, 31];
+
+        if (month < 1 || month > 12 || day < 1 || day > (daysInMonth[month - 1] || 31)) {
+          const februaryMessage = isLeapYear(year)
+            ? 'February allows up to 29 days in a leap year.'
+            : 'February allows up to 28 days unless it is a leap year.';
+          dateField.setCustomValidity(month === 2 ? februaryMessage : 'Enter a valid completion date.');
+        } else if (dateField.value > maxDate) {
+          dateField.setCustomValidity(`Completion date cannot be later than ${maxDate}.`);
+        }
+      }
+
+      if (report && !dateField.checkValidity()) {
+        dateField.reportValidity();
+      }
+
+      return dateField.checkValidity();
+    }
+
+    function syncJobCompletionDateState() {
+      const statusField = document.getElementById('jobStatusField');
+      const dateField = document.getElementById('jobCompletionDateField');
+      if (!statusField || !dateField) return;
+
+      const isCompleted = statusField.value === 'Completed';
+      dateField.disabled = !isCompleted;
+      dateField.max = getTomorrowIsoDate();
+
+      if (isCompleted) {
+        if (!dateField.value) {
+          dateField.value = getTodayIsoDate();
+        }
+        validateJobCompletionDate();
+      } else {
+        dateField.value = '';
+        dateField.setCustomValidity('');
+        dateField.blur();
+      }
+    }
+
+    function updateSectionFieldStatusDot(field) {
+      if (!field) return;
+      const initialValue = field.dataset.initialValue ?? '';
+
+      if (field.matches('.equip-details-section input[type="text"]') && isEquipmentMarkedNotRelevant()) {
+        field.classList.add('status-dot-dirty');
+        return;
+      }
+
+      if (field.matches('.sp-po-input')) {
+        const relatedStatus = document.querySelector(`.sp-status-select[data-sp-status="${field.dataset.spPo}"]`);
+        const isMarkedNa = relatedStatus?.value === 'N/A';
+        field.classList.toggle('status-dot-dirty', isMarkedNa || field.value !== initialValue);
+        return;
+      }
+
+      field.classList.toggle('status-dot-dirty', field.value !== initialValue);
+    }
+
+    function initializeSectionFieldStatusDots() {
+      getTrackedSectionFields().forEach((field) => {
+        if (field.dataset.initialValue === undefined) {
+          field.dataset.initialValue = field.value || '';
+        }
+        updateSectionFieldStatusDot(field);
+      });
+      applyEquipmentRelevanceState();
+      syncJobCompletionDateState();
+    }
+
+    let jobDetailsCompletionAnswer = 'no';
+    let attachmentsCompletionAnswer = 'no';
+
+    function setJobDetailsCompletionAnswer(value = 'no') {
+      jobDetailsCompletionAnswer = value === 'yes' ? 'yes' : 'no';
+      document.querySelectorAll('[data-job-details-answer]').forEach((input) => {
+        input.checked = input.dataset.jobDetailsAnswer === jobDetailsCompletionAnswer;
+      });
+      updateIclChart();
+    }
+
+    function setAttachmentsCompletionAnswer(value = 'no') {
+      attachmentsCompletionAnswer = value === 'yes' ? 'yes' : 'no';
+      document.querySelectorAll('[data-attachments-answer]').forEach((input) => {
+        input.checked = input.dataset.attachmentsAnswer === attachmentsCompletionAnswer;
+      });
+      updateIclChart();
+    }
+
+    function syncH1Repeats() {
+      const vesselName = document.getElementById('specVesselName')?.value || '';
+      const imo = document.getElementById('specImo')?.value || '';
+      const classRo = document.getElementById('specClassRo')?.value || '';
+      document.querySelectorAll('[data-h1-repeat="true"] input[type="text"]').forEach((input, i) => {
+        input.value = [vesselName, imo, classRo][i % 3];
+      });
+
+      const fieldMap = {
+        department: document.getElementById('specDepartment')?.value || '',
+        jobId: document.getElementById('specJobId')?.value || '',
+        doneBy: document.getElementById('specDoneBy')?.value || '',
+        doneWhen: document.getElementById('specDoneWhen')?.value || '',
+        jobDesc: document.getElementById('specJobDesc')?.value || ''
+      };
+
+      document.querySelectorAll('[data-h2-repeat="true"]').forEach((section) => {
+        Object.entries(fieldMap).forEach(([key, value]) => {
+          const input = section.querySelector(`[data-h2-field="${key}"]`);
+          if (input) input.value = value;
+        });
+      });
+    }
+
+    function createEmptyPage(pageNumber) {
+      const page = pageTemplate.cloneNode(false);
+      page.dataset.pageNumber = String(pageNumber);
+      const writingArea = writingAreaTemplate.cloneNode(true);
+      const flow = writingArea.querySelector('.page-flow');
+      const lhs = document.createElement('div');
+      lhs.className = 'lhs-column';
+      lhs.appendChild(buildH1Repeat());
+      lhs.appendChild(buildH2Repeat());
+      flow.appendChild(lhs);
+      page.appendChild(writingArea);
+      ensureOverflowAutoHeader(page);
+      observePage(page);
+      return page;
+    }
+
+    function observePage(page) {
+      resizeObserver.observe(page);
+      const writingArea = page.querySelector(".sheet-writing-area");
+      const flow = getPageFlow(page);
+      if (writingArea) resizeObserver.observe(writingArea);
+      if (flow) resizeObserver.observe(flow);
+      page.querySelectorAll(".flow-box").forEach((box) => {
+        resizeObserver.observe(box);
+      });
+    }
+
+    function getPages() {
+      return Array.from(pageStack.querySelectorAll(".a4-page"));
+    }
+
+    function getPageFlow(page) {
+      return page.querySelector(".page-flow");
+    }
+
+    function ensureNextPage(currentPage) {
+      const currentNumber = Number(currentPage.dataset.pageNumber || "1");
+      const nextNumber = currentNumber + 1;
+      let nextPage = pageStack.querySelector(`.a4-page[data-page-number="${nextNumber}"]`);
+
+      if (!nextPage) {
+        nextPage = createEmptyPage(nextNumber);
+        pageStack.appendChild(nextPage);
+      }
+
+      ensureOverflowAutoHeader(nextPage);
+      return nextPage;
+    }
+
+    function trimTrailingEmptyPages() {
+      const pages = getPages();
+      for (let index = pages.length - 1; index > 0; index -= 1) {
+        const page = pages[index];
+        const flow = getPageFlow(page);
+        if (!flow) break;
+
+        const lhs = flow.querySelector(':scope > .lhs-column');
+        const rhsBoxes = Array.from(flow.children).filter(
+          (child) => !child.classList.contains('lhs-column') && child.dataset.autoHeaderOnly !== 'true'
+        );
+        const hasMeaningfulLhs = lhs
+          ? Array.from(lhs.children).some(
+              (child) => child.dataset.h1Repeat !== 'true' && child.dataset.h2Repeat !== 'true'
+            )
+          : false;
+
+        if (rhsBoxes.length > 0 || hasMeaningfulLhs) break;
+        page.remove();
+      }
+
+      getPages().forEach((page, index) => {
+        page.dataset.pageNumber = String(index + 2);
+      });
+    }
+
+    function isBoxWithinBounds(box, writingArea) {
+      const boxRect = box.getBoundingClientRect();
+      const areaRect = writingArea.getBoundingClientRect();
+      const epsilon = 0.5;
+
+      return (
+        boxRect.left >= areaRect.left - epsilon &&
+        boxRect.right <= areaRect.right + epsilon &&
+        boxRect.top >= areaRect.top - epsilon &&
+        boxRect.bottom <= areaRect.bottom + epsilon
+      );
+    }
+
+    function markHorizontalBounds(box, writingArea) {
+      const boxRect = box.getBoundingClientRect();
+      const areaRect = writingArea.getBoundingClientRect();
+      const epsilon = 0.5;
+      if (boxRect.left < areaRect.left - epsilon || boxRect.right > areaRect.right + epsilon) {
+        box.style.width = "100%";
+        box.style.maxWidth = "100%";
+      }
+    }
+
+    const JOB_DETAILS_MAX_LINES = 100;
+
+    function getCombinedJobDetailsText() {
+      const textareas = Array.from(pageStack.querySelectorAll('.job-details-textarea'));
+      if (!textareas.length) return '';
+      return textareas
+        .flatMap((textarea) => textarea.value.replace(/\r/g, '').split('\n'))
+        .slice(0, JOB_DETAILS_MAX_LINES)
+        .join('\n');
+    }
+
+    function getJobTextareaMinHeight(textarea) {
+      const styles = getComputedStyle(textarea);
+      const lineHeight = parseFloat(styles.lineHeight) || 15;
+      const paddingTop = parseFloat(styles.paddingTop) || 0;
+      const paddingBottom = parseFloat(styles.paddingBottom) || 0;
+      const borderTop = parseFloat(styles.borderTopWidth) || 0;
+      const borderBottom = parseFloat(styles.borderBottomWidth) || 0;
+      return Math.ceil((lineHeight * 10) + paddingTop + paddingBottom + borderTop + borderBottom);
+    }
+
+    function autoSizeJobTextarea(textarea) {
+      if (!textarea) return;
+      const minHeight = getJobTextareaMinHeight(textarea);
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.max(textarea.scrollHeight, minHeight)}px`;
+    }
+
+    function getJobSelectionState() {
+      const active = document.activeElement;
+      if (!active || !active.matches('.job-details-textarea')) return null;
+
+      const textareas = Array.from(pageStack.querySelectorAll('.job-details-textarea'));
+      let offset = 0;
+
+      for (let index = 0; index < textareas.length; index += 1) {
+        const textarea = textareas[index];
+        const value = textarea.value.replace(/\r/g, '');
+
+        if (textarea === active) {
+          return {
+            start: offset + (textarea.selectionStart ?? 0),
+            end: offset + (textarea.selectionEnd ?? 0),
+            direction: textarea.selectionDirection || 'none'
+          };
+        }
+
+        offset += value.length + 1;
+      }
+
+      return null;
+    }
+
+    function restoreJobSelectionState(state) {
+      if (!state || isPointerSelecting) return;
+
+      const textareas = Array.from(pageStack.querySelectorAll('.job-details-textarea'));
+      let offset = 0;
+
+      for (let index = 0; index < textareas.length; index += 1) {
+        const textarea = textareas[index];
+        const value = textarea.value.replace(/\r/g, '');
+        const sectionEnd = offset + value.length;
+
+        if (state.start <= sectionEnd || index === textareas.length - 1) {
+          const start = Math.max(0, Math.min(value.length, state.start - offset));
+          const end = Math.max(start, Math.min(value.length, state.end - offset));
+          const direction = state.direction || 'none';
+
+          if (
+            document.activeElement !== textarea ||
+            textarea.selectionStart !== start ||
+            textarea.selectionEnd !== end ||
+            textarea.selectionDirection !== direction
+          ) {
+            textarea.focus({ preventScroll: true });
+            textarea.setSelectionRange(start, end, direction);
+          }
+          return;
+        }
+
+        offset = sectionEnd + 1;
+      }
+    }
+
+    function getYdFieldState() {
+      const active = document.activeElement;
+      if (!active || !active.matches('.yd-sl-input, .yd-job-textarea, .yd-quote-input')) return null;
+
+      if (active.matches('.yd-sl-input')) {
+        return {
+          selector: `.yd-sl-input[data-yd-sl="${active.dataset.ydSl}"]`,
+          start: active.selectionStart ?? 0,
+          end: active.selectionEnd ?? 0,
+          direction: active.selectionDirection || 'none'
+        };
+      }
+
+      if (active.matches('.yd-job-textarea')) {
+        return {
+          selector: `.yd-job-textarea[data-yd-row="${active.dataset.ydRow}"]`,
+          start: active.selectionStart ?? 0,
+          end: active.selectionEnd ?? 0,
+          direction: active.selectionDirection || 'none'
+        };
+      }
+
+      return {
+        selector: `.yd-quote-input[data-yd-quote="${active.dataset.ydQuote}"]`,
+        start: active.selectionStart ?? 0,
+        end: active.selectionEnd ?? 0,
+        direction: active.selectionDirection || 'none'
+      };
+    }
+
+    function restoreYdFieldState(state) {
+      if (!state?.selector || isPointerSelecting) return;
+      const field = pageStack.querySelector(state.selector);
+      if (!field) return;
+
+      const start = state.start ?? 0;
+      const end = state.end ?? start;
+      const direction = state.direction || 'none';
+
+      if (
+        document.activeElement !== field ||
+        field.selectionStart !== start ||
+        field.selectionEnd !== end ||
+        field.selectionDirection !== direction
+      ) {
+        field.focus({ preventScroll: true });
+        if (typeof field.setSelectionRange === 'function') {
+          field.setSelectionRange(start, end, direction);
+        }
+      }
+    }
+
+    const YD_TEXTAREA_MAX_LINES = 5;
+    const YD_QUOTE_MAX_CHARS = 15;
+
+    function getYdTextareaHeights(textarea) {
+      const styles = getComputedStyle(textarea);
+      const lineHeight = parseFloat(styles.lineHeight) || 14;
+      const paddingTop = parseFloat(styles.paddingTop) || 0;
+      const paddingBottom = parseFloat(styles.paddingBottom) || 0;
+      const minHeight = Math.ceil(lineHeight + paddingTop + paddingBottom);
+      const maxHeight = Math.ceil((lineHeight * YD_TEXTAREA_MAX_LINES) + paddingTop + paddingBottom);
+      return { minHeight, maxHeight };
+    }
+
+    function clampYdTextareaValue(textarea) {
+      if (!textarea) return;
+
+      let value = String(textarea.value || '').replace(/\r/g, '');
+      value = value.split('\n').slice(0, YD_TEXTAREA_MAX_LINES).join('\n');
+      textarea.value = value;
+
+      const { maxHeight } = getYdTextareaHeights(textarea);
+      textarea.style.height = 'auto';
+
+      while (textarea.scrollHeight > maxHeight + 1 && textarea.value.length > 0) {
+        textarea.value = textarea.value.slice(0, -1);
+        textarea.style.height = 'auto';
+      }
+    }
+
+    function autoSizeYdTextarea(textarea) {
+      if (!textarea) return;
+      clampYdTextareaValue(textarea);
+      const { minHeight, maxHeight } = getYdTextareaHeights(textarea);
+      textarea.style.height = 'auto';
+      textarea.style.height = `${Math.min(Math.max(textarea.scrollHeight, minHeight), maxHeight)}px`;
+    }
+
+    function fitYdQuoteInput(input) {
+      if (!input) return;
+
+      if ((input.value || '').length > YD_QUOTE_MAX_CHARS) {
+        input.value = input.value.slice(0, YD_QUOTE_MAX_CHARS);
+      }
+
+      input.style.fontSize = '11px';
+      input.style.letterSpacing = 'normal';
+      input.style.textAlign = 'center';
+    }
+
+    function placeYdSection(page, section) {
+      const flow = getPageFlow(page);
+      if (!flow) return;
+
+      const lhs = flow.querySelector(':scope > .lhs-column');
+      if (!lhs) return;
+
+      const jobSections = Array.from(lhs.querySelectorAll(':scope > .job-details-section'));
+      const anchor = jobSections[jobSections.length - 1] || null;
+      const desiredNextSibling = anchor ? anchor.nextSibling : null;
+
+      if (section.parentNode === lhs && section.previousElementSibling === anchor) {
+        return;
+      }
+
+      if (anchor) {
+        lhs.insertBefore(section, desiredNextSibling);
+      } else if (section.parentNode !== lhs || lhs.lastElementChild !== section) {
+        lhs.appendChild(section);
+      }
+    }
+
+    let ydLayoutActive = false;
+
+    function layoutYdSection() {
+      if (ydLayoutActive) return;
+
+      const ydSections = Array.from(pageStack.querySelectorAll('.yd-section'));
+      if (!ydSections.length) return;
+
+      ydLayoutActive = true;
+      const ydFieldState = getYdFieldState();
+
+      try {
+        const section = ydSections[0];
+        ydSections.slice(1).forEach((duplicate) => duplicate.remove());
+        section.querySelectorAll('.yd-job-textarea').forEach((textarea) => autoSizeYdTextarea(textarea));
+        section.querySelectorAll('.yd-quote-input').forEach((input) => fitYdQuoteInput(input));
+
+        const jobSections = Array.from(pageStack.querySelectorAll('.job-details-section'));
+        const anchorPage = jobSections[jobSections.length - 1]?.closest('.a4-page') || getPages()[0];
+        if (!anchorPage) return;
+
+        let page = anchorPage;
+        placeYdSection(page, section);
+
+        let writingArea = page.querySelector('.sheet-writing-area');
+        let guard = 0;
+
+        while (writingArea && !isBoxWithinBounds(section, writingArea) && guard < 20) {
+          page = ensureNextPage(page);
+          placeYdSection(page, section);
+          writingArea = page.querySelector('.sheet-writing-area');
+          guard += 1;
+        }
+
+        section.dataset.overflowStatus = writingArea && isBoxWithinBounds(section, writingArea) ? 'fit' : 'oversize';
+        restoreYdFieldState(ydFieldState);
+      } finally {
+        ydLayoutActive = false;
+      }
+    }
+
+    function placeSpSection(page, section) {
+      const flow = getPageFlow(page);
+      if (!flow) return;
+
+      const lhs = flow.querySelector(':scope > .lhs-column');
+      if (!lhs) return;
+
+      const ydSections = Array.from(lhs.querySelectorAll(':scope > .yd-section'));
+      const jobSections = Array.from(lhs.querySelectorAll(':scope > .job-details-section'));
+      const anchor = ydSections[ydSections.length - 1] || jobSections[jobSections.length - 1] || null;
+      const desiredNextSibling = anchor ? anchor.nextSibling : null;
+
+      if (section.parentNode === lhs && section.previousElementSibling === anchor) {
+        return;
+      }
+
+      if (anchor) {
+        lhs.insertBefore(section, desiredNextSibling);
+      } else if (section.parentNode !== lhs || lhs.lastElementChild !== section) {
+        lhs.appendChild(section);
+      }
+    }
+
+    function doBoxesFitWithinBounds(boxes, writingArea) {
+      return boxes.filter(Boolean).every((box) => isBoxWithinBounds(box, writingArea));
+    }
+
+    let spLayoutActive = false;
+
+    function layoutSpSection() {
+      if (spLayoutActive) return;
+
+      const spSections = Array.from(pageStack.querySelectorAll('.sp-section'));
+      if (!spSections.length) return;
+
+      spLayoutActive = true;
+      try {
+        const section = spSections[0];
+        const jobStatusSection = pageStack.querySelector('.job-status-section');
+        const actions = pageStack.querySelector('[data-page-actions="true"]');
+        const fitTargets = [section, jobStatusSection, actions];
+        spSections.slice(1).forEach((duplicate) => duplicate.remove());
+
+        const ydSections = Array.from(pageStack.querySelectorAll('.yd-section'));
+        const jobSections = Array.from(pageStack.querySelectorAll('.job-details-section'));
+        const anchorPage = ydSections[ydSections.length - 1]?.closest('.a4-page')
+          || jobSections[jobSections.length - 1]?.closest('.a4-page')
+          || getPages()[0];
+        if (!anchorPage) return;
+
+        let page = anchorPage;
+        placeSpSection(page, section);
+        if (jobStatusSection) placeJobStatusSection(page, jobStatusSection);
+        if (actions) placePageActions(page, actions);
+
+        let writingArea = page.querySelector('.sheet-writing-area');
+        let guard = 0;
+
+        while (writingArea && !doBoxesFitWithinBounds(fitTargets, writingArea) && guard < 20) {
+          page = ensureNextPage(page);
+          placeSpSection(page, section);
+          if (jobStatusSection) placeJobStatusSection(page, jobStatusSection);
+          if (actions) placePageActions(page, actions);
+          writingArea = page.querySelector('.sheet-writing-area');
+          guard += 1;
+        }
+
+        section.dataset.overflowStatus = writingArea && isBoxWithinBounds(section, writingArea) ? 'fit' : 'oversize';
+        if (jobStatusSection) {
+          jobStatusSection.dataset.overflowStatus = writingArea && isBoxWithinBounds(jobStatusSection, writingArea) ? 'fit' : 'oversize';
+        }
+        if (actions) {
+          actions.dataset.overflowStatus = writingArea && isBoxWithinBounds(actions, writingArea) ? 'fit' : 'oversize';
+        }
+      } finally {
+        spLayoutActive = false;
+      }
+    }
+
+    function placeJobStatusSection(page, section) {
+      const flow = getPageFlow(page);
+      if (!flow) return;
+
+      const lhs = flow.querySelector(':scope > .lhs-column');
+      if (!lhs) return;
+
+      const spSections = Array.from(lhs.querySelectorAll(':scope > .sp-section'));
+      const ydSections = Array.from(lhs.querySelectorAll(':scope > .yd-section'));
+      const jobSections = Array.from(lhs.querySelectorAll(':scope > .job-details-section'));
+      const anchor = spSections[spSections.length - 1] || ydSections[ydSections.length - 1] || jobSections[jobSections.length - 1] || null;
+      const desiredNextSibling = anchor ? anchor.nextSibling : null;
+
+      if (section.parentNode === lhs && section.previousElementSibling === anchor) {
+        return;
+      }
+
+      if (anchor) {
+        lhs.insertBefore(section, desiredNextSibling);
+      } else if (section.parentNode !== lhs || lhs.lastElementChild !== section) {
+        lhs.appendChild(section);
+      }
+    }
+
+    function placePageActions(page, actions) {
+      const flow = getPageFlow(page);
+      if (!flow) return;
+
+      const lhs = flow.querySelector(':scope > .lhs-column');
+      if (!lhs) return;
+
+      const statusSections = Array.from(lhs.querySelectorAll(':scope > .job-status-section'));
+      const anchor = statusSections[statusSections.length - 1] || null;
+      const desiredNextSibling = anchor ? anchor.nextSibling : null;
+
+      if (actions.parentNode === lhs && actions.previousElementSibling === anchor) {
+        return;
+      }
+
+      if (anchor) {
+        lhs.insertBefore(actions, desiredNextSibling);
+      } else if (actions.parentNode !== lhs || lhs.lastElementChild !== actions) {
+        lhs.appendChild(actions);
+      }
+    }
+
+    let jobStatusLayoutActive = false;
+
+    function layoutJobStatusSection() {
+      if (jobStatusLayoutActive) return;
+
+      const sections = Array.from(pageStack.querySelectorAll('.job-status-section'));
+      const actionRows = Array.from(pageStack.querySelectorAll('[data-page-actions="true"]'));
+      if (!sections.length || !actionRows.length) return;
+
+      jobStatusLayoutActive = true;
+      try {
+        const section = sections[0];
+        const actions = actionRows[0];
+        sections.slice(1).forEach((duplicate) => duplicate.remove());
+        actionRows.slice(1).forEach((duplicate) => duplicate.remove());
+
+        const spSections = Array.from(pageStack.querySelectorAll('.sp-section'));
+        const spSection = spSections[0] || null;
+        const fitTargets = [spSection, section, actions];
+        const ydSections = Array.from(pageStack.querySelectorAll('.yd-section'));
+        const jobSections = Array.from(pageStack.querySelectorAll('.job-details-section'));
+        const anchorPage = spSections[spSections.length - 1]?.closest('.a4-page')
+          || ydSections[ydSections.length - 1]?.closest('.a4-page')
+          || jobSections[jobSections.length - 1]?.closest('.a4-page')
+          || getPages()[0];
+        if (!anchorPage) return;
+
+        let page = anchorPage;
+        if (spSection) placeSpSection(page, spSection);
+        placeJobStatusSection(page, section);
+        placePageActions(page, actions);
+
+        let writingArea = page.querySelector('.sheet-writing-area');
+        let guard = 0;
+
+        while (writingArea && !doBoxesFitWithinBounds(fitTargets, writingArea) && guard < 20) {
+          page = ensureNextPage(page);
+          if (spSection) placeSpSection(page, spSection);
+          placeJobStatusSection(page, section);
+          placePageActions(page, actions);
+          writingArea = page.querySelector('.sheet-writing-area');
+          guard += 1;
+        }
+
+        section.dataset.overflowStatus = writingArea && isBoxWithinBounds(section, writingArea) ? 'fit' : 'oversize';
+        actions.dataset.overflowStatus = writingArea && isBoxWithinBounds(actions, writingArea) ? 'fit' : 'oversize';
+      } finally {
+        jobStatusLayoutActive = false;
+      }
+    }
+
+    function buildJobDetailsSection({ continuation = false } = {}) {
+      const section = document.createElement('section');
+      section.className = 'flow-box job-details-section';
+      section.setAttribute('aria-label', continuation ? 'Job Details continuation section' : 'Job Details section');
+      section.dataset.jobDetails = 'true';
+      section.dataset.jobContinuation = continuation ? 'true' : 'false';
+      section.innerHTML = `
+        <h3 class="job-details-header">Job Details</h3>
+        <div class="job-details-body">
+          <div class="job-details-label-row">
+            <label class="job-details-label">Full Description (Scope):</label>
+            <div class="job-details-complete" role="group" aria-label="Job details completion confirmation">
+              <span class="job-details-complete-text">Are details complete?</span>
+              <label class="inclusions-check-option answer-yes">
+                <input type="checkbox" name="jobDetailsComplete" data-job-details-answer="yes" />
+                <span>Yes</span>
+              </label>
+              <label class="inclusions-check-option answer-no">
+                <input type="checkbox" name="jobDetailsComplete" data-job-details-answer="no" checked />
+                <span>No</span>
+              </label>
+            </div>
+          </div>
+          <div class="job-details-note job-details-note-from" hidden>(Contd. from previous page)</div>
+          <textarea class="job-details-textarea" rows="10" placeholder="Detailed job scope, requirements, and special notes..."></textarea>
+          <div class="job-details-note job-details-note-to" hidden>(contd. to the next page)</div>
+        </div>`;
+      return section;
+    }
+
+    function ensureJobDetailsSection(page, continuation = false) {
+      const flow = getPageFlow(page);
+      if (!flow) return null;
+
+      const lhs = flow.querySelector(':scope > .lhs-column');
+      if (!lhs) return null;
+
+      let section = lhs.querySelector(':scope > .job-details-section');
+      if (!section) {
+        section = buildJobDetailsSection({ continuation });
+        lhs.appendChild(section);
+        observePage(page);
+      }
+
+      section.dataset.jobContinuation = continuation ? 'true' : 'false';
+      return section;
+    }
+
+    function setJobSectionState(section, lines, { showFrom = false, showTo = false } = {}) {
+      const fromNote = section.querySelector('.job-details-note-from');
+      const toNote = section.querySelector('.job-details-note-to');
+      const textarea = section.querySelector('.job-details-textarea');
+      section.dataset.jobContinuation = showFrom ? 'true' : 'false';
+
+      if (fromNote) fromNote.hidden = !showFrom;
+      if (toNote) toNote.hidden = !showTo;
+
+      if (textarea) {
+        textarea.value = lines.join('\n');
+        textarea.rows = Math.max(10, lines.length || 1);
+        autoSizeJobTextarea(textarea);
+      }
+    }
+
+    let jobLayoutActive = false;
+
+    function layoutJobDetails() {
+      if (jobLayoutActive) return;
+      const primarySection = pageStack.querySelector('.job-details-section');
+      if (!primarySection) return;
+
+      jobLayoutActive = true;
+      const jobSelectionState = getJobSelectionState();
+      try {
+        const combinedText = getCombinedJobDetailsText();
+        const allLines = combinedText.replace(/\r/g, '').split('\n').slice(0, JOB_DETAILS_MAX_LINES);
+        let cursor = 0;
+        let pageOffset = 0;
+        const usedSections = [];
+
+        while (pageOffset === 0 || cursor < allLines.length) {
+          const currentPages = getPages();
+          const page = currentPages[pageOffset] || ensureNextPage(currentPages[currentPages.length - 1]);
+          const writingArea = page.querySelector('.sheet-writing-area');
+          const section = ensureJobDetailsSection(page, pageOffset > 0);
+          if (!section || !writingArea) break;
+
+          const remaining = allLines.slice(cursor);
+          const searchPool = remaining.length ? remaining : [''];
+          let low = 1;
+          let high = searchPool.length;
+          let best = 1;
+
+          while (low <= high) {
+            const mid = Math.floor((low + high) / 2);
+            const showTo = mid < searchPool.length;
+            setJobSectionState(section, searchPool.slice(0, mid), {
+              showFrom: pageOffset > 0,
+              showTo
+            });
+
+            if (isBoxWithinBounds(section, writingArea)) {
+              best = mid;
+              low = mid + 1;
+            } else {
+              high = mid - 1;
+            }
+          }
+
+          const showTo = best < searchPool.length;
+          setJobSectionState(section, searchPool.slice(0, best), {
+            showFrom: pageOffset > 0,
+            showTo
+          });
+
+          usedSections.push(section);
+          cursor += best;
+          pageOffset += 1;
+
+          if (!showTo) break;
+        }
+
+        document.querySelectorAll('.job-details-section').forEach((section) => {
+          if (usedSections.includes(section)) return;
+          section.remove();
+        });
+
+        setJobDetailsCompletionAnswer(jobDetailsCompletionAnswer);
+        trimTrailingEmptyPages();
+        restoreJobSelectionState(jobSelectionState);
+      } finally {
+        jobLayoutActive = false;
+      }
+    }
+
+    function repaginate() {
+      paginationQueued = false;
+      if (isPointerSelecting) return;
+
+      layoutJobDetails();
+      layoutYdSection();
+      layoutSpSection();
+      layoutJobStatusSection();
+      getPages().forEach((page) => ensureOverflowAutoHeader(page));
+      const pages = getPages();
+
+      for (let pageIndex = 0; pageIndex < pages.length; pageIndex += 1) {
+        const page = pages[pageIndex];
+        const writingArea = page.querySelector(".sheet-writing-area");
+        const flow = getPageFlow(page);
+        if (!writingArea || !flow) continue;
+
+        const lhsCol = flow.querySelector(':scope > .lhs-column');
+        const boxes = lhsCol ? Array.from(lhsCol.children) : Array.from(flow.children);
+
+        for (const box of boxes) {
+          markHorizontalBounds(box, writingArea);
+
+          if (box.classList.contains('job-details-section') || box.classList.contains('yd-section') || box.classList.contains('sp-section') || box.classList.contains('job-status-section') || box.classList.contains('page-actions')) {
+            box.dataset.overflowStatus = isBoxWithinBounds(box, writingArea) ? 'fit' : 'oversize';
+            continue;
+          }
+
+          if (box.offsetHeight > writingArea.clientHeight) {
+            box.dataset.overflowStatus = "oversize";
+            continue;
+          }
+
+          box.dataset.overflowStatus = "fit";
+          if (isBoxWithinBounds(box, writingArea)) continue;
+
+          const nextPage = ensureNextPage(page);
+          const nextFlow = getPageFlow(nextPage);
+          const nextLhs = nextFlow.querySelector(':scope > .lhs-column');
+
+          if (nextLhs) {
+            const insertionAnchor = Array.from(nextLhs.children).find(
+              (child) => child.dataset.h1Repeat !== 'true' && child.dataset.h2Repeat !== 'true'
+            );
+            if (insertionAnchor) {
+              nextLhs.insertBefore(box, insertionAnchor);
+            } else {
+              nextLhs.appendChild(box);
+            }
+          } else {
+            nextFlow.insertBefore(box, nextFlow.firstChild);
+          }
+
+          schedulePagination();
+          return;
+        }
+      }
+
+      trimTrailingEmptyPages();
+    }
+
+    function isDropdownField(element) {
+      return !!element && element.matches('select');
+    }
+
+    function isPaginationSensitiveField(element) {
+      return !!element && element.matches('.sp-po-input, .job-completion-date');
+    }
+
+    function pausePaginationForDropdown() {
+      isDropdownInteractionActive = true;
+      if (dropdownResumeDelayId) {
+        window.clearTimeout(dropdownResumeDelayId);
+        dropdownResumeDelayId = 0;
+      }
+    }
+
+    function resumePaginationAfterDropdown(delay = DROPDOWN_PAGINATION_RESUME_DELAY) {
+      if (dropdownResumeDelayId) {
+        window.clearTimeout(dropdownResumeDelayId);
+      }
+
+      dropdownResumeDelayId = window.setTimeout(() => {
+        dropdownResumeDelayId = 0;
+        if (isDropdownField(document.activeElement)) return;
+        isDropdownInteractionActive = false;
+        schedulePagination();
+      }, delay);
+    }
+
+    function schedulePagination({ immediate = false } = {}) {
+      if (!immediate && (isPointerSelecting || isDropdownInteractionActive || isPaginationSensitiveField(document.activeElement))) return;
+
+      if (paginationDelayId) {
+        window.clearTimeout(paginationDelayId);
+        paginationDelayId = 0;
+      }
+
+      const queueNow = () => {
+        if (paginationQueued) return;
+        paginationQueued = true;
+        requestAnimationFrame(repaginate);
+      };
+
+      if (immediate) {
+        queueNow();
+        return;
+      }
+
+      paginationDelayId = window.setTimeout(() => {
+        paginationDelayId = 0;
+        if (isPointerSelecting || isDropdownInteractionActive || isPaginationSensitiveField(document.activeElement)) return;
+        queueNow();
+      }, 140);
+    }
+
+    const mutationObserver = new MutationObserver(() => {
+      getPages().forEach((page) => {
+        observePage(page);
+      });
+      schedulePagination();
+    });
+
+    mutationObserver.observe(pageStack, {
+      childList: true,
+      subtree: true,
+      characterData: true
+    });
+
+    // Live-sync H1/H2 values from Page 2 source inputs to all repeat copies.
+    ['specVesselName', 'specImo', 'specClassRo', 'specDepartment', 'specJobId', 'specDoneBy', 'specDoneWhen', 'specJobDesc'].forEach((id) => {
+      const el = document.getElementById(id);
+      if (!el) return;
+      el.addEventListener('input', syncH1Repeats);
+      el.addEventListener('change', syncH1Repeats);
+    });
+
+    document.addEventListener('input', (event) => {
+      if (event.target.matches('.intro-vessel-section:not(.h1-repeat) input[type="text"], .spec-details-section:not(.h2-repeat) input[type="text"], .equip-details-section input[type="text"], .sp-po-input')) {
+        updateSectionFieldStatusDot(event.target);
+        updateIclChart();
+      }
+
+      if (event.target.matches('.job-details-textarea')) {
+        autoSizeJobTextarea(event.target);
+        schedulePagination();
+        return;
+      }
+
+      if (event.target.matches('.yd-job-textarea')) {
+        autoSizeYdTextarea(event.target);
+        schedulePagination();
+        return;
+      }
+
+      if (event.target.matches('.yd-quote-input')) {
+        fitYdQuoteInput(event.target);
+        schedulePagination();
+        return;
+      }
+
+      if (event.target.matches('.job-completion-date')) {
+        validateJobCompletionDate();
+      }
+
+    });
+
+    document.addEventListener('change', (event) => {
+      if (event.target.matches('#specAttachmentInput')) {
+        appendAttachedSpecFiles(event.target.files || []);
+        event.target.value = '';
+        return;
+      }
+
+      if (event.target.matches('[data-inclusion-answer]')) {
+        const group = Array.from(document.querySelectorAll('[data-inclusion-answer]'));
+        if (event.target.checked) {
+          group.forEach((input) => {
+            if (input !== event.target) input.checked = false;
+          });
+        } else if (!group.some((input) => input.checked)) {
+          const noOption = group.find((input) => input.dataset.inclusionAnswer === 'no');
+          if (noOption) noOption.checked = true;
+        }
+        updateIclChart();
+        return;
+      }
+
+      if (event.target.matches('[data-job-details-answer]')) {
+        if (event.target.checked) {
+          setJobDetailsCompletionAnswer(event.target.dataset.jobDetailsAnswer);
+        } else {
+          setJobDetailsCompletionAnswer('no');
+        }
+        return;
+      }
+
+      if (event.target.matches('[data-attachments-answer]')) {
+        if (event.target.checked) {
+          setAttachmentsCompletionAnswer(event.target.dataset.attachmentsAnswer);
+        } else {
+          setAttachmentsCompletionAnswer('no');
+        }
+        return;
+      }
+
+      if (event.target.matches('[data-equipment-relevant]')) {
+        const group = Array.from(document.querySelectorAll('[data-equipment-relevant]'));
+        if (event.target.checked) {
+          group.forEach((input) => {
+            if (input !== event.target) input.checked = false;
+          });
+        } else if (!group.some((input) => input.checked)) {
+          const yesOption = group.find((input) => input.dataset.equipmentRelevant === 'yes');
+          if (yesOption) yesOption.checked = true;
+        }
+        applyEquipmentRelevanceState();
+        return;
+      }
+
+      if (event.target.matches('[data-yd-details-answer]')) {
+        const group = Array.from(document.querySelectorAll('[data-yd-details-answer]'));
+        if (event.target.checked) {
+          group.forEach((input) => {
+            if (input !== event.target) input.checked = false;
+          });
+        } else if (!group.some((input) => input.checked)) {
+          const noOption = group.find((input) => input.dataset.ydDetailsAnswer === 'no');
+          if (noOption) noOption.checked = true;
+        }
+        updateIclChart();
+        return;
+      }
+
+      if (event.target.matches('.job-completion-date')) {
+        validateJobCompletionDate({ report: true });
+      }
+
+      if (event.target.matches('.spec-details-section:not(.h2-repeat) select, .sp-status-select, .job-status-select')) {
+        updateSectionFieldStatusDot(event.target);
+
+        if (event.target.matches('.sp-status-select')) {
+          const linkedPo = document.querySelector(`.sp-po-input[data-sp-po="${event.target.dataset.spStatus}"]`);
+          if (linkedPo) updateSectionFieldStatusDot(linkedPo);
+        }
+
+        if (event.target.matches('.job-status-select')) {
+          syncJobCompletionDateState();
+        }
+
+        updateIclChart();
+      }
+
+      if (isDropdownField(event.target)) {
+        resumePaginationAfterDropdown();
+      }
+    });
+
+    document.addEventListener('focusin', (event) => {
+      if (isDropdownField(event.target)) {
+        pausePaginationForDropdown();
+      }
+
+      if (!isPaginationSensitiveField(event.target) && !isDropdownField(event.target)) return;
+      if (paginationDelayId) {
+        window.clearTimeout(paginationDelayId);
+        paginationDelayId = 0;
+      }
+    });
+
+    document.addEventListener('focusout', (event) => {
+      if (isDropdownField(event.target)) {
+        resumePaginationAfterDropdown();
+        return;
+      }
+
+      if (!isPaginationSensitiveField(event.target)) return;
+      window.setTimeout(() => {
+        if (!isPaginationSensitiveField(document.activeElement) && !isDropdownField(document.activeElement)) {
+          schedulePagination();
+        }
+      }, 0);
+    });
+
+    document.addEventListener('pointerdown', (event) => {
+      if (isDropdownField(event.target)) {
+        pausePaginationForDropdown();
+        return;
+      }
+
+      if (!event.target.matches('.job-details-textarea, .yd-job-textarea')) return;
+      isPointerSelecting = true;
+      if (paginationDelayId) {
+        window.clearTimeout(paginationDelayId);
+        paginationDelayId = 0;
+      }
+    });
+
+    document.addEventListener('click', (event) => {
+      const retryBtn = event.target.closest('#attachmentLimitRetry');
+      if (retryBtn) {
+        const primaryAction = attachmentLimitPrimaryAction;
+        hideAttachmentLimitPopup();
+        if (primaryAction) primaryAction();
+        return;
+      }
+
+      const cancelBtn = event.target.closest('#attachmentLimitCancel');
+      if (cancelBtn) {
+        const secondaryAction = attachmentLimitSecondaryAction;
+        hideAttachmentLimitPopup();
+        if (secondaryAction) secondaryAction();
+        return;
+      }
+
+      const deleteConfirmBtn = event.target.closest('#attachmentDeleteConfirm');
+      if (deleteConfirmBtn) {
+        const fileId = attachmentPendingDeleteId;
+        hideAttachmentDeletePopup();
+        if (fileId !== null) {
+          removeAttachedSpecFile(fileId);
+        }
+        return;
+      }
+
+      const deleteCancelBtn = event.target.closest('#attachmentDeleteCancel');
+      if (deleteCancelBtn) {
+        hideAttachmentDeletePopup();
+        return;
+      }
+
+      const attachDeleteBtn = event.target.closest('[data-delete-attachment-id]');
+      if (attachDeleteBtn) {
+        showAttachmentDeletePopup(Number(attachDeleteBtn.dataset.deleteAttachmentId));
+        return;
+      }
+
+      const attachBtn = event.target.closest('#btnAttachFiles');
+      if (attachBtn) {
+        if (attachBtn.disabled) return;
+        document.getElementById('specAttachmentInput')?.click();
+        return;
+      }
+
+      const attachmentLink = event.target.closest('[data-attachment-id]');
+      if (attachmentLink) {
+        event.preventDefault();
+        openAttachedSpecFile(Number(attachmentLink.dataset.attachmentId));
+        return;
+      }
+
+      const printBtn = event.target.closest('#btnPrintAction');
+      if (printBtn) {
+        window.print();
+        return;
+      }
+
+      const topBtn = event.target.closest('#btnGoTopAction');
+      if (topBtn) {
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      }
+    });
+
+    const releasePointerSelection = () => {
+      if (!isPointerSelecting) return;
+      isPointerSelecting = false;
+      schedulePagination({ immediate: true });
+    };
+
+    document.addEventListener('pointerup', releasePointerSelection);
+    document.addEventListener('pointercancel', releasePointerSelection);
+
+    document.addEventListener('keydown', (event) => {
+      if (event.target.matches('.job-completion-date') && !event.target.disabled) {
+        const allowedKeys = new Set(['Tab', 'Shift', 'Escape', 'Enter']);
+        const blockedKeys = new Set(['Backspace', 'Delete', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'PageUp', 'PageDown', 'Home', 'End']);
+
+        if (!allowedKeys.has(event.key) && (blockedKeys.has(event.key) || (event.key.length === 1 && !event.metaKey && !event.ctrlKey && !event.altKey))) {
+          event.preventDefault();
+          return;
+        }
+      }
+
+      if (event.key !== 'Escape') return;
+
+      if (document.getElementById('attachmentLimitModal') && !document.getElementById('attachmentLimitModal').hidden) {
+        hideAttachmentLimitPopup();
+      }
+
+      if (document.getElementById('attachmentDeleteModal') && !document.getElementById('attachmentDeleteModal').hidden) {
+        hideAttachmentDeletePopup();
+      }
+    });
+
+    document.addEventListener('paste', (event) => {
+      if (event.target.matches('.job-completion-date') && !event.target.disabled) {
+        event.preventDefault();
+      }
+    });
+
+    document.addEventListener('drop', (event) => {
+      if (event.target.matches('.job-completion-date') && !event.target.disabled) {
+        event.preventDefault();
+      }
+    });
+
+    const resizeObserver = new ResizeObserver(() => {
+      schedulePagination();
+    });
+
+    resizeObserver.observe(pageStack);
+    getPages().forEach((page) => {
+      observePage(page);
+    });
+
+    renderAttachedSpecFiles();
+    applyTC();
+    initializeSectionFieldStatusDots();
+    schedulePagination();
+  </script>
+</body>
+</html>

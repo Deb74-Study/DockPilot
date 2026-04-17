@@ -384,5 +384,18 @@
       <span>Landscape-first responsive front page</span>
     </footer>
   </section>
+
+  <script type="module">
+    import { supabase } from './supabaseClient.js';
+    import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
+
+    startDockPilotPageGuard({
+      supabase,
+      landingPage: './DockPilot_landing.html'
+    }).catch((error) => {
+      console.error('DockPilot guard startup failed:', error);
+      window.location.href = './DockPilot_landing.html';
+    });
+  </script>
 </body>
 </html>

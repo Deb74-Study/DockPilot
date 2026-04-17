@@ -489,6 +489,33 @@
         </div>
       </section>
 
+      <section class="panel">
+        <div class="panel-header">
+          <div>
+            <h2>Reset forgotten password</h2>
+            <p>Issue a fresh temporary password when a user cannot sign in.</p>
+          </div>
+        </div>
+
+        <div class="form-grid">
+          <div class="field">
+            <label for="resetLogin">Issued login</label>
+            <select id="resetLogin"></select>
+          </div>
+
+          <div class="field">
+            <label for="resetPassword">New temporary password</label>
+            <input id="resetPassword" type="text" placeholder="Generate or enter manually" required />
+          </div>
+        </div>
+
+        <div class="actions">
+          <button type="button" id="resetGenerateBtn" class="secondary-btn">Generate temporary password</button>
+          <button type="button" id="resetCopyBtn" class="secondary-btn">Copy password</button>
+          <button type="button" id="resetBtn" class="secondary-btn">Reset password</button>
+        </div>
+      </section>
+
       <section class="bottom-grid">
         <div class="panel">
           <div class="panel-header">
@@ -529,7 +556,7 @@
                 <tr>
                   <th>Name</th>
                   <th>Login</th>
-                  <th>Password</th>
+                  <th>Password state</th>
                   <th>Role</th>
                   <th>File access</th>
                   <th>Status</th>
@@ -546,6 +573,8 @@
   <script type="module">
 
     const TEMPLATE_ID = 'FPA_DEV_DOCKPILOT';
+  const SUPABASE_URL = 'https://radrajwlerdxpuzeoqtq.supabase.co';
+  const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InJhZHJhandsZXJkeHB1emVvcXRxIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzYzNTk3ODAsImV4cCI6MjA5MTkzNTc4MH0.ir_ZTfSkMDuod9AlAjEGIEWiABdk9sAGqaMo-aAHVq8';
     const form = document.getElementById('accessForm');
     const fullName = document.getElementById('fullName');
     const role = document.getElementById('role');
@@ -558,6 +587,11 @@
     const extendLogin = document.getElementById('extendLogin');
     const extendExpiry = document.getElementById('extendExpiry');
     const extendBtn = document.getElementById('extendBtn');
+    const resetLogin = document.getElementById('resetLogin');
+    const resetPassword = document.getElementById('resetPassword');
+    const resetGenerateBtn = document.getElementById('resetGenerateBtn');
+    const resetCopyBtn = document.getElementById('resetCopyBtn');
+    const resetBtn = document.getElementById('resetBtn');
     const previewLogin = document.getElementById('previewLogin');
     const previewPassword = document.getElementById('previewPassword');
     const previewAccess = document.getElementById('previewAccess');
@@ -566,6 +600,8 @@
     const activeCount = document.getElementById('activeCount');
     const permissionInputs = Array.from(document.querySelectorAll('.permission-grid input[type="checkbox"]'));
     let supabase = null;
+    let lastIssuedPassword = null;
+    let previewPinnedLogin = '';
 
     function escapeHtml(value) {
       return String(value ?? '').replace(/[&<>"']/g, (char) => ({
@@ -587,8 +623,14 @@
         const module = await import('./supabaseClient.js');
         supabase = module.supabase || null;
       } catch (error) {
-        console.error('Supabase client failed to load:', error);
-        setDashboardMessage('Supabase client could not be loaded. Login-name and password generation will still work offline.', 'error');
+        console.warn('Primary Supabase client import failed, trying direct fallback:', error);
+        try {
+          const sdk = await import('https://esm.sh/@supabase/supabase-js@2');
+          supabase = sdk.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        } catch (fallbackError) {
+          console.error('Supabase client failed to load:', fallbackError);
+          setDashboardMessage('Supabase client could not be loaded. Login-name and password generation will still work offline.', 'error');
+        }
       }
     }
 
@@ -615,6 +657,37 @@
       return Array.from(randomValues, (value) => chars[value % chars.length]).join('');
     }
 
+    async function copyText(text) {
+      const value = String(text || '').trim();
+      if (!value) return false;
+
+      try {
+        if (navigator.clipboard && window.isSecureContext) {
+          await navigator.clipboard.writeText(value);
+          return true;
+        }
+      } catch {
+        // Continue to fallback copy path.
+      }
+
+      const helper = document.createElement('textarea');
+      helper.value = value;
+      helper.setAttribute('readonly', '');
+      helper.style.position = 'fixed';
+      helper.style.top = '-9999px';
+      helper.style.opacity = '0';
+      document.body.appendChild(helper);
+      helper.select();
+
+      let copied = false;
+      try {
+        copied = document.execCommand('copy');
+      } finally {
+        document.body.removeChild(helper);
+      }
+      return copied;
+    }
+
     function getDefaultExpiry() {
       const date = new Date();
       date.setDate(date.getDate() + 14);
@@ -637,21 +710,28 @@
 
     async function getAccounts() {
       if (!supabase) return [];
-      const { data, error } = await supabase
-        .from('credentials')
-        .select('*');
-      if (error) return [];
-      return data;
+      const { data, error } = await supabase.functions.invoke('dockpilot-admin-list-credentials', {
+        body: {}
+      });
+      if (error || !data?.ok) return [];
+      return Array.isArray(data.accounts) ? data.accounts : [];
     }
 
     async function createAccount(account) {
       if (!supabase) {
         return { data: null, error: new Error('Supabase is unavailable') };
       }
-      const { data, error } = await supabase
-        .from('credentials')
-        .insert([account])
-        .select();
+      const { data, error } = await supabase.functions.invoke('dockpilot-admin-issue-credential', {
+        body: account
+      });
+
+      if (error || !data?.ok) {
+        return {
+          data: null,
+          error: error || new Error(data?.message || 'Failed to issue credential.')
+        };
+      }
+
       return { data, error };
     }
 
@@ -659,11 +739,17 @@
       if (!supabase) {
         return { data: null, error: new Error('Supabase is unavailable') };
       }
-      const { data, error } = await supabase
-        .from('credentials')
-        .update({ expiry: newExpiry })
-        .eq('login_name', loginName)
-        .select();
+      const { data, error } = await supabase.functions.invoke('dockpilot-admin-extend-credential', {
+        body: { loginName, newExpiry }
+      });
+
+      if (error || !data?.ok) {
+        return {
+          data: null,
+          error: error || new Error(data?.message || 'Failed to extend access.')
+        };
+      }
+
       return { data, error };
     }
 
@@ -680,6 +766,41 @@
       extendLogin.value = stillExists ? selectedValue : accounts[0].login_name;
     }
 
+    function populateResetOptions(accounts) {
+      if (!accounts.length) {
+        resetLogin.innerHTML = '<option value="">No issued logins</option>';
+        return;
+      }
+      const selectedValue = resetLogin.value;
+      resetLogin.innerHTML = accounts.map((account) => (
+        `<option value="${escapeHtml(account.login_name)}">${escapeHtml(account.login_name)} — ${escapeHtml(account.full_name)}</option>`
+      )).join('');
+      const stillExists = accounts.some((account) => account.login_name === selectedValue);
+      resetLogin.value = stillExists ? selectedValue : accounts[0].login_name;
+    }
+
+    async function resetAccountPassword(loginName, newPassword) {
+      if (!supabase) {
+        return { data: null, error: new Error('Supabase is unavailable') };
+      }
+
+      const { data, error } = await supabase.functions.invoke('dockpilot-admin-reset-password', {
+        body: {
+          loginName,
+          newPassword
+        }
+      });
+
+      if (error || !data?.ok) {
+        return {
+          data: null,
+          error: error || new Error(data?.message || 'Failed to reset password.')
+        };
+      }
+
+      return { data, error: null };
+    }
+
     function updatePreview(account) {
       if (!account) {
         previewLogin.textContent = 'No login issued yet';
@@ -691,7 +812,11 @@
         ? account.access_groups.join(', ')
         : 'General Access';
       previewLogin.textContent = account.login_name;
-      previewPassword.textContent = account.temp_password;
+      if (lastIssuedPassword && lastIssuedPassword.login_name === account.login_name) {
+        previewPassword.textContent = lastIssuedPassword.temp_password;
+      } else {
+        previewPassword.textContent = account.temp_password || 'Stored as hash (not viewable)';
+      }
       previewAccess.textContent = `${accessText} · valid until ${formatDate(account.expiry)}`;
     }
 
@@ -702,6 +827,7 @@
         issuedCount.textContent = '00';
         activeCount.textContent = '00';
         populateExtendOptions([]);
+        populateResetOptions([]);
         updatePreview(null);
         return;
       }
@@ -714,7 +840,7 @@
           <tr>
             <td>${escapeHtml(account.full_name)}</td>
             <td>${escapeHtml(account.login_name)}</td>
-            <td>${escapeHtml(account.temp_password)}</td>
+            <td>Stored as hash</td>
             <td>${escapeHtml(account.role)}</td>
             <td>${escapeHtml(accessText)}<br><small>Until ${escapeHtml(formatDate(account.expiry))}</small></td>
             <td><span class="status-pill ${expired ? 'expired' : ''}">${expired ? 'Expired' : 'Active'}</span></td>
@@ -724,7 +850,15 @@
       issuedCount.textContent = String(accounts.length).padStart(2, '0');
       activeCount.textContent = String(accounts.filter((account) => !isExpired(account)).length).padStart(2, '0');
       populateExtendOptions(accounts);
-      updatePreview(accounts[0]);
+      populateResetOptions(accounts);
+
+      const pinned = previewPinnedLogin.trim().toLowerCase();
+      const selected = pinned
+        ? accounts.find((account) => account.login_name === pinned) || accounts[0]
+        : accounts[0];
+
+      previewPinnedLogin = selected.login_name;
+      updatePreview(selected);
     }
 
     form.addEventListener('submit', async (event) => {
@@ -746,7 +880,13 @@
         setDashboardMessage('Failed to issue credential. Login name may already exist.', 'error');
         return;
       }
-      setDashboardMessage('Credential issued successfully.', 'success');
+      lastIssuedPassword = {
+        login_name: account.login_name,
+        temp_password: account.temp_password
+      };
+      previewPinnedLogin = account.login_name;
+      updatePreview(account);
+      setDashboardMessage('Credential issued successfully. Copy the temporary password from the preview card before leaving this screen.', 'success');
       renderAccounts();
       form.reset();
       prepareDateFields();
@@ -766,7 +906,53 @@
         setDashboardMessage('Failed to extend access.', 'error');
         return;
       }
+      previewPinnedLogin = extendLogin.value.trim().toLowerCase();
       setDashboardMessage(`Access for ${extendLogin.value} now runs until ${formatDate(extendExpiry.value)}.`, 'success');
+      renderAccounts();
+    });
+
+    resetGenerateBtn.addEventListener('click', () => {
+      const pw = makePassword();
+      resetPassword.value = pw;
+    });
+
+    resetCopyBtn.addEventListener('click', async () => {
+      const copied = await copyText(resetPassword.value);
+      if (!copied) {
+        setDashboardMessage('Nothing to copy yet. Generate or type a temporary password first.', 'error');
+        return;
+      }
+      setDashboardMessage('Temporary password copied to clipboard.', 'success');
+    });
+
+    resetBtn.addEventListener('click', async () => {
+      const login = resetLogin.value.trim().toLowerCase();
+      const nextPassword = resetPassword.value.trim();
+
+      if (!login) {
+        setDashboardMessage('No issued login is available to reset yet.', 'error');
+        return;
+      }
+
+      if (nextPassword.length < 8) {
+        setDashboardMessage('Reset password must be at least 8 characters long.', 'error');
+        return;
+      }
+
+      const { error } = await resetAccountPassword(login, nextPassword);
+      if (error) {
+        setDashboardMessage(error.message || 'Failed to reset password.', 'error');
+        return;
+      }
+
+      lastIssuedPassword = {
+        login_name: login,
+        temp_password: nextPassword
+      };
+      previewPinnedLogin = login;
+      previewLogin.textContent = login;
+      previewPassword.textContent = nextPassword;
+      setDashboardMessage(`Password reset complete for ${login}. Share this temporary password securely and ask user to change it at first login.`, 'success');
       renderAccounts();
     });
 

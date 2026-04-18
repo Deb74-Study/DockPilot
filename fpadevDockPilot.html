@@ -616,6 +616,7 @@
     const resetGenerateBtn = document.getElementById('resetGenerateBtn');
     const resetCopyBtn = document.getElementById('resetCopyBtn');
     const resetBtn = document.getElementById('resetBtn');
+    const issueBtn = form.querySelector('button[type="submit"]');
     const previewLogin = document.getElementById('previewLogin');
     const previewPassword = document.getElementById('previewPassword');
     const previewAccess = document.getElementById('previewAccess');
@@ -732,6 +733,14 @@
       return new Date(`${account.expiry}T23:59:59`).getTime() < Date.now();
     }
 
+    function setAdminActionsEnabled(enabled) {
+      [issueBtn, extendBtn, resetGenerateBtn, resetCopyBtn, resetBtn]
+        .filter(Boolean)
+        .forEach((button) => {
+          button.disabled = !enabled;
+        });
+    }
+
     async function getAccessToken() {
       if (!supabase) {
         return { token: null, error: new Error('Supabase is unavailable') };
@@ -766,6 +775,18 @@
           Authorization: `Bearer ${token}`
         }
       });
+    }
+
+    async function ensureAdminSupabaseSession() {
+      const { token, error } = await getAccessToken();
+      const hasSession = Boolean(token && !error);
+
+      setAdminActionsEnabled(hasSession);
+      if (!hasSession) {
+        setDashboardMessage('Admin actions are disabled until a valid Supabase user session is available in this browser.', 'error');
+      }
+
+      return hasSession;
     }
 
     async function getAccounts() {
@@ -1040,6 +1061,21 @@
       prepareDateFields();
       syncLoginName();
       await initSupabase();
+      if (supabase) {
+        try {
+          const guardModule = await import('./dockpilotPageGuard.js');
+          await guardModule.startDockPilotPageGuard({
+            supabase,
+            landingPage: './DockPilot_landing.html'
+          });
+        } catch (error) {
+          console.error('DockPilot guard startup failed:', error);
+          window.location.href = './DockPilot_landing.html';
+          return;
+        }
+      }
+
+      await ensureAdminSupabaseSession();
       renderAccounts();
     }
 

@@ -3,6 +3,12 @@ index.html
 DockPilot_landing.html
 Frontpage.html
 2nd Page.html
+fleet-registration.html
+fleet-composition.html
+dry-docking-project.html
+running-dd-project.html
+fleet-analytics.html
+provisional-page.html
 job_index.html
 spec_template.html
 

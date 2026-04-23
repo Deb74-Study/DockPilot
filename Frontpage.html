@@ -242,6 +242,24 @@
       border: 1px solid rgba(255,255,255,.05);
     }
 
+    .berth-link {
+      text-decoration: none;
+      color: inherit;
+      transition: transform .16s ease, border-color .16s ease, background .16s ease;
+    }
+
+    .berth-link:hover,
+    .berth-link:focus-visible {
+      transform: translateY(-1px);
+      border-color: rgba(103,214,255,.45);
+      background: rgba(103,214,255,.08);
+      outline: none;
+    }
+
+    .berth-link:focus-visible {
+      box-shadow: 0 0 0 2px rgba(103,214,255,.32);
+    }
+
     .berth small {
       display: block;
       color: var(--muted);
@@ -263,6 +281,16 @@
     .warn {
       background: rgba(255,182,72,.12);
       color: #ffd48b;
+    }
+
+    .dev-note {
+      display: inline-block;
+      margin-top: 6px;
+      font-size: .74rem;
+      color: #ffd48b;
+      border: 1px solid rgba(255,182,72,.45);
+      border-radius: 999px;
+      padding: 2px 8px;
     }
 
     footer {
@@ -312,29 +340,55 @@
           </div>
 
           <div class="berth-list">
-            <div class="berth">
+            <a class="berth berth-link" href="./fleet-registration.html">
               <div>
-                <strong>Berth A-03</strong>
-                <small>MV Horizon — ETA 09:40</small>
+                <strong>Register Fleet</strong>
+                <small>Create and register a new fleet profile for your company workspace.</small>
               </div>
-              <span class="pill ok">On Time</span>
-            </div>
+              <span class="pill ok">Open</span>
+            </a>
 
-            <div class="berth">
+            <a class="berth berth-link" href="./fleet-composition.html">
               <div>
-                <strong>Berth B-01</strong>
-                <small>Atlas Cargo — unloading</small>
+                <strong>Modify / Delete Fleet</strong>
+                <small>Update fleet composition details or remove obsolete fleet entries.</small>
               </div>
-              <span class="pill ok">In Dock</span>
-            </div>
+              <span class="pill ok">Open</span>
+            </a>
 
-            <div class="berth">
+            <a class="berth berth-link" href="./dry-docking-project.html">
               <div>
-                <strong>Berth C-02</strong>
-                <small>Northline — tug approval pending</small>
+                <strong>Launch Project</strong>
+                <small>Start a new dry-docking project and initialize project parameters.</small>
               </div>
-              <span class="pill warn">Action</span>
-            </div>
+              <span class="pill ok">Open</span>
+            </a>
+
+            <a class="berth berth-link" href="./running-dd-project.html">
+              <div>
+                <strong>Edit Running Project</strong>
+                <small>Open and adjust an active dry-docking project currently in progress.</small>
+              </div>
+              <span class="pill ok">Open</span>
+            </a>
+
+            <a class="berth berth-link" href="./fleet-analytics.html">
+              <div>
+                <strong>Analyse Project</strong>
+                <small>Review analytics and project performance indicators.</small>
+                <span class="dev-note">Under Development</span>
+              </div>
+              <span class="pill warn">Preview</span>
+            </a>
+
+            <a class="berth berth-link" href="./provisional-page.html">
+              <div>
+                <strong>Button 6</strong>
+                <small>Open the provisional workspace for upcoming DockPilot modules.</small>
+                <span class="dev-note">Under Development</span>
+              </div>
+              <span class="pill warn">Preview</span>
+            </a>
           </div>
         </div>
       </aside>

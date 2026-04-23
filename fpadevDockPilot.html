@@ -688,6 +688,7 @@
                 <tr>
                   <th>Name</th>
                   <th>Login</th>
+                  <th>Company ID</th>
                   <th>Password state</th>
                   <th>Role</th>
                   <th>File access</th>
@@ -1097,7 +1098,7 @@
 
     async function renderAccounts() {
       if (!issueCompany.value) {
-        tableBody.innerHTML = '<tr><td colspan="6">Select a company to view issued accounts.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7">Select a company to view issued accounts.</td></tr>';
         issuedCount.textContent = '00';
         activeCount.textContent = '00';
         populateExtendOptions([]);
@@ -1108,7 +1109,7 @@
 
       const accounts = (await getAccounts()).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       if (!accounts.length) {
-        tableBody.innerHTML = '<tr><td colspan="6">No issued accounts yet.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7">No issued accounts yet.</td></tr>';
         issuedCount.textContent = '00';
         activeCount.textContent = '00';
         populateExtendOptions([]);
@@ -1125,6 +1126,7 @@
           <tr>
             <td>${escapeHtml(account.full_name)}</td>
             <td>${escapeHtml(account.login_name)}</td>
+            <td>${escapeHtml(String(account.company_id || issueCompany.value || '').trim())}</td>
             <td>Stored as hash</td>
             <td>${escapeHtml(account.role)}</td>
             <td>${escapeHtml(accessText)}<br><small>Until ${escapeHtml(formatDate(account.expiry))}</small></td>

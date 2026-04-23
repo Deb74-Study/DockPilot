@@ -166,11 +166,12 @@ function createIdleOverlay() {
 }
 
 async function validateWithBackend(supabase, session) {
-  if (!session?.loginName || !session?.sessionToken) {
+  if (!session?.loginName || !session?.sessionToken || !session?.companyId) {
     return { ok: false, message: 'Session token missing.' };
   }
 
   const result = await invokeEdgeJson('dockpilot-validate-session', {
+    company_id: session.companyId,
     loginName: session.loginName,
     sessionToken: session.sessionToken
   });
@@ -188,8 +189,9 @@ async function validateWithBackend(supabase, session) {
   return { ok: true, session: normalizeSession(data.session) };
 }
 
-async function recheckWithPassword(supabase, loginName, password) {
+async function recheckWithPassword(supabase, companyId, loginName, password) {
   const result = await invokeEdgeJson('dockpilot-login', {
+    company_id: companyId,
     loginName,
     password
   });
@@ -282,7 +284,7 @@ export async function startDockPilotPageGuard({
   }
 
   overlay.unlockBtn.addEventListener('click', async () => {
-    if (!session?.loginName) {
+    if (!session?.loginName || !session?.companyId) {
       overlay.feedback.textContent = 'Session identity missing. Please sign in again.';
       return;
     }
@@ -293,7 +295,7 @@ export async function startDockPilotPageGuard({
       return;
     }
 
-    const result = await recheckWithPassword(supabase, session.loginName, password);
+    const result = await recheckWithPassword(supabase, session.companyId, session.loginName, password);
     if (!result.ok || !result.session) {
       overlay.feedback.textContent = result.message || 'Access re-check failed.';
       return;

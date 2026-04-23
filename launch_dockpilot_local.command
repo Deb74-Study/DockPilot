@@ -4,7 +4,7 @@ set -euo pipefail
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 cd "$SCRIPT_DIR"
 
-LANDING_PAGE="DockPilot_landing.html"
+LANDING_PAGE="fpadevDockPilot.html"
 LOG_FILE=".dockpilot-local.log"
 PID_FILE=".dockpilot-local.pid"
 DEFAULT_PORT="5500"

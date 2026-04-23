@@ -4,6 +4,7 @@ const decoder = new TextDecoder();
 export type SessionTokenPayload = {
   v: number;
   login_name: string;
+  company_id: string;
   issued_at: string;
   expiry: string;
   password_updated_at: string | null;
@@ -65,6 +66,7 @@ function getSigningSecret(serviceRoleKey?: string | null): string | null {
 
 export function buildSessionTokenPayload(input: {
   login_name: string;
+  company_id: string;
   issued_at?: string;
   expiry: string;
   password_updated_at?: string | null;
@@ -73,6 +75,7 @@ export function buildSessionTokenPayload(input: {
   return {
     v: 1,
     login_name: String(input.login_name || '').trim().toLowerCase(),
+    company_id: String(input.company_id || '').trim(),
     issued_at: input.issued_at || new Date().toISOString(),
     expiry: String(input.expiry || '').trim(),
     password_updated_at: input.password_updated_at || null,
@@ -124,11 +127,12 @@ export async function verifySessionToken(
   }
 
   if (!payload || payload.v !== 1) return null;
-  if (!payload.login_name || !payload.issued_at || !payload.expiry) return null;
+  if (!payload.login_name || !payload.issued_at || !payload.expiry || !payload.company_id) return null;
 
   return {
     v: 1,
     login_name: String(payload.login_name).trim().toLowerCase(),
+    company_id: String(payload.company_id).trim(),
     issued_at: String(payload.issued_at),
     expiry: String(payload.expiry),
     password_updated_at: payload.password_updated_at || null,

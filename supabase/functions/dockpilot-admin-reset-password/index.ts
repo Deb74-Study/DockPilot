@@ -34,7 +34,7 @@ serve(async (request) => {
     return jsonResponse(500, { ok: false, message: 'Server auth is not configured.' });
   }
 
-  let body: { loginName?: string; newPassword?: string };
+  let body: { loginName?: string; newPassword?: string; company_id?: string };
   try {
     body = await request.json();
   } catch {
@@ -43,9 +43,10 @@ serve(async (request) => {
 
   const loginName = String(body.loginName || '').trim().toLowerCase();
   const newPassword = String(body.newPassword || '').trim();
+  const companyId = String(body.company_id || '').trim();
 
-  if (!loginName || !newPassword) {
-    return jsonResponse(400, { ok: false, message: 'Both loginName and newPassword are required.' });
+  if (!loginName || !newPassword || !companyId) {
+    return jsonResponse(400, { ok: false, message: 'loginName, newPassword, and company_id are required.' });
   }
 
   if (newPassword.length < 8) {
@@ -68,6 +69,7 @@ serve(async (request) => {
       must_change_password: true,
       password_updated_at: null
     })
+    .eq('company_id', companyId)
     .eq('login_name', loginName)
     .select('login_name, full_name, email, role, expiry, access_groups, must_change_password, password_updated_at, created_at')
     .maybeSingle();

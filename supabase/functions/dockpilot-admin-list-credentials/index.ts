@@ -40,9 +40,21 @@ serve(async (request) => {
     }
   });
 
+  let body: { company_id?: string } = {};
+  try {
+    body = await request.json();
+  } catch {
+    // empty body is treated as missing company_id
+  }
+  const companyId = String(body.company_id || '').trim();
+  if (!companyId) {
+    return jsonResponse(400, { ok: false, message: 'company_id is required.' });
+  }
+
   const { data, error } = await adminClient
     .from('credentials')
     .select('login_name, full_name, email, role, expiry, access_groups, must_change_password, password_updated_at, created_at')
+    .eq('company_id', companyId)
     .order('created_at', { ascending: false });
 
   if (error) {

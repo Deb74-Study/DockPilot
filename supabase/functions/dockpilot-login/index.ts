@@ -11,6 +11,7 @@ const corsHeaders = {
 
 type CredentialRow = {
   login_name: string;
+  company_id: string;
   full_name: string;
   role: string;
   expiry: string;
@@ -60,7 +61,7 @@ serve(async (request) => {
     });
   }
 
-  let requestBody: { loginName?: string; password?: string };
+  let requestBody: { loginName?: string; password?: string; company_id?: string };
   try {
     requestBody = await request.json();
   } catch {
@@ -73,12 +74,13 @@ serve(async (request) => {
 
   const loginName = String(requestBody.loginName || '').trim().toLowerCase();
   const password = String(requestBody.password || '').trim();
+  const companyId = String(requestBody.company_id || '').trim();
 
-  if (!loginName || !password) {
+  if (!loginName || !password || !companyId) {
     return jsonResponse(400, {
       ok: false,
       code: 'invalid_payload',
-      message: 'Both loginName and password are required.'
+      message: 'loginName, password, and company_id are required.'
     });
   }
 
@@ -91,7 +93,8 @@ serve(async (request) => {
 
   const { data: account, error } = await adminClient
     .from('credentials')
-    .select('login_name, full_name, role, expiry, access_groups, must_change_password, password_updated_at, temp_password, password_hash')
+    .select('login_name, company_id, full_name, role, expiry, access_groups, must_change_password, password_updated_at, temp_password, password_hash')
+    .eq('company_id', companyId)
     .eq('login_name', loginName)
     .maybeSingle<CredentialRow>();
 
@@ -137,12 +140,14 @@ serve(async (request) => {
         password_hash: upgradedHash,
         temp_password: null
       })
+      .eq('company_id', companyId)
       .eq('login_name', loginName);
   }
 
   const issuedAt = new Date().toISOString();
   const tokenPayload = buildSessionTokenPayload({
     login_name: account.login_name,
+    company_id: account.company_id,
     issued_at: issuedAt,
     expiry: account.expiry,
     password_updated_at: account.password_updated_at,
@@ -161,6 +166,7 @@ serve(async (request) => {
     ok: true,
     session: {
       login_name: account.login_name,
+      company_id: account.company_id,
       full_name: account.full_name,
       role: account.role,
       expiry: account.expiry,

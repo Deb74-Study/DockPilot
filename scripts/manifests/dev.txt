@@ -1,0 +1,5 @@
+# Developer-only bundle
+fpadevDockPilot.html
+supabaseClient.js
+
+test-assets

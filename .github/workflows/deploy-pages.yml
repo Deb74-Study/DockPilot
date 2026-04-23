@@ -24,13 +24,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v6
 
+      - name: Build client rollout bundle
+        run: |
+          chmod +x ./scripts/build_bundle.sh
+          ./scripts/build_bundle.sh client
+
       - name: Setup Pages
         uses: actions/configure-pages@v6
 
       - name: Upload artifact
         uses: actions/upload-pages-artifact@v5
         with:
-          path: .
+          path: ./dist/client
 
       - name: Deploy to GitHub Pages
         id: deployment

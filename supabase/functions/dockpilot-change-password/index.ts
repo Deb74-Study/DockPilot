@@ -11,6 +11,7 @@ const corsHeaders = {
 
 type CredentialRow = {
   login_name: string;
+  company_id: string;
   full_name: string;
   role: string;
   expiry: string;
@@ -47,7 +48,7 @@ serve(async (request) => {
     return jsonResponse(500, { ok: false, message: 'Server auth is not configured.' });
   }
 
-  let body: { loginName?: string; currentPassword?: string; newPassword?: string };
+  let body: { loginName?: string; currentPassword?: string; newPassword?: string; company_id?: string };
   try {
     body = await request.json();
   } catch {
@@ -57,9 +58,10 @@ serve(async (request) => {
   const loginName = String(body.loginName || '').trim().toLowerCase();
   const currentPassword = String(body.currentPassword || '').trim();
   const newPassword = String(body.newPassword || '').trim();
+  const companyId = String(body.company_id || '').trim();
 
-  if (!loginName || !currentPassword || !newPassword) {
-    return jsonResponse(400, { ok: false, message: 'loginName, currentPassword, and newPassword are required.' });
+  if (!loginName || !currentPassword || !newPassword || !companyId) {
+    return jsonResponse(400, { ok: false, message: 'loginName, currentPassword, newPassword, and company_id are required.' });
   }
 
   if (newPassword.length < 8) {
@@ -75,7 +77,8 @@ serve(async (request) => {
 
   const { data: account, error } = await adminClient
     .from('credentials')
-    .select('login_name, full_name, role, expiry, access_groups, must_change_password, password_updated_at, temp_password, password_hash')
+    .select('login_name, company_id, full_name, role, expiry, access_groups, must_change_password, password_updated_at, temp_password, password_hash')
+    .eq('company_id', companyId)
     .eq('login_name', loginName)
     .maybeSingle<CredentialRow>();
 
@@ -105,6 +108,7 @@ serve(async (request) => {
       must_change_password: false,
       password_updated_at: passwordUpdatedAt
     })
+    .eq('company_id', companyId)
     .eq('login_name', loginName)
     .select('login_name, full_name, role, expiry, access_groups, must_change_password, password_updated_at')
     .maybeSingle();
@@ -116,6 +120,7 @@ serve(async (request) => {
   const issuedAt = new Date().toISOString();
   const tokenPayload = buildSessionTokenPayload({
     login_name: updated.login_name,
+    company_id: companyId,
     issued_at: issuedAt,
     expiry: updated.expiry,
     password_updated_at: updated.password_updated_at,

@@ -10,6 +10,7 @@ const corsHeaders = {
 
 type CredentialRow = {
   login_name: string;
+  company_id: string;
   full_name: string;
   role: string;
   expiry: string;
@@ -57,7 +58,7 @@ serve(async (request) => {
     });
   }
 
-  let body: { loginName?: string; sessionToken?: string };
+  let body: { loginName?: string; sessionToken?: string; company_id?: string };
   try {
     body = await request.json();
   } catch {
@@ -70,12 +71,13 @@ serve(async (request) => {
 
   const loginName = String(body.loginName || '').trim().toLowerCase();
   const sessionToken = String(body.sessionToken || '').trim();
+  const companyId = String(body.company_id || '').trim();
 
-  if (!loginName || !sessionToken) {
+  if (!loginName || !sessionToken || !companyId) {
     return jsonResponse(400, {
       ok: false,
       code: 'invalid_payload',
-      message: 'Both loginName and sessionToken are required.'
+      message: 'loginName, sessionToken, and company_id are required.'
     });
   }
 
@@ -88,7 +90,7 @@ serve(async (request) => {
     });
   }
 
-  if (tokenPayload.login_name !== loginName) {
+  if (tokenPayload.login_name !== loginName || tokenPayload.company_id !== companyId) {
     return jsonResponse(401, {
       ok: false,
       code: 'session_login_mismatch',
@@ -105,7 +107,8 @@ serve(async (request) => {
 
   const { data: account, error } = await adminClient
     .from('credentials')
-    .select('login_name, full_name, role, expiry, access_groups, must_change_password, password_updated_at')
+    .select('login_name, company_id, full_name, role, expiry, access_groups, must_change_password, password_updated_at')
+    .eq('company_id', companyId)
     .eq('login_name', loginName)
     .maybeSingle<CredentialRow>();
 

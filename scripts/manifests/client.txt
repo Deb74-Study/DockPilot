@@ -1,0 +1,13 @@
+# Client rollout bundle (no developer page)
+index.html
+DockPilot_landing.html
+Frontpage.html
+2nd Page.html
+job_index.html
+spec_template.html
+
+dockpilotAuthContract.js
+dockpilotPageGuard.js
+supabaseClient.js
+
+test-assets

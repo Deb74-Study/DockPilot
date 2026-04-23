@@ -33,7 +33,7 @@ serve(async (request) => {
     return jsonResponse(500, { ok: false, message: 'Server auth is not configured.' });
   }
 
-  let body: { loginName?: string; newExpiry?: string };
+  let body: { loginName?: string; newExpiry?: string; company_id?: string };
   try {
     body = await request.json();
   } catch {
@@ -42,9 +42,10 @@ serve(async (request) => {
 
   const loginName = String(body.loginName || '').trim().toLowerCase();
   const newExpiry = String(body.newExpiry || '').trim();
+  const companyId = String(body.company_id || '').trim();
 
-  if (!loginName || !newExpiry) {
-    return jsonResponse(400, { ok: false, message: 'Both loginName and newExpiry are required.' });
+  if (!loginName || !newExpiry || !companyId) {
+    return jsonResponse(400, { ok: false, message: 'loginName, newExpiry, and company_id are required.' });
   }
 
   const adminClient = createClient(supabaseUrl, serviceRoleKey, {
@@ -57,6 +58,7 @@ serve(async (request) => {
   const { data, error } = await adminClient
     .from('credentials')
     .update({ expiry: newExpiry })
+    .eq('company_id', companyId)
     .eq('login_name', loginName)
     .select('login_name, full_name, email, role, expiry, access_groups, must_change_password, password_updated_at, created_at')
     .maybeSingle();

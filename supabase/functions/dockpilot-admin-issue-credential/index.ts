@@ -45,6 +45,7 @@ serve(async (request) => {
     must_change_password?: boolean;
     password_updated_at?: string | null;
     created_at?: string;
+    company_id?: string;
   };
 
   try {
@@ -56,12 +57,13 @@ serve(async (request) => {
   const loginName = String(body.login_name || '').trim().toLowerCase();
   const fullName = String(body.full_name || '').trim();
   const email = String(body.email || '').trim();
-  const role = String(body.role || 'Developer').trim();
+  const role = String(body.role || 'Frontend Developer').trim();
   const tempPassword = String(body.temp_password || '').trim();
   const expiry = String(body.expiry || '').trim();
   const accessGroups = Array.isArray(body.access_groups) ? body.access_groups : [];
+  const companyId = String(body.company_id || '').trim();
 
-  if (!loginName || !fullName || !tempPassword || !expiry) {
+  if (!loginName || !fullName || !tempPassword || !expiry || !companyId) {
     return jsonResponse(400, { ok: false, message: 'Missing required credential fields.' });
   }
 
@@ -78,6 +80,7 @@ serve(async (request) => {
     .from('credentials')
     .insert([
       {
+        company_id: companyId,
         login_name: loginName,
         full_name: fullName,
         email,

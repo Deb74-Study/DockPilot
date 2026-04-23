@@ -301,6 +301,9 @@
       </div>
 
       <form id="loginForm" class="login-form">
+        <label for="companyIdInput">Company ID</label>
+        <input id="companyIdInput" type="text" placeholder="UUID from client registration" required />
+
         <label for="loginInput">Login name</label>
         <input id="loginInput" type="text" placeholder="e.g. frontend.dev" required />
 
@@ -402,6 +405,7 @@
 
     const pageShell = document.querySelector('.page-shell');
     const form = document.getElementById('loginForm');
+    const companyIdInput = document.getElementById('companyIdInput');
     const loginInput = document.getElementById('loginInput');
     const passwordInput = document.getElementById('passwordInput');
     const message = document.getElementById('message');
@@ -463,6 +467,9 @@
       if (basePath.endsWith('/dockpilot_landing.html') || basePath.endsWith('/dockpilot_landing')) {
         return null;
       }
+      if (basePath.endsWith('/fpadevdockpilot.html') || basePath.endsWith('/fpadevdockpilot')) {
+        return null;
+      }
 
       return target;
     }
@@ -516,9 +523,10 @@
       cancelPasswordBtn.classList.add('hidden');
     }
 
-    async function loginWithIssuedCredential(loginName, password) {
+    async function loginWithIssuedCredential(companyId, loginName, password) {
       const { data, error } = await supabase.functions.invoke('dockpilot-login', {
         body: {
+          company_id: companyId,
           loginName,
           password
         }
@@ -606,12 +614,26 @@
       loginFailPopup.classList.add('hidden');
     }
 
+    function initializeCompanyIdFromStorage() {
+      const savedCompanyId = localStorage.getItem('dockpilot_company_id') || '';
+      if (savedCompanyId) {
+        companyIdInput.value = savedCompanyId;
+      }
+    }
+
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
+      const companyIdValue = companyIdInput.value.trim();
       const loginValue = loginInput.value.trim().toLowerCase();
       const passwordValue = passwordInput.value.trim();
 
-      const { data, error } = await loginWithIssuedCredential(loginValue, passwordValue);
+      if (!companyIdValue) {
+        setMessage('Company ID is required.', 'error');
+        companyIdInput.focus();
+        return;
+      }
+
+      const { data, error } = await loginWithIssuedCredential(companyIdValue, loginValue, passwordValue);
       if (error) {
         const rawError = String(error?.message || '').toLowerCase();
         if (rawError.includes('failed to fetch') || rawError.includes('functions') || rawError.includes('network')) {
@@ -644,6 +666,7 @@
         issuedAt: account.issued_at || account.issuedAt || new Date().toISOString(),
         sessionToken: account.session_token || account.sessionToken || null
       });
+      localStorage.setItem('dockpilot_company_id', companyIdValue);
       hideLoginFailPopup();
       saveSession(safeSession);
       markActivity();
@@ -661,10 +684,11 @@
 
     retryLoginBtn.addEventListener('click', () => {
       hideLoginFailPopup();
-      loginInput.focus();
+      companyIdInput.focus();
     });
     cancelLoginBtn.addEventListener('click', () => {
       hideLoginFailPopup();
+      initializeCompanyIdFromStorage();
       form.reset();
       setLoginStatus(false);
     });
@@ -750,6 +774,7 @@
     });
 
     window.addEventListener('DOMContentLoaded', async () => {
+      initializeCompanyIdFromStorage();
       const storedSession = getSession();
       const guardOutcome = getGuardOutcome({
         hasSession: Boolean(storedSession),

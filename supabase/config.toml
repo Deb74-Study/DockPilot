@@ -370,6 +370,21 @@ verify_jwt = false
 [functions.dockpilot-change-password]
 verify_jwt = false
 
+[functions.dockpilot-admin-manage-companies]
+verify_jwt = false
+
+[functions.dockpilot-admin-issue-credential]
+verify_jwt = false
+
+[functions.dockpilot-admin-list-credentials]
+verify_jwt = false
+
+[functions.dockpilot-admin-extend-credential]
+verify_jwt = false
+
+[functions.dockpilot-admin-reset-password]
+verify_jwt = false
+
 # [edge_runtime.secrets]
 # secret_key = "env(SECRET_VALUE)"
 

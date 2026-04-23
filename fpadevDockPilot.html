@@ -370,6 +370,25 @@
       border-color: rgba(255, 188, 99, 0.22);
     }
 
+    /* Client registration lock-state */
+    .reg-locked input,
+    .reg-locked select,
+    .reg-locked textarea {
+      opacity: 0.55;
+      pointer-events: none;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .reg-status {
+      margin: 0;
+      font-size: 0.88rem;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .reg-status.success { color: var(--ok); }
+    .reg-status.error   { color: #ffd28c;  }
+
     @media (max-width: 980px) {
       .app-shell,
       .bottom-grid,
@@ -420,6 +439,69 @@
     </aside>
 
     <main class="main-content">
+      <!-- ═══ Client Registration Panel ═════════════════════════════════ -->
+      <section class="panel" id="clientRegPanel">
+        <div class="panel-header">
+          <div>
+            <h2>Register a client</h2>
+            <p>Add a new client company before issuing credentials. Required fields are marked *.</p>
+          </div>
+        </div>
+
+        <div id="clientRegForm" class="access-form reg-locked">
+          <div class="actions">
+            <button type="button" id="regStartBtn" class="primary-btn">Register client</button>
+            <button type="button" id="regAddBtn" class="primary-btn" disabled>Add client</button>
+            <button type="button" id="regAbortBtn" class="secondary-btn" disabled>Abort registration</button>
+          </div>
+
+          <div class="form-grid">
+            <div class="field">
+              <label for="regName">Client / Company / DOC Name *</label>
+              <input id="regName" type="text" placeholder="e.g. Acme Corp" disabled />
+            </div>
+
+            <div class="field">
+              <label for="regContactEmail">Company Contact Admin Email *</label>
+              <input id="regContactEmail" type="email" placeholder="admin@company.com" disabled />
+            </div>
+
+            <div class="field">
+              <label for="regContactName">Contact Name</label>
+              <input id="regContactName" type="text" placeholder="Full contact name" disabled />
+            </div>
+
+            <div class="field">
+              <label for="regPhone">Phone No.</label>
+              <input id="regPhone" type="text" placeholder="+91 00000 00000" disabled />
+            </div>
+
+            <div class="field full">
+              <label for="regContactAddress">Contact Address</label>
+              <input id="regContactAddress" type="text" placeholder="Street, City, Country" disabled />
+            </div>
+
+            <div class="field">
+              <label for="regRegNo">Client Registration No.</label>
+              <input id="regRegNo" type="text" placeholder="e.g. CIN / GSTIN" disabled />
+            </div>
+
+            <div class="field">
+              <label for="regTba1">TBA 1</label>
+              <input id="regTba1" type="text" placeholder="Reserved field 1" disabled />
+            </div>
+
+            <div class="field">
+              <label for="regTba2">TBA 2</label>
+              <input id="regTba2" type="text" placeholder="Reserved field 2" disabled />
+            </div>
+          </div>
+
+          <p id="regStatus" class="reg-status">Fields are disabled by default. Click "Register client" to enable editing, then click "Add client" to save or "Abort registration" to cancel.</p>
+        </div>
+      </section>
+      <!-- ════════════════════════════════════════════════════════════════ -->
+
       <section class="panel">
         <div class="panel-header">
           <div>
@@ -431,6 +513,13 @@
         <form id="accessForm" class="access-form">
           <div class="form-grid">
             <div class="field">
+              <label for="issueCompany">Company *</label>
+              <select id="issueCompany" required>
+                <option value="">Select company</option>
+              </select>
+            </div>
+
+            <div class="field">
               <label for="fullName">Developer name</label>
               <input id="fullName" type="text" placeholder="e.g. Priya Sen" required />
             </div>
@@ -441,8 +530,9 @@
                 <option>Frontend Developer</option>
                 <option>Backend Developer</option>
                 <option>QA Tester</option>
-                <option>User</option>
-                <option>Project Admin</option>
+                <option>Company Admin</option>
+                <option>Technical / DD Manager</option>
+                <option>TSI / DDSI</option>
               </select>
             </div>
 
@@ -498,6 +588,13 @@
 
         <div class="form-grid">
           <div class="field">
+            <label for="extendCompany">Company *</label>
+            <select id="extendCompany" required>
+              <option value="">Select company</option>
+            </select>
+          </div>
+
+          <div class="field">
             <label for="extendLogin">Issued login</label>
             <select id="extendLogin"></select>
           </div>
@@ -522,6 +619,13 @@
         </div>
 
         <div class="form-grid">
+          <div class="field">
+            <label for="resetCompany">Company *</label>
+            <select id="resetCompany" required>
+              <option value="">Select company</option>
+            </select>
+          </div>
+
           <div class="field">
             <label for="resetLogin">Issued login</label>
             <select id="resetLogin"></select>
@@ -604,13 +708,16 @@
     const role = document.getElementById('role');
     const email = document.getElementById('email');
     const expiry = document.getElementById('expiry');
+    const issueCompany = document.getElementById('issueCompany');
     const loginName = document.getElementById('loginName');
     const tempPassword = document.getElementById('tempPassword');
     const generateBtn = document.getElementById('generateBtn');
     const dashboardMessage = document.getElementById('dashboardMessage');
+    const extendCompany = document.getElementById('extendCompany');
     const extendLogin = document.getElementById('extendLogin');
     const extendExpiry = document.getElementById('extendExpiry');
     const extendBtn = document.getElementById('extendBtn');
+    const resetCompany = document.getElementById('resetCompany');
     const resetLogin = document.getElementById('resetLogin');
     const resetPassword = document.getElementById('resetPassword');
     const resetGenerateBtn = document.getElementById('resetGenerateBtn');
@@ -628,6 +735,22 @@
     let lastIssuedPassword = null;
     let previewPinnedLogin = '';
 
+    // ── Client registration elements ──────────────────────────────────────
+    const regForm         = document.getElementById('clientRegForm');
+    const regName         = document.getElementById('regName');
+    const regContactEmail = document.getElementById('regContactEmail');
+    const regContactName  = document.getElementById('regContactName');
+    const regPhone        = document.getElementById('regPhone');
+    const regContactAddr  = document.getElementById('regContactAddress');
+    const regRegNo        = document.getElementById('regRegNo');
+    const regTba1         = document.getElementById('regTba1');
+    const regTba2         = document.getElementById('regTba2');
+    const regStartBtn     = document.getElementById('regStartBtn');
+    const regAddBtn       = document.getElementById('regAddBtn');
+    const regAbortBtn     = document.getElementById('regAbortBtn');
+    const regStatus       = document.getElementById('regStatus');
+    let regIsLocked = false;
+
     function escapeHtml(value) {
       return String(value ?? '').replace(/[&<>"']/g, (char) => ({
         '&': '&amp;',
@@ -636,6 +759,61 @@
         '"': '&quot;',
         "'": '&#39;'
       }[char]));
+    }
+
+    function setRegStatus(text, tone = '') {
+      regStatus.textContent = text;
+      regStatus.className = `reg-status${tone ? ` ${tone}` : ''}`;
+    }
+
+    function setRegFieldsDisabled(disabled) {
+      [regName, regContactEmail, regContactName, regPhone, regContactAddr, regRegNo, regTba1, regTba2]
+        .forEach((el) => {
+          el.disabled = disabled;
+        });
+    }
+
+    function setOtherSectionsDisabled(disabled) {
+      [fullName, role, email, expiry, loginName, tempPassword, issueCompany, issueBtn, generateBtn]
+        .forEach((el) => { if (el) el.disabled = disabled; });
+      permissionInputs.forEach((el) => { el.disabled = disabled; });
+      [extendCompany, extendLogin, extendExpiry, extendBtn]
+        .forEach((el) => { if (el) el.disabled = disabled; });
+      [resetCompany, resetLogin, resetPassword, resetGenerateBtn, resetCopyBtn, resetBtn]
+        .forEach((el) => { if (el) el.disabled = disabled; });
+    }
+
+    function lockRegForm(clearFields = false) {
+      regForm.classList.add('reg-locked');
+      setRegFieldsDisabled(true);
+      setOtherSectionsDisabled(false);
+      regStartBtn.disabled = false;
+      regAddBtn.disabled = true;
+      regAbortBtn.disabled = true;
+      regIsLocked = true;
+      if (clearFields) {
+        [regName, regContactEmail, regContactName, regPhone, regContactAddr, regRegNo, regTba1, regTba2]
+          .forEach((el) => { el.value = ''; });
+      }
+      setRegStatus('Fields are disabled. Click "Register client" to enable editing.');
+    }
+
+    function unlockRegForm() {
+      regForm.classList.remove('reg-locked');
+      setRegFieldsDisabled(false);
+      setOtherSectionsDisabled(true);
+      regStartBtn.disabled = true;
+      regAddBtn.disabled = false;
+      regAbortBtn.disabled = false;
+      regIsLocked = false;
+      setRegStatus('Editing enabled. Complete the details, then click "Add client" to save or "Abort registration" to cancel.');
+    }
+
+    async function getCompanies() {
+      if (!supabase) return [];
+      const { data, error } = await invokeAdminFunction('dockpilot-admin-manage-companies', { action: 'list' });
+      if (error || !data?.ok) return [];
+      return Array.isArray(data.companies) ? data.companies : [];
     }
 
     function setDashboardMessage(text, tone = '') {
@@ -657,6 +835,24 @@
           setDashboardMessage('Supabase client could not be loaded. Login-name and password generation will still work offline.', 'error');
         }
       }
+    }
+
+    // Role-to-default access-group mapping (Phase 3).
+    // Overwrites current checkbox state whenever role changes; manual edits remain possible after.
+    const ROLE_DEFAULT_GROUPS = {
+      'Frontend Developer':     ['Frontpage Files', 'API Config', 'Design Assets', 'User Reports', 'Release Notes', 'Admin Files'],
+      'Backend Developer':      ['Frontpage Files', 'API Config', 'Design Assets', 'User Reports', 'Release Notes', 'Admin Files'],
+      'QA Tester':              ['Frontpage Files', 'Design Assets', 'User Reports', 'Release Notes', 'Admin Files'],
+      'Company Admin':          ['Frontpage Files', 'Design Assets', 'User Reports', 'Admin Files'],
+      'Technical / DD Manager': ['Frontpage Files', 'Design Assets', 'User Reports'],
+      'TSI / DDSI':             ['Frontpage Files', 'Design Assets'],
+    };
+
+    function applyRoleDefaults(selectedRole) {
+      const defaults = ROLE_DEFAULT_GROUPS[selectedRole] || [];
+      permissionInputs.forEach((input) => {
+        input.checked = defaults.includes(input.value);
+      });
     }
 
     function getSelectedAccess() {
@@ -763,35 +959,29 @@
     }
 
     async function invokeAdminFunction(functionName, body) {
-      const { token, error: tokenError } = await getAccessToken();
-      if (tokenError || !token) {
-        return { data: null, error: tokenError || new Error('Access token is missing.') };
+      if (!supabase) {
+        return { data: null, error: new Error('Supabase is unavailable') };
       }
 
       return supabase.functions.invoke(functionName, {
         body: body || {},
         headers: {
           apikey: SUPABASE_ANON_KEY,
-          Authorization: `Bearer ${token}`
+          Authorization: `Bearer ${SUPABASE_ANON_KEY}`
         }
       });
     }
 
     async function ensureAdminSupabaseSession() {
-      const { token, error } = await getAccessToken();
-      const hasSession = Boolean(token && !error);
-
-      setAdminActionsEnabled(hasSession);
-      if (!hasSession) {
-        setDashboardMessage('Admin actions are disabled until a valid Supabase user session is available in this browser.', 'error');
-      }
-
-      return hasSession;
+      setAdminActionsEnabled(true);
+      return true;
     }
 
     async function getAccounts() {
       if (!supabase) return [];
-      const { data, error } = await invokeAdminFunction('dockpilot-admin-list-credentials', {});
+      const companyId = String(issueCompany.value || '').trim();
+      if (!companyId) return [];
+      const { data, error } = await invokeAdminFunction('dockpilot-admin-list-credentials', { company_id: companyId });
       if (error || !data?.ok) return [];
       return Array.isArray(data.accounts) ? data.accounts : [];
     }
@@ -812,13 +1002,14 @@
       return { data, error };
     }
 
-    async function updateAccountExpiry(loginName, newExpiry) {
+    async function updateAccountExpiry(loginName, newExpiry, companyId) {
       if (!supabase) {
         return { data: null, error: new Error('Supabase is unavailable') };
       }
       const { data, error } = await invokeAdminFunction('dockpilot-admin-extend-credential', {
         loginName,
-        newExpiry
+        newExpiry,
+        company_id: companyId
       });
 
       if (error || !data?.ok) {
@@ -857,14 +1048,15 @@
       resetLogin.value = stillExists ? selectedValue : accounts[0].login_name;
     }
 
-    async function resetAccountPassword(loginName, newPassword) {
+    async function resetAccountPassword(loginName, newPassword, companyId) {
       if (!supabase) {
         return { data: null, error: new Error('Supabase is unavailable') };
       }
 
       const { data, error } = await invokeAdminFunction('dockpilot-admin-reset-password', {
         loginName,
-        newPassword
+        newPassword,
+        company_id: companyId
       });
 
       if (error || !data?.ok) {
@@ -897,6 +1089,16 @@
     }
 
     async function renderAccounts() {
+      if (!issueCompany.value) {
+        tableBody.innerHTML = '<tr><td colspan="6">Select a company to view issued accounts.</td></tr>';
+        issuedCount.textContent = '00';
+        activeCount.textContent = '00';
+        populateExtendOptions([]);
+        populateResetOptions([]);
+        updatePreview(null);
+        return;
+      }
+
       const accounts = (await getAccounts()).sort((a, b) => new Date(b.created_at) - new Date(a.created_at));
       if (!accounts.length) {
         tableBody.innerHTML = '<tr><td colspan="6">No issued accounts yet.</td></tr>';
@@ -939,7 +1141,15 @@
 
     form.addEventListener('submit', async (event) => {
       event.preventDefault();
+      const companyId = String(issueCompany.value || '').trim();
+      if (!companyId) {
+        setDashboardMessage('Please select a company before issuing credentials.', 'error');
+        issueCompany.focus();
+        return;
+      }
+
       const account = {
+        company_id: companyId,
         login_name: loginName.value.trim().toLowerCase(),
         full_name: fullName.value.trim(),
         email: email.value.trim(),
@@ -969,6 +1179,13 @@
     });
 
     extendBtn.addEventListener('click', async () => {
+      const companyId = String(extendCompany.value || '').trim();
+      if (!companyId) {
+        setDashboardMessage('Please select a company before extending access.', 'error');
+        extendCompany.focus();
+        return;
+      }
+
       if (!extendLogin.value) {
         setDashboardMessage('No issued login is available to extend yet.', 'error');
         return;
@@ -977,7 +1194,7 @@
         setDashboardMessage('Please choose a new expiry date before extending access.', 'error');
         return;
       }
-      const { error } = await updateAccountExpiry(extendLogin.value, extendExpiry.value);
+      const { error } = await updateAccountExpiry(extendLogin.value, extendExpiry.value, companyId);
       if (error) {
         setDashboardMessage('Failed to extend access.', 'error');
         return;
@@ -1002,6 +1219,13 @@
     });
 
     resetBtn.addEventListener('click', async () => {
+      const companyId = String(resetCompany.value || '').trim();
+      if (!companyId) {
+        setDashboardMessage('Please select a company before resetting password.', 'error');
+        resetCompany.focus();
+        return;
+      }
+
       const login = resetLogin.value.trim().toLowerCase();
       const nextPassword = resetPassword.value.trim();
 
@@ -1015,7 +1239,7 @@
         return;
       }
 
-      const { error } = await resetAccountPassword(login, nextPassword);
+      const { error } = await resetAccountPassword(login, nextPassword, companyId);
       if (error) {
         setDashboardMessage(error.message || 'Failed to reset password.', 'error');
         return;
@@ -1036,6 +1260,9 @@
       loginName.value = makeLoginName(fullName.value);
     }
 
+    // Apply role defaults when role selection changes (Phase 3).
+    role.addEventListener('change', () => applyRoleDefaults(role.value));
+
     // Keep auto-generation responsive across typing, paste, and autofill-like changes.
     fullName.addEventListener('input', syncLoginName);
     fullName.addEventListener('change', syncLoginName);
@@ -1048,6 +1275,115 @@
       previewPassword.textContent = pw;
     });
 
+    // ── Client registration flow ──────────────────────────────────────────
+    function renderCompanySelectOptions(companies, preferredCompanyId = '') {
+      const hasCompanies = Array.isArray(companies) && companies.length > 0;
+      const options = hasCompanies
+        ? companies.map((company) => `<option value="${escapeHtml(company.id)}">${escapeHtml(company.name)}</option>`).join('')
+        : '<option value="">No registered companies</option>';
+
+      [issueCompany, extendCompany, resetCompany].forEach((selectEl) => {
+        const oldValue = selectEl.value;
+        selectEl.innerHTML = hasCompanies ? `<option value="">Select company</option>${options}` : options;
+
+        if (!hasCompanies) {
+          selectEl.value = '';
+          return;
+        }
+
+        const targetValue = preferredCompanyId || oldValue;
+        const exists = companies.some((company) => company.id === targetValue);
+        if (exists) {
+          selectEl.value = targetValue;
+        } else {
+          selectEl.value = companies[0].id;
+        }
+      });
+    }
+
+    async function loadCompanyOptions(preferredCompanyId = '') {
+      const companies = await getCompanies();
+      renderCompanySelectOptions(companies, preferredCompanyId);
+      if (!companies.length) {
+        setDashboardMessage('No registered clients found. Register at least one company before issuing, extending, or resetting credentials.', 'error');
+      }
+      await renderAccounts();
+    }
+
+    function syncCompanySelection(source) {
+      const selectedId = String(source.value || '').trim();
+      [issueCompany, extendCompany, resetCompany].forEach((selectEl) => {
+        if (selectEl !== source) {
+          selectEl.value = selectedId;
+        }
+      });
+      renderAccounts();
+    }
+
+    issueCompany.addEventListener('change', () => syncCompanySelection(issueCompany));
+    extendCompany.addEventListener('change', () => syncCompanySelection(extendCompany));
+    resetCompany.addEventListener('change', () => syncCompanySelection(resetCompany));
+
+    regStartBtn.addEventListener('click', () => {
+      unlockRegForm();
+      regName.focus();
+    });
+
+    regAbortBtn.addEventListener('click', () => {
+      lockRegForm(true);
+    });
+
+    regAddBtn.addEventListener('click', async () => {
+      const nameVal  = regName.value.trim();
+      const emailVal = regContactEmail.value.trim();
+      if (!nameVal) {
+        setRegStatus('Client / Company / DOC Name is required.', 'error');
+        regName.focus();
+        return;
+      }
+      if (!emailVal) {
+        setRegStatus('Company Contact Admin Email is required.', 'error');
+        regContactEmail.focus();
+        return;
+      }
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(emailVal)) {
+        setRegStatus('Please enter a valid email address.', 'error');
+        regContactEmail.focus();
+        return;
+      }
+
+      regAddBtn.disabled  = true;
+      regAbortBtn.disabled = true;
+      setRegStatus('Registering client…');
+
+      const { data, error } = await invokeAdminFunction('dockpilot-admin-manage-companies', {
+        action:               'register',
+        name:                 regName.value.trim(),
+        contact_admin_email:  regContactEmail.value.trim(),
+        contact_name:         regContactName.value.trim()  || undefined,
+        contact_address:      regContactAddr.value.trim()  || undefined,
+        registration_no:      regRegNo.value.trim()        || undefined,
+        phone:                regPhone.value.trim()         || undefined,
+        tba1:                 regTba1.value.trim()          || undefined,
+        tba2:                 regTba2.value.trim()          || undefined
+      });
+
+      regAddBtn.disabled   = false;
+      regAbortBtn.disabled = false;
+
+      if (error || !data?.ok) {
+        const msg = data?.message || error?.message || 'Failed to register client.';
+        setRegStatus(msg, 'error');
+        return;
+      }
+
+      const companyName = data.company?.name || regName.value.trim();
+      lockRegForm(true);
+      setRegStatus(`Client "${companyName}" registered successfully.`, 'success');
+      const newCompanyId = String(data.company?.id || '').trim();
+      await loadCompanyOptions(newCompanyId);
+    });
+
     // Prepare date fields on load
     function prepareDateFields() {
       const today = new Date().toISOString().split('T')[0];
@@ -1057,26 +1393,27 @@
       extendExpiry.value = getDefaultExpiry();
     }
 
+    function ensureDeveloperOnlyHost() {
+      const host = (window.location.hostname || '').toLowerCase();
+      const isLocalHost = host === 'localhost' || host === '127.0.0.1' || host === '::1';
+      if (isLocalHost) return true;
+
+      window.location.href = './DockPilot_landing.html';
+      return false;
+    }
+
     async function initialize() {
-      prepareDateFields();
-      syncLoginName();
-      await initSupabase();
-      if (supabase) {
-        try {
-          const guardModule = await import('./dockpilotPageGuard.js');
-          await guardModule.startDockPilotPageGuard({
-            supabase,
-            landingPage: './DockPilot_landing.html'
-          });
-        } catch (error) {
-          console.error('DockPilot guard startup failed:', error);
-          window.location.href = './DockPilot_landing.html';
-          return;
-        }
+      if (!ensureDeveloperOnlyHost()) {
+        return;
       }
 
-      await ensureAdminSupabaseSession();
-      renderAccounts();
+      lockRegForm(false);
+      prepareDateFields();
+      syncLoginName();
+      applyRoleDefaults(role.value);   // Apply defaults for initially-selected role on page load.
+      await initSupabase();
+      setAdminActionsEnabled(true);
+      await loadCompanyOptions();
     }
 
     initialize();

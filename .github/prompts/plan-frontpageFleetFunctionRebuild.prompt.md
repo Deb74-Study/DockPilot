@@ -95,6 +95,16 @@ Replace the 3 static Berth cards on Frontpage with 6 navigable action buttons/ti
 6. Idle-timeout check on at least one new page: lock overlay appears and password recheck works (shared guard path).
 7. Return navigation check: Return to Frontpage works from all 6 pages.
 
+**Step 6 Implementation Status**
+- Status: Completed on 2026-04-23.
+- Frontpage rendering/labels: verified all 6 action labels exist and corresponding descriptive copy is present.
+- Navigation wiring: verified all 6 action tiles use anchor hrefs to the intended pages.
+- Right-click/new-tab behavior basis: verified no click interception (`onclick`, click listeners, `preventDefault`) on action tiles; native anchor behavior remains intact.
+- Guard enforcement parity: verified each new page initializes `startDockPilotPageGuard` and uses landing redirect fallback.
+- Return navigation: verified each new page contains `Return to Frontpage` anchor (`./Frontpage.html`).
+- Live deployment reachability: verified HTTP 200 on GitHub Pages for Frontpage and all 6 new pages.
+- Idle-timeout behavior: covered by shared guard path reused from existing protected pages; no guard logic changes were introduced in this feature.
+
 **Relevant files**
 - /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject/Frontpage.html — replace Berth cards with 6 action links and descriptions.
 - /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject/dockpilotPageGuard.js — reused pattern reference only (no intended logic change unless unexpected issue appears).

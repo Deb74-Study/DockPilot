@@ -149,6 +149,7 @@ serve(async (request) => {
     ok: true,
     session: {
       login_name: account.login_name,
+      company_id: account.company_id,
       full_name: account.full_name,
       role: account.role,
       expiry: account.expiry,

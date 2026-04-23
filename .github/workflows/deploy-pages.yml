@@ -25,9 +25,11 @@ jobs:
         uses: actions/checkout@v6
 
       - name: Build client rollout bundle
+        shell: bash
         run: |
+          set -euo pipefail
           chmod +x ./scripts/build_bundle.sh
-          ./scripts/build_bundle.sh client
+          bash ./scripts/build_bundle.sh client
 
       - name: Setup Pages
         uses: actions/configure-pages@v6

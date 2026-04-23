@@ -659,6 +659,10 @@
               <strong id="previewLogin">frontend.dev</strong>
             </div>
             <div class="preview-row">
+              <small>Company ID</small>
+              <strong id="previewCompanyId">Select a company</strong>
+            </div>
+            <div class="preview-row">
               <small>Temporary password</small>
               <strong id="previewPassword">DP!2481Safe</strong>
             </div>
@@ -725,6 +729,7 @@
     const resetBtn = document.getElementById('resetBtn');
     const issueBtn = form.querySelector('button[type="submit"]');
     const previewLogin = document.getElementById('previewLogin');
+    const previewCompanyId = document.getElementById('previewCompanyId');
     const previewPassword = document.getElementById('previewPassword');
     const previewAccess = document.getElementById('previewAccess');
     const tableBody = document.getElementById('issuedTableBody');
@@ -1072,6 +1077,7 @@
     function updatePreview(account) {
       if (!account) {
         previewLogin.textContent = 'No login issued yet';
+        previewCompanyId.textContent = String(issueCompany.value || '').trim() || 'Select a company';
         previewPassword.textContent = 'Generate a password';
         previewAccess.textContent = 'Create a dashboard credential to preview it here';
         return;
@@ -1080,6 +1086,7 @@
         ? account.access_groups.join(', ')
         : 'General Access';
       previewLogin.textContent = account.login_name;
+      previewCompanyId.textContent = String(account.company_id || issueCompany.value || '').trim() || 'Select a company';
       if (lastIssuedPassword && lastIssuedPassword.login_name === account.login_name) {
         previewPassword.textContent = lastIssuedPassword.temp_password;
       } else {
@@ -1378,9 +1385,9 @@
       }
 
       const companyName = data.company?.name || regName.value.trim();
-      lockRegForm(true);
-      setRegStatus(`Client "${companyName}" registered successfully.`, 'success');
       const newCompanyId = String(data.company?.id || '').trim();
+      lockRegForm(true);
+      setRegStatus(`Client "${companyName}" registered successfully. Company ID: ${newCompanyId || 'unavailable'}`, 'success');
       await loadCompanyOptions(newCompanyId);
     });
 

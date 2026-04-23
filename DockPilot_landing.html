@@ -546,9 +546,10 @@
       return { data, error: null };
     }
 
-    async function changeIssuedCredentialPassword(loginName, currentPassword, newPassword) {
+    async function changeIssuedCredentialPassword(companyId, loginName, currentPassword, newPassword) {
       const { data, error } = await supabase.functions.invoke('dockpilot-change-password', {
         body: {
+          company_id: companyId,
           loginName,
           currentPassword,
           newPassword
@@ -572,6 +573,7 @@
     async function validateSessionHandshake(session) {
       const { data, error } = await supabase.functions.invoke('dockpilot-validate-session', {
         body: {
+          company_id: session.companyId,
           loginName: session.loginName,
           sessionToken: session.sessionToken
         }
@@ -659,6 +661,7 @@
         fullName: account.full_name || account.fullName,
         role: account.role,
         loginName: account.login_name || account.loginName,
+        companyId: account.company_id || companyIdValue,
         expiry: account.expiry,
         access: account.access_groups || account.access,
         mustChangePassword: needsPasswordChange(account),
@@ -689,7 +692,8 @@
     cancelLoginBtn.addEventListener('click', () => {
       hideLoginFailPopup();
       initializeCompanyIdFromStorage();
-      form.reset();
+      loginInput.value = '';
+      passwordInput.value = '';
       setLoginStatus(false);
     });
 
@@ -717,7 +721,7 @@
         return;
       }
 
-      const { data, error } = await changeIssuedCredentialPassword(session.loginName, currentPassword, newPassword);
+      const { data, error } = await changeIssuedCredentialPassword(session.companyId, session.loginName, currentPassword, newPassword);
       if (error) {
         setMessage(error?.message || 'Failed to update password. Please try again.', 'error');
         return;
@@ -727,6 +731,7 @@
         fullName: data.session.full_name || data.session.fullName || session.fullName,
         role: data.session.role || session.role,
         loginName: data.session.login_name || data.session.loginName || session.loginName,
+        companyId: data.session.company_id || session.companyId,
         expiry: data.session.expiry || session.expiry,
         access: data.session.access_groups || data.session.access || session.access,
         mustChangePassword: false,

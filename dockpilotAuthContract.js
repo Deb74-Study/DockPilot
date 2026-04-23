@@ -36,6 +36,7 @@ export function normalizeSession(rawSession) {
     fullName: rawSession.fullName || rawSession.full_name || null,
     role: rawSession.role || null,
     loginName: rawSession.loginName || rawSession.login_name || null,
+    companyId: rawSession.companyId || rawSession.company_id || null,
     expiry: rawSession.expiry || null,
     access: Array.isArray(rawSession.access)
       ? rawSession.access

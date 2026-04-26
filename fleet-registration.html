@@ -7,14 +7,25 @@
   <style>
     :root {
       --edge-padding: clamp(12px, 1.6vw, 22px);
+      --subheader-row-height: 45px;
+      --panel: rgba(11, 24, 45, 0.92);
+      --line: rgba(255, 255, 255, 0.1);
       --text: #eef4ff;
       --muted: #aebcda;
       --accent: #67d6ff;
-      --border: rgba(255,255,255,0.1);
+      --accent-2: #72f1cb;
+      --ok: #8ef0b1;
+      --warn: #ffd28c;
+      --blue-text: #163b73;
+      --badge-fill: #093046;
+      --badge-line: rgba(107, 215, 255, 0.24);
+      --border: rgba(255, 255, 255, 0.1);
       --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
     }
 
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+    }
 
     html, body {
       height: 100%;
@@ -26,6 +37,7 @@
       display: grid;
       place-items: center;
       padding: var(--edge-padding);
+      overflow-x: hidden;
       font-family: Inter, "Segoe UI", Roboto, sans-serif;
       background:
         radial-gradient(circle at top left, #133977 0%, transparent 32%),
@@ -34,59 +46,1155 @@
       color: var(--text);
     }
 
-    main {
-      width: min(980px, 100%);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      background: linear-gradient(180deg, rgba(9,16,32,.92), rgba(8,12,25,.95));
-      box-shadow: var(--shadow);
-      padding: clamp(20px, 2.2vw, 30px);
+    .manager-shell {
+      width: min(1280px, 100%);
+      max-width: calc(100vw - (2 * var(--edge-padding)));
+      max-height: calc(100dvh - (2 * var(--edge-padding)));
+      margin: 0 auto;
       display: grid;
-      gap: 14px;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      gap: 10px;
+    }
+
+    .panel {
+      width: 100%;
+      min-width: 0;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .header-panel {
+      display: grid;
+      gap: 8px;
+    }
+
+    .table-panel {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto auto;
+    }
+
+    .toolbar-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      display: inline-flex;
+      width: fit-content;
+      padding: 5px 10px;
+      border-radius: 999px;
+      color: var(--accent);
+      background: var(--badge-fill);
+      border: 1px solid var(--badge-line);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+      font-size: clamp(1.45rem, 2.4vw, 1.95rem);
+      line-height: 1.1;
     }
 
-    p {
+    p,
+    .muted {
       margin: 0;
       color: var(--muted);
-      line-height: 1.6;
+      line-height: 1.35;
+      font-size: 0.86rem;
     }
 
-    .return-link {
-      margin-top: 10px;
-      width: fit-content;
+    .return-link,
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 9px 13px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       text-decoration: none;
-      color: #06263a;
-      background: var(--accent);
-      padding: 10px 14px;
+    }
+
+    .return-link,
+    .secondary-btn {
+      width: fit-content;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #04101d;
+    }
+
+    button[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .return-link:focus-visible,
+    button:focus-visible {
+      outline: 2px solid rgba(103,214,255,.5);
+      outline-offset: 2px;
+    }
+
+    .status-note {
+      margin: 0;
+      padding: 7px 10px;
       border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      line-height: 1.3;
+      font-size: 0.8rem;
+    }
+
+    .status-note.success {
+      color: var(--ok);
+      background: rgba(142, 240, 177, 0.08);
+      border-color: rgba(142, 240, 177, 0.18);
+    }
+
+    .status-note.error {
+      color: var(--warn);
+      background: rgba(255, 210, 140, 0.08);
+      border-color: rgba(255, 210, 140, 0.18);
+    }
+
+    .status-note.warn {
+      color: var(--warn);
+      background: rgba(255, 210, 140, 0.08);
+      border-color: rgba(255, 210, 140, 0.18);
+    }
+
+    .table-area {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      min-height: 0;
+      position: relative;
+      overflow-x: auto;
+      overflow-y: auto;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #ffffff;
+    }
+
+    table {
+      width: max-content;
+      min-width: max(100%, 980px);
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    th,
+    td {
+      padding: 6px 10px;
+      border-right: 1px dashed #1a243a;
+      border-bottom: 1px dashed #1a243a;
+      font-size: 0.9rem;
+      min-width: 130px;
+      height: 32px;
+      white-space: nowrap;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      background: var(--badge-fill);
+      color: var(--accent);
+      text-align: center;
       font-weight: 700;
     }
 
-    .return-link:focus-visible {
-      outline: 2px solid rgba(103,214,255,.5);
-      outline-offset: 2px;
+    .header-main {
+      padding: 4px 0;
+      font-size: 0.96rem;
+      letter-spacing: 0.02em;
+      color: #7de6ff;
+    }
+
+    .table-title-band {
+      width: 100%;
+      margin-bottom: 8px;
+      border-radius: 16px 16px 0 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--badge-fill);
+      color: #7de6ff;
+      text-align: center;
+      font-weight: 700;
+      font-size: 0.96rem;
+      letter-spacing: 0.02em;
+    }
+
+    .header-main-shell {
+      width: 100%;
+      max-width: 100%;
+      margin: 0 auto;
+      padding: 10px 16px;
+      text-align: center;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .subheader-top,
+    .subheader-second,
+    .left-head,
+    .action-head {
+      height: var(--subheader-row-height);
+    }
+
+    .subheader-top,
+    .left-head,
+    .action-head {
+      top: 0;
+    }
+
+    .subheader-second {
+      top: var(--subheader-row-height);
+      z-index: 5;
+    }
+
+    .left-head,
+    .row-label {
+      position: sticky;
+      left: 0;
+      z-index: 8;
+      width: 260px;
+      min-width: 260px;
+      text-align: left;
+      background: var(--badge-fill);
+      color: var(--accent);
+      border-right: 2px dashed rgba(11, 36, 80, 0.85);
+    }
+
+    .row-label {
+      vertical-align: top;
+      font-weight: 700;
+    }
+
+    .left-head {
+      z-index: 9;
+      top: 0;
+    }
+
+    .data-cell,
+    .subheader-cell {
+      text-align: center;
+      background: #ffffff;
+      color: var(--blue-text);
+      font-weight: 600;
+    }
+
+    .action-head,
+    .action-cell {
+      position: sticky;
+      right: 0;
+      z-index: 7;
+      width: 188px;
+      min-width: 188px;
+      text-align: center;
+      color: var(--text);
+      background: var(--panel);
+    }
+
+    .action-head {
+      color: transparent;
+      top: 0;
+    }
+
+    .action-cell {
+      padding-right: 56px;
+    }
+
+    .editable {
+      cursor: text;
+    }
+
+    .editable:focus {
+      outline: 2px solid rgba(107, 215, 255, 0.85);
+      outline-offset: -3px;
+    }
+
+    .pair-divider {
+      border-right: 2px dashed rgba(11, 36, 80, 0.85);
+    }
+
+    .table-controls {
+      display: flex;
+      justify-content: flex-start;
+      gap: 8px;
+      margin-top: 10px;
+      flex-wrap: wrap;
+    }
+
+    .horizontal-scroll-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .scroll-arrow {
+      min-width: 40px;
+      padding: 8px 10px;
+    }
+
+    .horizontal-range {
+      flex: 1;
+      height: 20px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+    }
+
+    .horizontal-range::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .horizontal-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 96px;
+      height: 16px;
+      margin-top: -5px;
+      border-radius: 999px;
+      border: 1px solid rgba(7, 17, 31, 0.18);
+      background: linear-gradient(135deg, #67d6ff, #72f1cb);
+      cursor: pointer;
+    }
+
+    .vertical-scroll-controls {
+      position: absolute;
+      top: calc((2 * var(--subheader-row-height)) + 8px);
+      right: 10px;
+      bottom: 10px;
+      width: 40px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      z-index: 12;
+      pointer-events: none;
+    }
+
+    .vertical-scroll-controls button,
+    .vertical-scroll-controls input {
+      pointer-events: auto;
+    }
+
+    .vertical-range {
+      flex: 1;
+      min-height: 160px;
+      width: 18px;
+      writing-mode: bt-lr;
+      -webkit-appearance: slider-vertical;
+      appearance: slider-vertical;
+      background: transparent;
+    }
+
+    .vertical-range::-webkit-slider-runnable-track {
+      width: 6px;
+      border-radius: 999px;
+      background: rgba(9, 48, 70, 0.18);
+    }
+
+    .vertical-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 16px;
+      height: 44px;
+      border-radius: 999px;
+      border: 1px solid rgba(7, 17, 31, 0.18);
+      background: linear-gradient(180deg, #67d6ff, #72f1cb);
+      cursor: pointer;
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      display: grid;
+      place-items: center;
+      background: rgba(3, 9, 18, 0.72);
+      z-index: 1000;
+      padding: 16px;
+    }
+
+    .modal-card {
+      width: min(420px, 100%);
+      background: #ffffff;
+      color: #0f2244;
+      border-radius: 18px;
+      padding: 20px;
+      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+    }
+
+    .modal-card h2 {
+      margin: 0 0 10px;
+      font-size: 1.2rem;
+    }
+
+    .modal-card p {
+      margin: 0;
+      line-height: 1.5;
+      color: #27436d;
+      font-size: 0.95rem;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 5px;
+      margin-top: 16px;
+    }
+
+    .modal-card .secondary-btn {
+      color: #0f2244;
+      background: rgba(9, 48, 70, 0.12);
+      border: 1px solid rgba(9, 48, 70, 0.28);
+    }
+
+    .modal-card .secondary-btn:hover {
+      background: rgba(9, 48, 70, 0.18);
+    }
+
+    @media (max-width: 900px) {
+      .manager-shell {
+        width: 100%;
+      }
+
+      .toolbar-row {
+        align-items: flex-start;
+      }
+
+      .action-head,
+      .action-cell {
+        min-width: 170px;
+        width: 170px;
+      }
+
+      .left-head,
+      .row-label {
+        min-width: 220px;
+        width: 220px;
+      }
+
+      .header-main-shell {
+        width: 280px;
+        max-width: calc(100vw - 220px);
+      }
+
+      .vertical-scroll-controls {
+        width: 34px;
+        right: 8px;
+      }
     }
   </style>
 </head>
 <body>
-  <main>
-    <h1>Fleet Registration</h1>
-    <p>This page scaffold is ready for feature implementation.</p>
-    <a class="return-link" href="./Frontpage.html">Return to Frontpage</a>
+  <main class="manager-shell">
+    <section class="panel header-panel">
+      <div class="toolbar-row">
+        <span id="todayBadge" class="tag">Date:</span>
+        <a class="return-link" href="./Frontpage.html">Return to Frontpage</a>
+      </div>
+
+      <div>
+        <h1>Fleet Registration</h1>
+        <p class="muted">Manage fleet additions/deletions and superintendent allocation for vessels. This is an Admin Only function.</p>
+      </div>
+    </section>
+
+    <p id="statusNote" class="status-note">Fleet table is ready.</p>
+
+    <section class="panel table-panel">
+      <div id="tableTitleBand" class="table-title-band">
+        <div id="tableTitleBandText" class="header-main header-main-shell editable" data-header-type="main" contenteditable="true" spellcheck="false">Fleet Registration Matrix</div>
+      </div>
+
+      <div id="tableViewport" class="table-area">
+        <table id="matrixTable">
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+
+        <div class="vertical-scroll-controls" aria-label="Vertical scroll controls">
+          <button id="scrollUpBtn" type="button" class="secondary-btn scroll-arrow" aria-label="Scroll up">▲</button>
+          <input id="verticalScroll" class="vertical-range" type="range" min="0" max="0" value="0" step="1" />
+          <button id="scrollDownBtn" type="button" class="secondary-btn scroll-arrow" aria-label="Scroll down">▼</button>
+        </div>
+      </div>
+
+      <div class="horizontal-scroll-controls" aria-label="Horizontal scroll controls">
+        <button id="scrollLeftBtn" type="button" class="secondary-btn scroll-arrow" aria-label="Scroll left">◀</button>
+        <input id="horizontalScroll" class="horizontal-range" type="range" min="0" max="0" value="0" step="1" />
+        <button id="scrollRightBtn" type="button" class="secondary-btn scroll-arrow" aria-label="Scroll right">▶</button>
+      </div>
+
+      <div class="table-controls">
+        <button id="addRowBtn" type="button" class="secondary-btn">Add Row</button>
+        <button id="addColumnBtn" type="button" class="secondary-btn">Add Column</button>
+        <button id="deleteLastColumnBtn" type="button" class="secondary-btn">Delete Last Column Pair</button>
+      </div>
+    </section>
   </main>
+
+  <div id="modalOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <h2 id="modalTitle">Note</h2>
+      <p id="modalMessage"></p>
+      <div class="modal-actions">
+        <button id="modalCancelBtn" type="button" class="secondary-btn hidden">No</button>
+        <button id="modalConfirmBtn" type="button" class="primary-btn">Continue</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module">
     import { supabase } from './supabaseClient.js';
     import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
 
+    const STATE_KEY = 'DOCKPILOT_FLEET_REG_STATE';
+    const MIN_DATA_COLUMNS = 2;
+    const MAX_CELL_CHARS = 30;
+    const DEFAULT_MAIN_HEADER = 'Fleet Registration Matrix';
+    const DEFAULT_SUBHEADER_ROW_A = ['Fleet Group Name', 'TM / FM Name', 'Fleet Group Name', 'TM / FM Name'];
+    const DEFAULT_SUBHEADER_ROW_B = ['Vessel Name', 'TSI Name', 'Vessel Name', 'TSI Name'];
+    const DEFAULT_ROW_LABELS = [
+      'Vessel 1',
+      'Vessel 2',
+      'Vessel 3',
+      'Vessel 4'
+    ];
+
+    const todayBadge = document.getElementById('todayBadge');
+    const statusNote = document.getElementById('statusNote');
+    const tableTitleBandText = document.getElementById('tableTitleBandText');
+    const tableViewport = document.getElementById('tableViewport');
+    const tableHead = document.getElementById('tableHead');
+    const tableBody = document.getElementById('tableBody');
+    const horizontalScroll = document.getElementById('horizontalScroll');
+    const verticalScroll = document.getElementById('verticalScroll');
+    const scrollLeftBtn = document.getElementById('scrollLeftBtn');
+    const scrollRightBtn = document.getElementById('scrollRightBtn');
+    const scrollUpBtn = document.getElementById('scrollUpBtn');
+    const scrollDownBtn = document.getElementById('scrollDownBtn');
+    const addRowBtn = document.getElementById('addRowBtn');
+    const addColumnBtn = document.getElementById('addColumnBtn');
+    const deleteLastColumnBtn = document.getElementById('deleteLastColumnBtn');
+
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMessage = document.getElementById('modalMessage');
+    const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+    const modalCancelBtn = document.getElementById('modalCancelBtn');
+
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+    let mainHeader = DEFAULT_MAIN_HEADER;
+    let subHeaderRowA = [...DEFAULT_SUBHEADER_ROW_A];
+    let subHeaderRowB = [...DEFAULT_SUBHEADER_ROW_B];
+    let rowLabels = [...DEFAULT_ROW_LABELS];
+    let matrixData = [];
+    let continueAction = null;
+    let cancelAction = null;
+
+    function formatBadgeDate(date) {
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${day}-${monthNames[date.getMonth()]}-${date.getFullYear()}`;
+    }
+
+    function setStatus(text, tone = '') {
+      statusNote.textContent = text;
+      statusNote.className = `status-note${tone ? ` ${tone}` : ''}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#39;'
+      }[char]));
+    }
+
+    function defaultHeaderA(colIndex) {
+      return colIndex % 2 === 0 ? 'Fleet Group Name' : 'TM / FM Name';
+    }
+
+    function normalizeMainHeader(value) {
+      const nextValue = sanitizeLineBreaks(String(value ?? ''));
+      if (isMeaningfullyBlank(nextValue)) {
+        return DEFAULT_MAIN_HEADER;
+      }
+      if (/^Fleet Registration Matrixs+$/i.test(nextValue.trim())) {
+        return DEFAULT_MAIN_HEADER;
+      }
+      return nextValue;
+    }
+
+    function defaultHeaderB(colIndex) {
+      return colIndex % 2 === 0 ? 'Vessel Name' : 'TSI Name';
+    }
+
+    function defaultRowLabel(rowIndex) {
+      return `Vessel ${rowIndex + 1}`;
+    }
+
+    function isPairDivider(colIndex) {
+      return colIndex % 2 === 1;
+    }
+
+    function sanitizeLineBreaks(text) {
+      return String(text ?? '').replace(/[\r\n]+/g, ' ');
+    }
+
+    function isMeaningfullyBlank(text) {
+      return sanitizeLineBreaks(text).trim().length === 0;
+    }
+
+    function truncateToMax(text, maxChars = MAX_CELL_CHARS) {
+      return String(text ?? '').slice(0, maxChars);
+    }
+
+    function isConstrainedCell(cell) {
+      return Boolean(cell && cell.matches('.editable[contenteditable="true"]') && !cell.classList.contains('header-main'));
+    }
+
+    function setCellText(cell, value) {
+      cell.textContent = value;
+      const selection = window.getSelection();
+      if (!selection) return;
+      const range = document.createRange();
+      range.selectNodeContents(cell);
+      range.collapse(false);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    function normalizeCellText(cell, rawValue) {
+      const singleLine = sanitizeLineBreaks(rawValue);
+      const isConstrained = isConstrainedCell(cell);
+      const nextValue = isConstrained ? truncateToMax(singleLine) : singleLine;
+      return {
+        value: nextValue,
+        hadLineBreaks: /[\r\n]/.test(String(rawValue ?? '')),
+        wasTruncated: isConstrained && singleLine.length > MAX_CELL_CHARS
+      };
+    }
+
+    function syncScrollControls() {
+      const maxScrollLeft = Math.max(0, tableViewport.scrollWidth - tableViewport.clientWidth);
+      const maxScrollTop = Math.max(0, tableViewport.scrollHeight - tableViewport.clientHeight);
+
+      horizontalScroll.max = String(maxScrollLeft);
+      horizontalScroll.value = String(Math.min(maxScrollLeft, Math.round(tableViewport.scrollLeft)));
+      verticalScroll.max = String(maxScrollTop);
+      verticalScroll.value = String(Math.min(maxScrollTop, Math.round(tableViewport.scrollTop)));
+
+      const atLeftStart = tableViewport.scrollLeft <= 1;
+      const atLeftEnd = tableViewport.scrollLeft >= (maxScrollLeft - 1);
+      const atTopStart = tableViewport.scrollTop <= 1;
+      const atTopEnd = tableViewport.scrollTop >= (maxScrollTop - 1);
+
+      scrollLeftBtn.disabled = atLeftStart;
+      scrollRightBtn.disabled = atLeftEnd;
+      scrollUpBtn.disabled = atTopStart;
+      scrollDownBtn.disabled = atTopEnd;
+      horizontalScroll.disabled = maxScrollLeft === 0;
+      verticalScroll.disabled = maxScrollTop === 0;
+
+      const firstStickyRow = tableHead.querySelector('tr');
+      if (firstStickyRow) {
+        const firstRowHeight = Math.round(firstStickyRow.getBoundingClientRect().height) || 45;
+        tableViewport.style.setProperty('--subheader-row-height', `${firstRowHeight}px`);
+      }
+      const stickyHeaderHeight = tableHead.getBoundingClientRect().height;
+      verticalScroll.parentElement.style.top = `${stickyHeaderHeight + 8}px`;
+    }
+
+    function makeDefaultMatrix(labels = rowLabels, columns = subHeaderRowA.length) {
+      return labels.map(() => Array(columns).fill(''));
+    }
+
+    function normalizeState(raw = {}) {
+      const sourceHeaderA = Array.isArray(raw?.subHeaderRowA) ? raw.subHeaderRowA : [];
+      const sourceHeaderB = Array.isArray(raw?.subHeaderRowB) ? raw.subHeaderRowB : [];
+      const sourceMatrix = Array.isArray(raw?.matrixData) ? raw.matrixData : [];
+
+      let dataColumnCount = Math.max(
+        MIN_DATA_COLUMNS,
+        sourceHeaderA.length,
+        sourceHeaderB.length,
+        sourceMatrix.reduce((max, row) => (Array.isArray(row) ? Math.max(max, row.length) : max), 0)
+      );
+
+      if (dataColumnCount % 2 !== 0) {
+        dataColumnCount -= 1;
+      }
+      dataColumnCount = Math.max(MIN_DATA_COLUMNS, dataColumnCount);
+
+      const nextHeaderA = Array.from({ length: dataColumnCount }, (_, index) => (
+        sanitizeLineBreaks(String(sourceHeaderA[index] ?? '')).trim() || defaultHeaderA(index)
+      ));
+
+      const nextHeaderB = Array.from({ length: dataColumnCount }, (_, index) => (
+        sanitizeLineBreaks(String(sourceHeaderB[index] ?? '')).trim() || defaultHeaderB(index)
+      ));
+
+      const sourceLabels = Array.isArray(raw?.rowLabels) ? raw.rowLabels : [];
+      const rowCount = Math.max(DEFAULT_ROW_LABELS.length, sourceLabels.length, sourceMatrix.length);
+      const nextLabels = Array.from({ length: rowCount }, (_, rowIndex) => (
+        sanitizeLineBreaks(String(sourceLabels[rowIndex] ?? '')).trim() || defaultRowLabel(rowIndex)
+      ));
+
+      const nextMatrix = nextLabels.map((_, rowIndex) => (
+        Array.from({ length: dataColumnCount }, (_, colIndex) => (
+          sanitizeLineBreaks(String(sourceMatrix?.[rowIndex]?.[colIndex] ?? '')).trim()
+        ))
+      ));
+
+      return {
+        mainHeader: normalizeMainHeader(raw?.mainHeader ?? DEFAULT_MAIN_HEADER),
+        subHeaderRowA: nextHeaderA,
+        subHeaderRowB: nextHeaderB,
+        rowLabels: nextLabels,
+        matrixData: nextMatrix
+      };
+    }
+
+    function loadState() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(STATE_KEY) || 'null');
+        if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
+          const saved = typeof structuredClone === 'function' ? structuredClone(parsed) : JSON.parse(JSON.stringify(parsed));
+          return normalizeState(saved);
+        }
+      } catch (error) {
+        console.error('Fleet registration state load failed:', error);
+      }
+
+      return normalizeState();
+    }
+
+    function saveState() {
+      try {
+        localStorage.setItem(STATE_KEY, JSON.stringify({
+          mainHeader,
+          subHeaderRowA,
+          subHeaderRowB,
+          rowLabels,
+          matrixData
+        }));
+      } catch (error) {
+        console.error('Fleet registration state save failed:', error);
+        setStatus('Storage limit reached. Changes are not persisted yet.', 'warn');
+      }
+    }
+
+    function showModal({
+      title,
+      message,
+      confirmText = 'Continue',
+      cancelText = '',
+      onConfirm = null,
+      onCancel = null
+    }) {
+      modalTitle.textContent = title;
+      modalMessage.textContent = message;
+      modalConfirmBtn.textContent = confirmText;
+      modalCancelBtn.textContent = cancelText || 'No';
+      modalCancelBtn.classList.toggle('hidden', !cancelText);
+      continueAction = onConfirm;
+      cancelAction = onCancel;
+      modalOverlay.classList.remove('hidden');
+      modalConfirmBtn.focus();
+    }
+
+    function closeModal(runCancel = false) {
+      const pendingCancel = cancelAction;
+      modalOverlay.classList.add('hidden');
+      continueAction = null;
+      cancelAction = null;
+      if (runCancel && typeof pendingCancel === 'function') {
+        pendingCancel();
+      }
+    }
+
+    function renderTable() {
+      const columnCount = subHeaderRowA.length;
+
+      tableTitleBandText.textContent = normalizeMainHeader(mainHeader);
+
+      tableHead.innerHTML = `
+        <tr>
+          <th class="left-head" rowspan="2">Fleet Attribute</th>
+          ${subHeaderRowA.map((label, colIndex) => `<th class="subheader-cell subheader-top editable ${isPairDivider(colIndex) ? 'pair-divider' : ''}" data-header-type="sub-a" data-col-index="${colIndex}" contenteditable="true" spellcheck="false">${escapeHtml(label)}</th>`).join('')}
+          <th class="action-head" rowspan="2" aria-label="Row controls"></th>
+        </tr>
+        <tr>
+          ${subHeaderRowB.map((label, colIndex) => `<th class="subheader-cell subheader-second editable ${isPairDivider(colIndex) ? 'pair-divider' : ''}" data-header-type="sub-b" data-col-index="${colIndex}" contenteditable="true" spellcheck="false">${escapeHtml(label)}</th>`).join('')}
+        </tr>
+      `;
+
+      tableBody.innerHTML = rowLabels.map((label, rowIndex) => `
+        <tr>
+          <th scope="row" class="row-label editable" data-row-label-index="${rowIndex}" contenteditable="true" spellcheck="false">${escapeHtml(label)}</th>
+          ${subHeaderRowA.map((_, colIndex) => `<td class="data-cell editable ${isPairDivider(colIndex) ? 'pair-divider' : ''}" data-row-index="${rowIndex}" data-col-index="${colIndex}" contenteditable="true" spellcheck="false">${escapeHtml(matrixData?.[rowIndex]?.[colIndex] ?? '')}</td>`).join('')}
+          <td class="action-cell"><button type="button" class="secondary-btn row-delete-btn" data-delete-row-index="${rowIndex}">Delete Row</button></td>
+        </tr>
+      `).join('');
+
+      deleteLastColumnBtn.disabled = subHeaderRowA.length <= MIN_DATA_COLUMNS;
+
+      saveState();
+      requestAnimationFrame(syncScrollControls);
+    }
+
+    function commitHeadCell(cell) {
+      const headerType = cell.dataset.headerType;
+      const nextValue = sanitizeLineBreaks(cell.textContent);
+
+      if (headerType === 'main') {
+        const oldValue = mainHeader;
+        mainHeader = normalizeMainHeader(nextValue);
+        if (oldValue !== mainHeader) {
+          setStatus('Main header updated.', 'success');
+        }
+        renderTable();
+        return;
+      }
+
+      const colIndex = Number(cell.dataset.colIndex);
+      if (!Number.isFinite(colIndex) || colIndex < 0 || colIndex >= subHeaderRowA.length) {
+        renderTable();
+        return;
+      }
+
+      if (headerType === 'sub-a') {
+        subHeaderRowA[colIndex] = truncateToMax(isMeaningfullyBlank(nextValue) ? defaultHeaderA(colIndex) : nextValue);
+        setStatus('Subheader row A updated.', 'success');
+      } else if (headerType === 'sub-b') {
+        subHeaderRowB[colIndex] = truncateToMax(isMeaningfullyBlank(nextValue) ? defaultHeaderB(colIndex) : nextValue);
+        setStatus('Subheader row B updated.', 'success');
+      }
+
+      renderTable();
+    }
+
+    function commitRowLabelCell(cell) {
+      const rowIndex = Number(cell.dataset.rowLabelIndex);
+      const oldValue = rowLabels[rowIndex] ?? '';
+      const rawValue = sanitizeLineBreaks(cell.textContent);
+      const nextValue = truncateToMax(isMeaningfullyBlank(rawValue) ? defaultRowLabel(rowIndex) : rawValue);
+      rowLabels[rowIndex] = nextValue;
+      if (oldValue !== nextValue) {
+        setStatus(`Updated row label from "${oldValue || '(blank)'}" to "${nextValue}".`, 'success');
+      }
+      renderTable();
+    }
+
+    function commitDataCell(cell) {
+      const rowIndex = Number(cell.dataset.rowIndex);
+      const colIndex = Number(cell.dataset.colIndex);
+      const oldValue = matrixData?.[rowIndex]?.[colIndex] ?? '';
+      const nextValue = truncateToMax(sanitizeLineBreaks(cell.textContent));
+
+      if (!Array.isArray(matrixData[rowIndex])) {
+        matrixData[rowIndex] = Array(subHeaderRowA.length).fill('');
+      }
+
+      matrixData[rowIndex][colIndex] = nextValue;
+      if (oldValue !== nextValue) {
+        setStatus(`Updated cell R${rowIndex + 1}C${colIndex + 1}.`, 'success');
+      }
+      renderTable();
+    }
+
+    function addRow() {
+      rowLabels.push(defaultRowLabel(rowLabels.length));
+      matrixData.push(Array(subHeaderRowA.length).fill(''));
+      renderTable();
+      setStatus('A new row has been added.', 'success');
+    }
+
+    function addColumn() {
+      const nextIndex = subHeaderRowA.length;
+      subHeaderRowA.push(defaultHeaderA(nextIndex), defaultHeaderA(nextIndex + 1));
+      subHeaderRowB.push(defaultHeaderB(nextIndex), defaultHeaderB(nextIndex + 1));
+      matrixData = rowLabels.map((_, rowIndex) => {
+        const sourceRow = Array.isArray(matrixData[rowIndex]) ? matrixData[rowIndex] : [];
+        return [...sourceRow, '', ''];
+      });
+      renderTable();
+      setStatus('A new column pair has been added.', 'success');
+    }
+
+    function deleteRow(rowIndex) {
+      const removedLabel = rowLabels[rowIndex] || `Row ${rowIndex + 1}`;
+      rowLabels.splice(rowIndex, 1);
+      matrixData.splice(rowIndex, 1);
+      renderTable();
+      setStatus(`${removedLabel} has been deleted.`, 'success');
+    }
+
+    function deleteLastColumn() {
+      if (subHeaderRowA.length <= MIN_DATA_COLUMNS) {
+        setStatus('At least one column pair must remain in the table.', 'error');
+        return;
+      }
+
+      const removedHeaderLeft = subHeaderRowA[subHeaderRowA.length - 2] || `Column ${subHeaderRowA.length - 1}`;
+      const removedHeaderRight = subHeaderRowA[subHeaderRowA.length - 1] || `Column ${subHeaderRowA.length}`;
+      subHeaderRowA.pop();
+      subHeaderRowA.pop();
+      subHeaderRowB.pop();
+      subHeaderRowB.pop();
+      matrixData = matrixData.map((row) => row.slice(0, subHeaderRowA.length));
+      renderTable();
+      setStatus(`Column pair "${removedHeaderLeft}" and "${removedHeaderRight}" has been deleted.`, 'success');
+    }
+
+    function applyConstraintsToCell(cell, options = { fromPaste: false }) {
+      if (!cell || !cell.matches('.editable[contenteditable="true"]')) {
+        return;
+      }
+
+      const rawValue = cell.textContent;
+      const normalized = normalizeCellText(cell, rawValue);
+      if (rawValue !== normalized.value) {
+        setCellText(cell, normalized.value);
+      }
+
+      if (normalized.wasTruncated || normalized.hadLineBreaks || options.fromPaste) {
+        if (normalized.wasTruncated && normalized.hadLineBreaks) {
+          setStatus('Newlines removed and input truncated to 30 characters.', 'warn');
+        } else if (normalized.wasTruncated) {
+          setStatus('Input truncated to 30 characters.', 'warn');
+        } else if (normalized.hadLineBreaks) {
+          setStatus('Newlines removed before saving.', 'warn');
+        }
+      }
+    }
+
+    function wireEvents() {
+      tableTitleBandText.addEventListener('keydown', (event) => {
+        const cell = event.target.closest('.editable[contenteditable="true"]');
+        if (!cell) return;
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          cell.blur();
+        }
+      });
+
+      tableHead.addEventListener('keydown', (event) => {
+        const cell = event.target.closest('.editable[contenteditable="true"]');
+        if (!cell) return;
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          cell.blur();
+        }
+      });
+
+      tableBody.addEventListener('keydown', (event) => {
+        const cell = event.target.closest('.editable[contenteditable="true"]');
+        if (!cell) return;
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          cell.blur();
+        }
+      });
+
+      const onEditableInput = (event) => {
+        const cell = event.target.closest('.editable[contenteditable="true"]');
+        if (!cell) return;
+        applyConstraintsToCell(cell);
+      };
+
+      const onEditablePaste = (event) => {
+        const cell = event.target.closest('.editable[contenteditable="true"]');
+        if (!cell) return;
+        event.preventDefault();
+        const pasted = event.clipboardData?.getData('text') ?? '';
+        const normalized = normalizeCellText(cell, pasted);
+        setCellText(cell, normalized.value);
+        applyConstraintsToCell(cell, { fromPaste: true });
+      };
+
+      tableTitleBandText.addEventListener('input', onEditableInput);
+      tableHead.addEventListener('input', onEditableInput);
+      tableBody.addEventListener('input', onEditableInput);
+      tableTitleBandText.addEventListener('paste', onEditablePaste);
+      tableHead.addEventListener('paste', onEditablePaste);
+      tableBody.addEventListener('paste', onEditablePaste);
+
+      tableTitleBandText.addEventListener('blur', (event) => {
+        const cell = event.target.closest('.editable[contenteditable="true"]');
+        if (!cell) return;
+        applyConstraintsToCell(cell);
+        commitHeadCell(cell);
+      }, true);
+
+      tableHead.addEventListener('blur', (event) => {
+        const cell = event.target.closest('.editable[contenteditable="true"]');
+        if (!cell) return;
+        applyConstraintsToCell(cell);
+        commitHeadCell(cell);
+      }, true);
+
+      tableBody.addEventListener('blur', (event) => {
+        const rowLabelCell = event.target.closest('.row-label[contenteditable="true"]');
+        if (rowLabelCell) {
+          applyConstraintsToCell(rowLabelCell);
+          commitRowLabelCell(rowLabelCell);
+          return;
+        }
+
+        const dataCell = event.target.closest('.data-cell[contenteditable="true"]');
+        if (dataCell) {
+          applyConstraintsToCell(dataCell);
+          commitDataCell(dataCell);
+        }
+      }, true);
+
+      tableBody.addEventListener('click', (event) => {
+        const deleteButton = event.target.closest('.row-delete-btn');
+        if (!deleteButton) return;
+
+        const rowIndex = Number(deleteButton.dataset.deleteRowIndex);
+        showModal({
+          title: 'Alert',
+          message: 'Are you sure you want to delete this row?',
+          confirmText: 'Yes',
+          cancelText: 'No',
+          onConfirm: () => deleteRow(rowIndex)
+        });
+      });
+
+      addRowBtn.addEventListener('click', () => {
+        showModal({
+          title: 'Alert',
+          message: 'Are you sure you want to Add a Row?',
+          confirmText: 'Yes',
+          cancelText: 'No',
+          onConfirm: addRow
+        });
+      });
+
+      addColumnBtn.addEventListener('click', () => {
+        showModal({
+          title: 'Alert',
+          message: 'Are you sure you want to Add a Column Pair?',
+          confirmText: 'Yes',
+          cancelText: 'No',
+          onConfirm: addColumn
+        });
+      });
+
+      deleteLastColumnBtn.addEventListener('click', () => {
+        showModal({
+          title: 'Alert',
+          message: 'Are you sure you want to delete the last column pair on the right side of the table?',
+          confirmText: 'Yes',
+          cancelText: 'No',
+          onConfirm: deleteLastColumn
+        });
+      });
+
+      tableViewport.addEventListener('scroll', syncScrollControls);
+
+      horizontalScroll.addEventListener('input', (event) => {
+        tableViewport.scrollLeft = Number(event.target.value);
+      });
+
+      verticalScroll.addEventListener('input', (event) => {
+        tableViewport.scrollTop = Number(event.target.value);
+      });
+
+      scrollLeftBtn.addEventListener('click', () => {
+        tableViewport.scrollBy({ left: -180, behavior: 'smooth' });
+      });
+
+      scrollRightBtn.addEventListener('click', () => {
+        tableViewport.scrollBy({ left: 180, behavior: 'smooth' });
+      });
+
+      scrollUpBtn.addEventListener('click', () => {
+        tableViewport.scrollBy({ top: -120, behavior: 'smooth' });
+      });
+
+      scrollDownBtn.addEventListener('click', () => {
+        tableViewport.scrollBy({ top: 120, behavior: 'smooth' });
+      });
+
+      window.addEventListener('resize', syncScrollControls);
+
+      modalConfirmBtn.addEventListener('click', () => {
+        const nextAction = continueAction;
+        closeModal();
+        if (typeof nextAction === 'function') {
+          nextAction();
+        }
+      });
+
+      modalCancelBtn.addEventListener('click', () => {
+        closeModal(true);
+      });
+
+      modalOverlay.addEventListener('click', (event) => {
+        if (event.target === modalOverlay) {
+          closeModal(true);
+        }
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !modalOverlay.classList.contains('hidden')) {
+          closeModal(true);
+        }
+      });
+    }
+
+    function initFleetRegistration() {
+      const state = loadState();
+      mainHeader = state.mainHeader;
+      subHeaderRowA = state.subHeaderRowA;
+      subHeaderRowB = state.subHeaderRowB;
+      rowLabels = state.rowLabels;
+      matrixData = state.matrixData;
+
+      todayBadge.textContent = `Date: ${formatBadgeDate(new Date())}`;
+      renderTable();
+      wireEvents();
+      setStatus('Fleet table loaded with paired-column baseline and 3 header rows.', 'success');
+    }
+
     startDockPilotPageGuard({
       supabase,
       landingPage: './DockPilot_landing.html'
+    }).then(() => {
+      initFleetRegistration();
     }).catch((error) => {
       console.error('DockPilot guard startup failed:', error);
       window.location.href = './DockPilot_landing.html';

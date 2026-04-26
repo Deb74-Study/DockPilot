@@ -6,7 +6,7 @@ Refactor fpadev DockPilot from single-tenant credential management to client-awa
 1. Phase 1 - Baseline and safety gates (blocks all later phases)
 1. Confirm Supabase project access, snapshot current schema, and capture current credentials row count before destructive actions.
 2. Confirm purge scope: delete all existing rows from public.credentials before onboarding company-linked records.
-3. Create rollback SQL/export checkpoint for credentials table data and structure.
+3. Create rollback SQL/export checkpoint for credentials table data and structure
 1. Phase 2 - Data model for clients and tenant-scoped credentials (depends on Phase 1)
 1. Create new companies table (UUID primary key, name, contact/admin fields, registration metadata, TBA1, TBA2, timestamps).
 2. Extend credentials with company_id UUID FK to companies and create tenant-safe indexes, including uniqueness on (company_id, login_name).

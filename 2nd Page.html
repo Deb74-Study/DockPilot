@@ -168,6 +168,40 @@
       color: var(--text);
     }
 
+    .btn:hover,
+    .btn:focus-visible {
+      transform: translateY(-2px);
+      border-color: rgba(103,214,255,.60);
+      background: linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72));
+      color: #eef4ff;
+    }
+
+    .return-link {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      color: #06263a;
+      background: var(--accent);
+      padding: 10px 14px;
+      border-radius: 10px;
+      font-weight: 700;
+      border: 1px solid transparent;
+    }
+
+    .return-link:focus-visible {
+      outline: 2px solid rgba(103,214,255,.5);
+      outline-offset: 2px;
+    }
+
+    .return-link:hover,
+    .return-link:focus-visible {
+      transform: translateY(-2px);
+      border-color: rgba(103,214,255,.60);
+      background: linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72));
+      color: #eef4ff;
+    }
+
     .highlights {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
@@ -382,6 +416,7 @@
     <footer>
       <span>Built for laptop and desktop screens</span>
       <span>Landscape-first responsive front page</span>
+      <a class="return-link" href="./Frontpage.html">Return to Frontpage</a>
     </footer>
   </section>
 

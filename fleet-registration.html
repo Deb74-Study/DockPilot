@@ -69,6 +69,7 @@
     .header-panel {
       display: grid;
       gap: 8px;
+      position: relative;
     }
 
     .table-panel {
@@ -79,15 +80,22 @@
 
     .toolbar-row {
       display: flex;
-      align-items: center;
+      align-items: flex-start;
       justify-content: space-between;
       gap: 10px;
       flex-wrap: wrap;
     }
 
+    .toolbar-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
     .tag {
       display: inline-flex;
-      width: fit-content;
+      width: 158px;
       padding: 5px 10px;
       border-radius: 999px;
       color: var(--accent);
@@ -127,9 +135,15 @@
       text-decoration: none;
     }
 
-    .return-link,
+    .return-link {
+      width: 168px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+    }
+
     .secondary-btn {
-      width: fit-content;
+      width: 158px;
       color: var(--text);
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid var(--line);
@@ -149,6 +163,21 @@
     button:focus-visible {
       outline: 2px solid rgba(103,214,255,.5);
       outline-offset: 2px;
+    }
+
+    .return-link:hover,
+    .return-link:focus-visible,
+    .secondary-btn:hover,
+    .secondary-btn:focus-visible {
+      transform: translateY(-2px);
+      border-color: rgba(103,214,255,.60);
+      background: linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72));
+    }
+
+    .primary-btn:hover,
+    .primary-btn:focus-visible {
+      transform: translateY(-2px);
+      filter: brightness(1.1);
     }
 
     .status-note {
@@ -208,6 +237,7 @@
       font-size: 0.9rem;
       min-width: 130px;
       height: 32px;
+      vertical-align: middle;
       white-space: nowrap;
     }
 
@@ -275,16 +305,15 @@
       position: sticky;
       left: 0;
       z-index: 8;
-      width: 260px;
-      min-width: 260px;
-      text-align: left;
+      width: 156px;
+      min-width: 156px;
+      text-align: center;
       background: var(--badge-fill);
       color: var(--accent);
       border-right: 2px dashed rgba(11, 36, 80, 0.85);
     }
 
     .row-label {
-      vertical-align: top;
       font-weight: 700;
     }
 
@@ -305,12 +334,19 @@
     .action-cell {
       position: sticky;
       right: 0;
-      z-index: 7;
       width: 188px;
       min-width: 188px;
       text-align: center;
       color: var(--text);
       background: var(--panel);
+    }
+
+    .action-head {
+      z-index: 7;
+    }
+
+    .action-cell {
+      z-index: 3;
     }
 
     .action-head {
@@ -351,8 +387,11 @@
     }
 
     .scroll-arrow {
-      min-width: 40px;
-      padding: 8px 10px;
+      width: 36px;
+      min-width: 36px;
+      height: 36px;
+      padding: 0 !important;
+      flex-shrink: 0;
     }
 
     .horizontal-range {
@@ -372,7 +411,7 @@
     .horizontal-range::-webkit-slider-thumb {
       -webkit-appearance: none;
       appearance: none;
-      width: 96px;
+      width: var(--thumb-width, 96px);
       height: 16px;
       margin-top: -5px;
       border-radius: 999px;
@@ -381,52 +420,94 @@
       cursor: pointer;
     }
 
-    .vertical-scroll-controls {
+    .more-actions-dropdown {
       position: absolute;
-      top: calc((2 * var(--subheader-row-height)) + 8px);
-      right: 10px;
-      bottom: 10px;
-      width: 40px;
+      top: calc(36px + 2px + 20px);
+      right: 16px;
       display: flex;
-      flex-direction: column;
+      width: 168px;
+      z-index: 10;
+    }
+
+    .more-actions-dropdown.collapsed {
+      flex-direction: row;
       align-items: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 2px;
+      height: 36px;
+      justify-content: center;
+      align-items: center;
+    }
+
+    .more-actions-dropdown:not(.collapsed) {
+      flex-direction: column;
       gap: 8px;
-      z-index: 12;
-      pointer-events: none;
+      background: rgba(11, 24, 45, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 8px;
+      width: 168px;
     }
 
-    .vertical-scroll-controls button,
-    .vertical-scroll-controls input {
-      pointer-events: auto;
-    }
-
-    .vertical-range {
-      flex: 1;
-      min-height: 160px;
-      width: 18px;
-      writing-mode: bt-lr;
-      -webkit-appearance: slider-vertical;
-      appearance: slider-vertical;
-      background: transparent;
-    }
-
-    .vertical-range::-webkit-slider-runnable-track {
-      width: 6px;
-      border-radius: 999px;
-      background: rgba(9, 48, 70, 0.18);
-    }
-
-    .vertical-range::-webkit-slider-thumb {
-      -webkit-appearance: none;
-      appearance: none;
-      width: 16px;
-      height: 44px;
-      border-radius: 999px;
-      border: 1px solid rgba(7, 17, 31, 0.18);
-      background: linear-gradient(180deg, #67d6ff, #72f1cb);
+    .more-actions-toggle {
+      padding: 9px 13px !important;
+      border-radius: 12px !important;
+      font-size: 0.86rem !important;
+      font-weight: 700 !important;
+      background: transparent !important;
+      border: 1px solid transparent !important;
+      color: var(--text) !important;
       cursor: pointer;
+      flex-shrink: 0;
     }
 
+    .more-actions-toggle:hover {
+      transform: translateY(-2px);
+      text-decoration: underline;
+    }
+
+    .more-actions-dropdown:not(.collapsed) .more-actions-toggle {
+      align-self: stretch;
+      padding: 9px 13px !important;
+      width: auto;
+      min-width: 0;
+    }
+
+    .more-actions-buttons {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .more-actions-dropdown:not(.collapsed) .more-actions-buttons {
+      display: flex;
+    }
+
+    .more-actions-dropdown button {
+      width: 100%;
+      justify-content: center;
+      text-align: center;
+      background: rgba(103, 214, 255, 0.12);
+      border: 1px solid rgba(103, 214, 255, 0.24);
+      color: var(--accent);
+    }
+
+    .more-actions-dropdown button:not(.more-actions-toggle):hover {
+      background: rgba(103, 214, 255, 0.24);
+      border-color: rgba(103, 214, 255, 0.5);
+      color: var(--accent);
+    }
+
+    .more-actions-dropdown:not(.collapsed) button {
+      width: 100%;
+    }
+
+    .more-actions-dropdown button:not(.more-actions-toggle):hover {
+      background: rgba(103, 214, 255, 0.24);
+      border-color: rgba(103, 214, 255, 0.5);
+    }
     .hidden {
       display: none !important;
     }
@@ -434,49 +515,61 @@
     .modal-overlay {
       position: fixed;
       inset: 0;
-      display: grid;
-      place-items: center;
-      background: rgba(3, 9, 18, 0.72);
       z-index: 1000;
-      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
     }
 
     .modal-card {
-      width: min(420px, 100%);
-      background: #ffffff;
-      color: #0f2244;
+      background: rgba(11, 24, 45, 0.97);
+      border: 1px solid rgba(255, 255, 255, 0.14);
       border-radius: 18px;
-      padding: 20px;
-      box-shadow: 0 20px 45px rgba(0, 0, 0, 0.35);
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.55);
+      padding: 28px 32px 24px;
+      min-width: 320px;
+      max-width: 480px;
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
     }
 
     .modal-card h2 {
-      margin: 0 0 10px;
-      font-size: 1.2rem;
+      margin: 0;
+      font-size: 1.1rem;
+      color: var(--text);
     }
 
     .modal-card p {
       margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
       line-height: 1.5;
-      color: #27436d;
-      font-size: 0.95rem;
     }
 
     .modal-actions {
       display: flex;
       justify-content: flex-end;
-      gap: 5px;
-      margin-top: 16px;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      min-width: 90px;
     }
 
     .modal-card .secondary-btn {
-      color: #0f2244;
-      background: rgba(9, 48, 70, 0.12);
-      border: 1px solid rgba(9, 48, 70, 0.28);
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
     }
 
     .modal-card .secondary-btn:hover {
-      background: rgba(9, 48, 70, 0.18);
+      background: rgba(255, 255, 255, 0.1);
     }
 
     @media (max-width: 900px) {
@@ -496,8 +589,8 @@
 
       .left-head,
       .row-label {
-        min-width: 220px;
-        width: 220px;
+        min-width: 132px;
+        width: 132px;
       }
 
       .header-main-shell {
@@ -517,7 +610,20 @@
     <section class="panel header-panel">
       <div class="toolbar-row">
         <span id="todayBadge" class="tag">Date:</span>
-        <a class="return-link" href="./Frontpage.html">Return to Frontpage</a>
+        <div class="toolbar-actions">
+          <button id="loadFleetBtn" type="button" class="secondary-btn">Load Fleet</button>
+          <button id="saveFleetBtn" type="button" class="secondary-btn">Save Fleet</button>
+          <a class="return-link" href="./Frontpage.html">Return to Frontpage</a>
+        </div>
+      </div>
+
+      <div id="moreActionsDropdown" class="more-actions-dropdown collapsed">
+        <button id="moreActionsToggle" type="button" class="secondary-btn more-actions-toggle">See More</button>
+        <div class="more-actions-buttons">
+          <button id="modifyFleetBtn" type="button" class="secondary-btn">Modify Fleet</button>
+          <button id="launchProjectBtn" type="button" class="secondary-btn">Launch Project</button>
+          <button id="editProjectBtn" type="button" class="secondary-btn">Edit Project</button>
+        </div>
       </div>
 
       <div>
@@ -538,12 +644,6 @@
           <thead id="tableHead"></thead>
           <tbody id="tableBody"></tbody>
         </table>
-
-        <div class="vertical-scroll-controls" aria-label="Vertical scroll controls">
-          <button id="scrollUpBtn" type="button" class="secondary-btn scroll-arrow" aria-label="Scroll up">▲</button>
-          <input id="verticalScroll" class="vertical-range" type="range" min="0" max="0" value="0" step="1" />
-          <button id="scrollDownBtn" type="button" class="secondary-btn scroll-arrow" aria-label="Scroll down">▼</button>
-        </div>
       </div>
 
       <div class="horizontal-scroll-controls" aria-label="Horizontal scroll controls">
@@ -571,6 +671,8 @@
     </div>
   </div>
 
+  <input id="fleetFileInput" type="file" accept="application/json,.json" class="hidden" />
+
   <script type="module">
     import { supabase } from './supabaseClient.js';
     import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
@@ -595,14 +697,19 @@
     const tableHead = document.getElementById('tableHead');
     const tableBody = document.getElementById('tableBody');
     const horizontalScroll = document.getElementById('horizontalScroll');
-    const verticalScroll = document.getElementById('verticalScroll');
     const scrollLeftBtn = document.getElementById('scrollLeftBtn');
     const scrollRightBtn = document.getElementById('scrollRightBtn');
-    const scrollUpBtn = document.getElementById('scrollUpBtn');
-    const scrollDownBtn = document.getElementById('scrollDownBtn');
     const addRowBtn = document.getElementById('addRowBtn');
     const addColumnBtn = document.getElementById('addColumnBtn');
     const deleteLastColumnBtn = document.getElementById('deleteLastColumnBtn');
+    const loadFleetBtn = document.getElementById('loadFleetBtn');
+    const saveFleetBtn = document.getElementById('saveFleetBtn');
+    const moreActionsDropdown = document.getElementById('moreActionsDropdown');
+    const moreActionsToggle = document.getElementById('moreActionsToggle');
+    const modifyFleetBtn = document.getElementById('modifyFleetBtn');
+    const launchProjectBtn = document.getElementById('launchProjectBtn');
+    const editProjectBtn = document.getElementById('editProjectBtn');
+    const fleetFileInput = document.getElementById('fleetFileInput');
 
     const modalOverlay = document.getElementById('modalOverlay');
     const modalTitle = document.getElementById('modalTitle');
@@ -611,6 +718,11 @@
     const modalCancelBtn = document.getElementById('modalCancelBtn');
 
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const FLEET_FILE_NAME = 'default_fleet_dist.json';
+    const FLEET_HANDLE_DB = 'dockpilot-fleet-file-handle-db';
+    const FLEET_HANDLE_STORE = 'handles';
+    const FLEET_HANDLE_KEY = 'default-fleet-handle';
+    const INACTIVITY_AUTOSAVE_MS = 5 * 60 * 1000;
 
     let mainHeader = DEFAULT_MAIN_HEADER;
     let subHeaderRowA = [...DEFAULT_SUBHEADER_ROW_A];
@@ -619,6 +731,8 @@
     let matrixData = [];
     let continueAction = null;
     let cancelAction = null;
+    let fleetFileHandle = null;
+    let inactivityTimer = null;
 
     function formatBadgeDate(date) {
       const day = String(date.getDate()).padStart(2, '0');
@@ -661,6 +775,10 @@
 
     function defaultRowLabel(rowIndex) {
       return `Vessel ${rowIndex + 1}`;
+    }
+
+    function normalizeRowLabelsToSequence(labels = rowLabels) {
+      return labels.map((_, index) => defaultRowLabel(index));
     }
 
     function isPairDivider(colIndex) {
@@ -707,39 +825,34 @@
 
     function syncScrollControls() {
       const maxScrollLeft = Math.max(0, tableViewport.scrollWidth - tableViewport.clientWidth);
-      const maxScrollTop = Math.max(0, tableViewport.scrollHeight - tableViewport.clientHeight);
 
       horizontalScroll.max = String(maxScrollLeft);
       horizontalScroll.value = String(Math.min(maxScrollLeft, Math.round(tableViewport.scrollLeft)));
-      verticalScroll.max = String(maxScrollTop);
-      verticalScroll.value = String(Math.min(maxScrollTop, Math.round(tableViewport.scrollTop)));
 
       const atLeftStart = tableViewport.scrollLeft <= 1;
       const atLeftEnd = tableViewport.scrollLeft >= (maxScrollLeft - 1);
-      const atTopStart = tableViewport.scrollTop <= 1;
-      const atTopEnd = tableViewport.scrollTop >= (maxScrollTop - 1);
 
       scrollLeftBtn.disabled = atLeftStart;
       scrollRightBtn.disabled = atLeftEnd;
-      scrollUpBtn.disabled = atTopStart;
-      scrollDownBtn.disabled = atTopEnd;
       horizontalScroll.disabled = maxScrollLeft === 0;
-      verticalScroll.disabled = maxScrollTop === 0;
+
+      const thumbRatio = tableViewport.scrollWidth > 0 ? tableViewport.clientWidth / tableViewport.scrollWidth : 1;
+      const thumbPx = Math.max(24, Math.round(thumbRatio * horizontalScroll.offsetWidth));
+      horizontalScroll.style.setProperty('--thumb-width', `${thumbPx}px`);
 
       const firstStickyRow = tableHead.querySelector('tr');
       if (firstStickyRow) {
         const firstRowHeight = Math.round(firstStickyRow.getBoundingClientRect().height) || 45;
         tableViewport.style.setProperty('--subheader-row-height', `${firstRowHeight}px`);
       }
-      const stickyHeaderHeight = tableHead.getBoundingClientRect().height;
-      verticalScroll.parentElement.style.top = `${stickyHeaderHeight + 8}px`;
     }
 
     function makeDefaultMatrix(labels = rowLabels, columns = subHeaderRowA.length) {
       return labels.map(() => Array(columns).fill(''));
     }
 
-    function normalizeState(raw = {}) {
+    function normalizeState(raw = {}, options = { useDefaultRowFloor: true }) {
+      const useDefaultRowFloor = options?.useDefaultRowFloor !== false;
       const sourceHeaderA = Array.isArray(raw?.subHeaderRowA) ? raw.subHeaderRowA : [];
       const sourceHeaderB = Array.isArray(raw?.subHeaderRowB) ? raw.subHeaderRowB : [];
       const sourceMatrix = Array.isArray(raw?.matrixData) ? raw.matrixData : [];
@@ -765,7 +878,8 @@
       ));
 
       const sourceLabels = Array.isArray(raw?.rowLabels) ? raw.rowLabels : [];
-      const rowCount = Math.max(DEFAULT_ROW_LABELS.length, sourceLabels.length, sourceMatrix.length);
+      const minimumRowCount = useDefaultRowFloor ? DEFAULT_ROW_LABELS.length : 0;
+      const rowCount = Math.max(minimumRowCount, sourceLabels.length, sourceMatrix.length);
       const nextLabels = Array.from({ length: rowCount }, (_, rowIndex) => (
         sanitizeLineBreaks(String(sourceLabels[rowIndex] ?? '')).trim() || defaultRowLabel(rowIndex)
       ));
@@ -780,9 +894,157 @@
         mainHeader: normalizeMainHeader(raw?.mainHeader ?? DEFAULT_MAIN_HEADER),
         subHeaderRowA: nextHeaderA,
         subHeaderRowB: nextHeaderB,
-        rowLabels: nextLabels,
+        rowLabels: normalizeRowLabelsToSequence(nextLabels),
         matrixData: nextMatrix
       };
+    }
+
+    function getFleetPayload() {
+      return {
+        mainHeader,
+        subHeaderRowA,
+        subHeaderRowB,
+        rowLabels: normalizeRowLabelsToSequence(rowLabels),
+        matrixData
+      };
+    }
+
+    function supportsFileHandlePersistence() {
+      return typeof indexedDB !== 'undefined' && 'showSaveFilePicker' in window;
+    }
+
+    function openFleetHandleDb() {
+      return new Promise((resolve, reject) => {
+        const request = indexedDB.open(FLEET_HANDLE_DB, 1);
+        request.onupgradeneeded = () => {
+          const db = request.result;
+          if (!db.objectStoreNames.contains(FLEET_HANDLE_STORE)) {
+            db.createObjectStore(FLEET_HANDLE_STORE);
+          }
+        };
+        request.onsuccess = () => resolve(request.result);
+        request.onerror = () => reject(request.error);
+      });
+    }
+
+    async function persistFleetFileHandle(handle) {
+      if (!supportsFileHandlePersistence() || !handle) return;
+      try {
+        const db = await openFleetHandleDb();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(FLEET_HANDLE_STORE, 'readwrite');
+          tx.objectStore(FLEET_HANDLE_STORE).put(handle, FLEET_HANDLE_KEY);
+          tx.oncomplete = () => resolve();
+          tx.onerror = () => reject(tx.error);
+        });
+        db.close();
+      } catch (error) {
+        console.error('Persist fleet file handle failed:', error);
+      }
+    }
+
+    async function restoreFleetFileHandle() {
+      if (!supportsFileHandlePersistence()) return null;
+      try {
+        const db = await openFleetHandleDb();
+        const handle = await new Promise((resolve, reject) => {
+          const tx = db.transaction(FLEET_HANDLE_STORE, 'readonly');
+          const request = tx.objectStore(FLEET_HANDLE_STORE).get(FLEET_HANDLE_KEY);
+          request.onsuccess = () => resolve(request.result || null);
+          request.onerror = () => reject(request.error);
+        });
+        db.close();
+        return handle;
+      } catch (error) {
+        console.error('Restore fleet file handle failed:', error);
+        return null;
+      }
+    }
+
+    async function hasWritePermission(handle, request = false) {
+      if (!handle || typeof handle.queryPermission !== 'function') {
+        return false;
+      }
+      try {
+        const query = await handle.queryPermission({ mode: 'readwrite' });
+        if (query === 'granted') return true;
+        if (!request || typeof handle.requestPermission !== 'function') return false;
+        const requested = await handle.requestPermission({ mode: 'readwrite' });
+        return requested === 'granted';
+      } catch (error) {
+        console.error('Write permission check failed:', error);
+        return false;
+      }
+    }
+
+    async function writeFleetJsonToHandle(handle, showSuccessStatus = false) {
+      if (!handle) return false;
+      try {
+        const writable = await handle.createWritable();
+        await writable.write(JSON.stringify(getFleetPayload(), null, 2));
+        await writable.close();
+        if (showSuccessStatus) {
+          setStatus(`Fleet distribution saved as ${FLEET_FILE_NAME}.`, 'success');
+        }
+        return true;
+      } catch (error) {
+        console.error('Write fleet JSON to handle failed:', error);
+        return false;
+      }
+    }
+
+    async function silentAutoSaveFleetFile() {
+      if (!fleetFileHandle) return;
+      const granted = await hasWritePermission(fleetFileHandle, false);
+      if (!granted) return;
+      await writeFleetJsonToHandle(fleetFileHandle, false);
+    }
+
+    function queueAutoSave() {
+      saveState();
+      void silentAutoSaveFleetFile();
+    }
+
+    function resetInactivityAutosaveTimer() {
+      if (inactivityTimer) {
+        window.clearTimeout(inactivityTimer);
+      }
+      inactivityTimer = window.setTimeout(() => {
+        queueAutoSave();
+      }, INACTIVITY_AUTOSAVE_MS);
+    }
+
+    function wireAutoSaveEvents() {
+      const activityEvents = ['click', 'keydown', 'input', 'scroll', 'pointerdown', 'touchstart'];
+      activityEvents.forEach((eventName) => {
+        document.addEventListener(eventName, resetInactivityAutosaveTimer, { passive: true });
+      });
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'hidden') {
+          queueAutoSave();
+        }
+      });
+
+      window.addEventListener('pagehide', () => {
+        queueAutoSave();
+      });
+
+      window.addEventListener('beforeunload', () => {
+        queueAutoSave();
+      });
+
+      resetInactivityAutosaveTimer();
+    }
+
+    function isValidFleetPayload(rawData) {
+      if (!rawData || typeof rawData !== 'object' || Array.isArray(rawData)) {
+        return false;
+      }
+      return Array.isArray(rawData.subHeaderRowA)
+        && Array.isArray(rawData.subHeaderRowB)
+        && Array.isArray(rawData.rowLabels)
+        && Array.isArray(rawData.matrixData);
     }
 
     function loadState() {
@@ -801,17 +1063,102 @@
 
     function saveState() {
       try {
-        localStorage.setItem(STATE_KEY, JSON.stringify({
-          mainHeader,
-          subHeaderRowA,
-          subHeaderRowB,
-          rowLabels,
-          matrixData
-        }));
+        localStorage.setItem(STATE_KEY, JSON.stringify(getFleetPayload()));
       } catch (error) {
         console.error('Fleet registration state save failed:', error);
         setStatus('Storage limit reached. Changes are not persisted yet.', 'warn');
       }
+    }
+
+    function showDefaultFileMissingError() {
+      showModal({
+        title: 'Error',
+        message: 'The file "default_fleet_dist.json" was not found in the working folder. Either locate and transfer the file in the working folder, or re-populate the Fleet Data!',
+        confirmText: 'Continue'
+      });
+    }
+
+    async function saveFleetToJsonFile() {
+      try {
+        if ('showSaveFilePicker' in window) {
+          let handle = fleetFileHandle;
+          const hasExistingAccess = await hasWritePermission(handle, false);
+          if (!hasExistingAccess) {
+            handle = await window.showSaveFilePicker({
+              suggestedName: FLEET_FILE_NAME,
+              types: [{
+                description: 'JSON Files',
+                accept: { 'application/json': ['.json'] }
+              }]
+            });
+
+            if (!handle || handle.name !== FLEET_FILE_NAME) {
+              showDefaultFileMissingError();
+              return;
+            }
+
+            const granted = await hasWritePermission(handle, true);
+            if (!granted) return;
+
+            fleetFileHandle = handle;
+            await persistFleetFileHandle(handle);
+          }
+
+          await writeFleetJsonToHandle(fleetFileHandle, true);
+        } else {
+          const payload = JSON.stringify(getFleetPayload(), null, 2);
+          const blob = new Blob([payload], { type: 'application/json' });
+          const url = URL.createObjectURL(blob);
+          const link = document.createElement('a');
+          link.href = url;
+          link.download = FLEET_FILE_NAME;
+          document.body.appendChild(link);
+          link.click();
+          link.remove();
+          URL.revokeObjectURL(url);
+          setStatus(`Fleet distribution saved as ${FLEET_FILE_NAME}.`, 'success');
+        }
+      } catch (error) {
+        console.error('Save fleet file failed:', error);
+      }
+    }
+
+    function applyLoadedFleet(rawData) {
+      if (!isValidFleetPayload(rawData)) {
+        showDefaultFileMissingError();
+        return;
+      }
+
+      const loaded = normalizeState(rawData, { useDefaultRowFloor: false });
+      mainHeader = loaded.mainHeader;
+      subHeaderRowA = loaded.subHeaderRowA;
+      subHeaderRowB = loaded.subHeaderRowB;
+      rowLabels = normalizeRowLabelsToSequence(loaded.rowLabels);
+      matrixData = loaded.matrixData;
+      renderTable();
+      setStatus(`Loaded fleet distribution from ${FLEET_FILE_NAME}.`, 'success');
+    }
+
+    function loadFleetFromSelectedFile(file) {
+      if (!file || file.name !== FLEET_FILE_NAME) {
+        showDefaultFileMissingError();
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = () => {
+        try {
+          const parsed = JSON.parse(String(reader.result ?? '{}'));
+          applyLoadedFleet(parsed);
+        } catch (error) {
+          console.error('Parse fleet file failed:', error);
+          showDefaultFileMissingError();
+        }
+      };
+      reader.onerror = () => {
+        showDefaultFileMissingError();
+      };
+      reader.readAsText(file);
     }
 
     function showModal({
@@ -845,6 +1192,7 @@
 
     function renderTable() {
       const columnCount = subHeaderRowA.length;
+      rowLabels = normalizeRowLabelsToSequence(rowLabels);
 
       tableTitleBandText.textContent = normalizeMainHeader(mainHeader);
 
@@ -861,7 +1209,7 @@
 
       tableBody.innerHTML = rowLabels.map((label, rowIndex) => `
         <tr>
-          <th scope="row" class="row-label editable" data-row-label-index="${rowIndex}" contenteditable="true" spellcheck="false">${escapeHtml(label)}</th>
+          <th scope="row" class="row-label" data-row-label-index="${rowIndex}" contenteditable="false" spellcheck="false">${escapeHtml(label)}</th>
           ${subHeaderRowA.map((_, colIndex) => `<td class="data-cell editable ${isPairDivider(colIndex) ? 'pair-divider' : ''}" data-row-index="${rowIndex}" data-col-index="${colIndex}" contenteditable="true" spellcheck="false">${escapeHtml(matrixData?.[rowIndex]?.[colIndex] ?? '')}</td>`).join('')}
           <td class="action-cell"><button type="button" class="secondary-btn row-delete-btn" data-delete-row-index="${rowIndex}">Delete Row</button></td>
         </tr>
@@ -901,18 +1249,6 @@
         setStatus('Subheader row B updated.', 'success');
       }
 
-      renderTable();
-    }
-
-    function commitRowLabelCell(cell) {
-      const rowIndex = Number(cell.dataset.rowLabelIndex);
-      const oldValue = rowLabels[rowIndex] ?? '';
-      const rawValue = sanitizeLineBreaks(cell.textContent);
-      const nextValue = truncateToMax(isMeaningfullyBlank(rawValue) ? defaultRowLabel(rowIndex) : rawValue);
-      rowLabels[rowIndex] = nextValue;
-      if (oldValue !== nextValue) {
-        setStatus(`Updated row label from "${oldValue || '(blank)'}" to "${nextValue}".`, 'success');
-      }
       renderTable();
     }
 
@@ -1065,13 +1401,6 @@
       }, true);
 
       tableBody.addEventListener('blur', (event) => {
-        const rowLabelCell = event.target.closest('.row-label[contenteditable="true"]');
-        if (rowLabelCell) {
-          applyConstraintsToCell(rowLabelCell);
-          commitRowLabelCell(rowLabelCell);
-          return;
-        }
-
         const dataCell = event.target.closest('.data-cell[contenteditable="true"]');
         if (dataCell) {
           applyConstraintsToCell(dataCell);
@@ -1123,14 +1452,42 @@
         });
       });
 
+      saveFleetBtn.addEventListener('click', () => {
+        showModal({
+          title: 'Alert',
+          message: 'Do you want to save the existing Fleet Distribution?',
+          confirmText: 'Yes',
+          cancelText: 'No',
+          onConfirm: saveFleetToJsonFile
+        });
+      });
+
+      loadFleetBtn.addEventListener('click', () => {
+        showModal({
+          title: 'Alert',
+          message: 'Do you want to load the previously saved Fleet Distribution?',
+          confirmText: 'Yes',
+          cancelText: 'No',
+          onConfirm: () => {
+            fleetFileInput.value = '';
+            fleetFileInput.click();
+          }
+        });
+      });
+
+      fleetFileInput.addEventListener('change', () => {
+        const selectedFile = fleetFileInput.files?.[0];
+        if (!selectedFile) {
+          showDefaultFileMissingError();
+          return;
+        }
+        loadFleetFromSelectedFile(selectedFile);
+      });
+
       tableViewport.addEventListener('scroll', syncScrollControls);
 
       horizontalScroll.addEventListener('input', (event) => {
         tableViewport.scrollLeft = Number(event.target.value);
-      });
-
-      verticalScroll.addEventListener('input', (event) => {
-        tableViewport.scrollTop = Number(event.target.value);
       });
 
       scrollLeftBtn.addEventListener('click', () => {
@@ -1141,12 +1498,30 @@
         tableViewport.scrollBy({ left: 180, behavior: 'smooth' });
       });
 
-      scrollUpBtn.addEventListener('click', () => {
-        tableViewport.scrollBy({ top: -120, behavior: 'smooth' });
+      function toggleMoreActions() {
+        moreActionsDropdown.classList.toggle('collapsed');
+        moreActionsToggle.textContent = moreActionsDropdown.classList.contains('collapsed') ? 'See More' : 'See Less';
+      }
+
+      moreActionsToggle.addEventListener('click', toggleMoreActions);
+
+      modifyFleetBtn.addEventListener('click', () => {
+        window.location.href = './fleet-composition.html';
       });
 
-      scrollDownBtn.addEventListener('click', () => {
-        tableViewport.scrollBy({ top: 120, behavior: 'smooth' });
+      launchProjectBtn.addEventListener('click', () => {
+        window.location.href = './dry-docking-project.html';
+      });
+
+      editProjectBtn.addEventListener('click', () => {
+        window.location.href = './running-dd-project.html';
+      });
+
+      document.addEventListener('click', (event) => {
+        if (!moreActionsDropdown.contains(event.target) && !moreActionsDropdown.classList.contains('collapsed')) {
+          moreActionsDropdown.classList.add('collapsed');
+          moreActionsToggle.textContent = 'See More';
+        }
       });
 
       window.addEventListener('resize', syncScrollControls);
@@ -1184,9 +1559,16 @@
       rowLabels = state.rowLabels;
       matrixData = state.matrixData;
 
+      void restoreFleetFileHandle().then((handle) => {
+        if (handle && handle.name === FLEET_FILE_NAME) {
+          fleetFileHandle = handle;
+        }
+      });
+
       todayBadge.textContent = `Date: ${formatBadgeDate(new Date())}`;
       renderTable();
       wireEvents();
+      wireAutoSaveEvents();
       setStatus('Fleet table loaded with paired-column baseline and 3 header rows.', 'success');
     }
 

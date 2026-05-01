@@ -3,14 +3,18 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Running DD Project | DockPilot</title>
+  <title>DockPilot | Docking Software</title>
   <style>
     :root {
+      --landscape-ratio: 1.58;
       --edge-padding: clamp(12px, 1.6vw, 22px);
+      --panel: rgba(9, 16, 32, 0.82);
+      --panel-soft: rgba(18, 29, 54, 0.72);
       --text: #eef4ff;
       --muted: #aebcda;
       --accent: #67d6ff;
-      --border: rgba(255,255,255,0.1);
+      --accent-2: #5c8dff;
+      --border: rgba(255,255,255,0.08);
       --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
     }
 
@@ -34,51 +38,387 @@
       color: var(--text);
     }
 
-    main {
-      width: min(980px, 100%);
-      border: 1px solid var(--border);
-      border-radius: 20px;
+    .writing-area {
+      /* Main adaptive rule:
+         uses max height when possible,
+         otherwise width becomes the limiting factor */
+      width: min(
+        calc(100vw - (var(--edge-padding) * 2)),
+        calc((100dvh - (var(--edge-padding) * 2)) * var(--landscape-ratio))
+      );
+      height: min(
+        calc(100dvh - (var(--edge-padding) * 2)),
+        calc((100vw - (var(--edge-padding) * 2)) / var(--landscape-ratio))
+      );
+
+      max-width: 1400px;
+      max-height: 900px;
       background: linear-gradient(180deg, rgba(9,16,32,.92), rgba(8,12,25,.95));
+      border: 1px solid var(--border);
+      border-radius: 24px;
       box-shadow: var(--shadow);
-      padding: clamp(20px, 2.2vw, 30px);
+      padding: clamp(18px, 2vw, 28px);
       display: grid;
-      gap: 14px;
+      grid-template-rows: auto 1fr auto;
+      gap: clamp(16px, 1.5vw, 22px);
+      overflow: hidden;
     }
 
-    h1 {
-      margin: 0;
-      font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+    header {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 16px;
     }
 
-    p {
-      margin: 0;
+    .brand {
+      display: flex;
+      align-items: flex-start;
+      gap: 18px;
+      font-weight: 700;
+      letter-spacing: .02em;
+      font-size: 2rem;
+    }
+
+    .brand-copy {
+      display: flex;
+      flex-direction: column;
+      align-items: flex-start;
+      gap: 8px;
+    }
+
+    .brand-name {
+      line-height: 1;
+    }
+
+    .logo {
+      width: 80px;
+      height: 80px;
+      border-radius: 24px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #06111f;
+      font-weight: 900;
+      font-size: 2rem;
+    }
+
+    nav {
+      display: flex;
+      gap: 16px;
       color: var(--muted);
-      line-height: 1.6;
+      font-size: .95rem;
+      flex-wrap: wrap;
+    }
+
+    .hero {
+      display: grid;
+      grid-template-columns: 1.15fr .85fr;
+      gap: clamp(16px, 2vw, 28px);
+      min-height: 0;
+    }
+
+    .eyebrow {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+      padding: 8px 12px;
+      border-radius: 999px;
+      background: rgba(103,214,255,.12);
+      color: var(--accent);
+      font-size: .84rem;
+      border: 1px solid rgba(103,214,255,.18);
+    }
+
+    .brand .eyebrow {
+      font-size: .78rem;
+      padding: 6px 11px;
+    }
+
+    .lead {
+      font-size: clamp(1rem, 1.25vw, 1.12rem);
+      line-height: 1.65;
+      color: var(--muted);
+      max-width: 60ch;
+    }
+
+    .actions {
+      display: flex;
+      gap: 12px;
+      flex-wrap: wrap;
+      margin: 18px 0 20px;
+    }
+
+    .btn {
+      padding: 12px 16px;
+      border-radius: 12px;
+      text-decoration: none;
+      font-weight: 600;
+      border: 1px solid transparent;
+    }
+
+    .btn.primary {
+      background: linear-gradient(135deg, var(--accent), #77f1d5);
+      color: #07111e;
+    }
+
+    .btn.secondary {
+      background: rgba(255,255,255,.04);
+      border-color: var(--border);
+      color: var(--text);
+    }
+
+    .btn:hover,
+    .btn:focus-visible {
+      transform: translateY(-2px);
+      border-color: rgba(103,214,255,.60);
+      background: linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72));
+      color: #eef4ff;
     }
 
     .return-link {
-      margin-top: 10px;
-      width: fit-content;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
       text-decoration: none;
       color: #06263a;
       background: var(--accent);
       padding: 10px 14px;
       border-radius: 10px;
       font-weight: 700;
+      border: 1px solid transparent;
     }
 
     .return-link:focus-visible {
       outline: 2px solid rgba(103,214,255,.5);
       outline-offset: 2px;
     }
+
+    .return-link:hover,
+    .return-link:focus-visible {
+      transform: translateY(-2px);
+      border-color: rgba(103,214,255,.60);
+      background: linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72));
+      color: #eef4ff;
+    }
+
+    .highlights {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 12px;
+    }
+
+    .card {
+      background: var(--panel-soft);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 14px;
+    }
+
+    .card strong {
+      display: block;
+      font-size: 1.05rem;
+      margin-bottom: 4px;
+    }
+
+    .card span {
+      color: var(--muted);
+      font-size: .92rem;
+    }
+
+    .preview {
+      display: grid;
+      grid-template-rows: auto auto 1fr;
+      gap: 12px;
+      order: -1;
+    }
+
+    .screen {
+      background:
+        linear-gradient(180deg, rgba(255,255,255,.05), transparent),
+        #0a1326;
+      border: 1px solid var(--border);
+      border-radius: 18px;
+      padding: 14px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .screen-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      color: var(--muted);
+      font-size: .88rem;
+    }
+
+    .screen .eyebrow {
+      margin-bottom: 8px;
+      width: fit-content;
+    }
+
+    .status {
+      display: inline-flex;
+      gap: 8px;
+      align-items: center;
+    }
+
+    .dot {
+      width: 10px;
+      height: 10px;
+      border-radius: 50%;
+      background: #41d37d;
+      box-shadow: 0 0 10px rgba(65,211,125,.55);
+    }
+
+    .berth-list {
+      display: grid;
+      gap: 10px;
+    }
+
+    .berth {
+      display: grid;
+      grid-template-columns: 1fr auto;
+      gap: 10px;
+      align-items: center;
+      padding: 12px;
+      border-radius: 12px;
+      background: rgba(255,255,255,.03);
+      border: 1px solid rgba(255,255,255,.05);
+    }
+
+    .berth small {
+      display: block;
+      color: var(--muted);
+      margin-top: 4px;
+    }
+
+    .pill {
+      padding: 6px 10px;
+      border-radius: 999px;
+      font-size: .8rem;
+      font-weight: 700;
+    }
+
+    .ok {
+      background: rgba(65,211,125,.12);
+      color: #7ff0aa;
+    }
+
+    .warn {
+      background: rgba(255,182,72,.12);
+      color: #ffd48b;
+    }
+
+    footer {
+      display: flex;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+      color: var(--muted);
+      font-size: .9rem;
+    }
+
+    @media (max-width: 980px) {
+      :root { --landscape-ratio: 1.33; }
+
+      .hero {
+        grid-template-columns: 1fr;
+      }
+
+      .highlights {
+        grid-template-columns: 1fr;
+      }
+
+      .preview {
+        order: 0;
+      }
+    }
   </style>
 </head>
 <body>
-  <main>
-    <h1>Running DD Project</h1>
-    <p>This page scaffold is ready for feature implementation.</p>
-    <a class="return-link" href="./Frontpage.html">Return to Frontpage</a>
-  </main>
+  <section class="writing-area">
+    <header>
+      <div class="brand">
+        <div class="logo">DP</div>
+        <div class="brand-copy">
+          <span class="brand-name">DockPilot</span>
+          <div class="eyebrow">⚓ Smart Docking Control</div>
+        </div>
+      </div>
+      <nav>
+        <span>Scheduling</span>
+        <span>Berth Allocation</span>
+        <span>Analytics</span>
+        <span>Support</span>
+      </nav>
+    </header>
+
+    <main class="hero">
+      <section>
+        <div class="actions">
+          <a class="btn primary" href="#">Request Demo</a>
+          <a class="btn secondary" href="#">See Platform</a>
+        </div>
+
+        <div class="highlights">
+          <div class="card">
+            <strong>-22%</strong>
+            <span>Average vessel idle time</span>
+          </div>
+          <div class="card">
+            <strong>Live ETA</strong>
+            <span>Shared across dock and ops teams</span>
+          </div>
+          <div class="card">
+            <strong>24/7 View</strong>
+            <span>For terminals, harbors, and fleets</span>
+          </div>
+        </div>
+      </section>
+
+      <aside class="preview">
+        <div class="screen">
+          <div class="screen-top">
+            <span>Live Dock Overview</span>
+            <div class="status"><span class="dot"></span>All systems synced</div>
+          </div>
+
+          <div class="berth-list">
+            <div class="berth">
+              <div>
+                <strong>Berth A-03</strong>
+                <small>MV Horizon — ETA 09:40</small>
+              </div>
+              <span class="pill ok">On Time</span>
+            </div>
+
+            <div class="berth">
+              <div>
+                <strong>Berth B-01</strong>
+                <small>Atlas Cargo — unloading</small>
+              </div>
+              <span class="pill ok">In Dock</span>
+            </div>
+
+            <div class="berth">
+              <div>
+                <strong>Berth C-02</strong>
+                <small>Northline — tug approval pending</small>
+              </div>
+              <span class="pill warn">Action</span>
+            </div>
+          </div>
+        </div>
+      </aside>
+    </main>
+
+    <footer>
+      <span>Built for laptop and desktop screens</span>
+      <span>Landscape-first responsive front page</span>
+      <a class="return-link" href="./Frontpage.html">Return to Frontpage</a>
+    </footer>
+  </section>
 
   <script type="module">
     import { supabase } from './supabaseClient.js';

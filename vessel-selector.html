@@ -1,0 +1,1206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vessel Selection and Particulars Editor | DockPilot</title>
+  <style>
+    :root {
+      --edge-padding: clamp(12px, 1.6vw, 22px);
+      --panel: rgba(11, 24, 45, 0.92);
+      --line: rgba(255, 255, 255, 0.1);
+      --text: #eef4ff;
+      --muted: #aebcda;
+      --accent: #67d6ff;
+      --accent-2: #72f1cb;
+      --ok: #8ef0b1;
+      --warn: #ffd28c;
+      --badge-fill: #093046;
+      --badge-line: rgba(107, 215, 255, 0.24);
+      --border: rgba(255,255,255,0.1);
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    * {
+      box-sizing: border-box;
+    }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      min-height: 100dvh;
+      display: grid;
+      place-items: start center;
+      padding: var(--edge-padding);
+      overflow-x: hidden;
+      font-family: Inter, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(circle at top left, #133977 0%, transparent 32%),
+        radial-gradient(circle at bottom right, #0f8f98 0%, transparent 30%),
+        linear-gradient(135deg, #06111f, #0a1830 40%, #07111e 100%);
+      color: var(--text);
+    }
+
+    .manager-shell {
+      width: min(1280px, 100%);
+      max-width: calc(100vw - (2 * var(--edge-padding)));
+      margin: 0 auto;
+      display: grid;
+      gap: 10px;
+    }
+
+    .panel {
+      width: 100%;
+      min-width: 0;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .header-panel {
+      display: grid;
+      gap: 8px;
+      position: relative;
+    }
+
+    .toolbar-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      display: inline-flex;
+      width: 158px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      color: var(--accent);
+      background: var(--badge-fill);
+      border: 1px solid var(--badge-line);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.4vw, 1.95rem);
+      line-height: 1.1;
+    }
+
+    p,
+    .muted {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.35;
+      font-size: 0.86rem;
+    }
+
+    .return-link,
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 9px 13px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+    }
+
+    .return-link {
+      width: 168px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+    }
+
+    .secondary-btn {
+      width: 158px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #04101d;
+    }
+
+    .return-link:focus-visible {
+      outline: 2px solid rgba(103,214,255,.5);
+      outline-offset: 2px;
+    }
+
+    button:focus-visible {
+      outline: 2px solid rgba(103,214,255,.5);
+      outline-offset: 2px;
+    }
+
+    .return-link:hover,
+    .return-link:focus-visible,
+    .secondary-btn:hover,
+    .secondary-btn:focus-visible {
+      transform: translateY(-2px);
+      border-color: rgba(103,214,255,.60);
+      background: linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72));
+    }
+
+    .primary-btn:hover,
+    .primary-btn:focus-visible {
+      transform: translateY(-2px);
+      filter: brightness(1.1);
+    }
+
+    .status-note {
+      margin: 0;
+      padding: 7px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      line-height: 1.3;
+      font-size: 0.8rem;
+    }
+
+    .status-note.success {
+      color: var(--ok);
+      background: rgba(142, 240, 177, 0.08);
+      border-color: rgba(142, 240, 177, 0.18);
+    }
+
+    .status-note.warn {
+      color: var(--warn);
+      background: rgba(255, 210, 140, 0.08);
+      border-color: rgba(255, 210, 140, 0.18);
+    }
+
+    .composition-placeholder {
+      min-height: 260px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      border: 1px dashed rgba(255, 255, 255, 0.18);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 20px;
+    }
+
+    .vp-action-panel {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+      flex-wrap: wrap;
+    }
+
+    .section-subheader {
+      margin: 0;
+      font-size: 1.05rem;
+      font-weight: 700;
+      color: var(--text);
+      letter-spacing: 0.01em;
+    }
+
+    .filter-panel {
+      display: grid;
+      gap: 10px;
+    }
+
+    .filter-row {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 14px;
+      padding: 10px 14px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      border-radius: 12px;
+      background: rgba(255, 255, 255, 0.02);
+    }
+
+    .filter-label {
+      font-size: 0.9rem;
+      font-weight: 700;
+      color: var(--text);
+      white-space: nowrap;
+      min-width: 130px;
+    }
+
+    .filter-select,
+    .filter-readonly {
+      flex: 1;
+      max-width: 460px;
+      min-width: 180px;
+      height: 38px;
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.15);
+      background: rgba(9, 48, 70, 0.55);
+      color: var(--text);
+      font-size: 0.88rem;
+      font-family: inherit;
+      outline: none;
+      appearance: none;
+      -webkit-appearance: none;
+    }
+
+    .filter-select:focus {
+      border-color: rgba(103, 214, 255, 0.6);
+      box-shadow: 0 0 0 2px rgba(103, 214, 255, 0.14);
+    }
+
+    .filter-readonly {
+      cursor: default;
+      opacity: 0.72;
+      background: rgba(9, 48, 70, 0.30);
+    }
+
+    .filter-select option {
+      background: #0a1830;
+      color: var(--text);
+    }
+
+    .more-actions-dropdown {
+      position: absolute;
+      top: calc(36px + 2px + 20px);
+      right: 16px;
+      display: flex;
+      width: 168px;
+      z-index: 10;
+    }
+
+    .more-actions-dropdown.collapsed {
+      flex-direction: row;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 2px;
+      height: 36px;
+      justify-content: center;
+    }
+
+    .more-actions-dropdown:not(.collapsed) {
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(11, 24, 45, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 8px;
+      width: 168px;
+    }
+
+    .more-actions-toggle {
+      padding: 9px 13px !important;
+      border-radius: 12px !important;
+      font-size: 0.86rem !important;
+      font-weight: 700 !important;
+      background: transparent !important;
+      border: 1px solid transparent !important;
+      color: var(--text) !important;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .more-actions-toggle:hover {
+      transform: translateY(-2px);
+      text-decoration: underline;
+    }
+
+    .more-actions-dropdown:not(.collapsed) .more-actions-toggle {
+      align-self: stretch;
+      width: auto;
+      min-width: 0;
+    }
+
+    .more-actions-buttons {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .more-actions-dropdown:not(.collapsed) .more-actions-buttons {
+      display: flex;
+    }
+
+    .more-actions-dropdown button {
+      width: 100%;
+      justify-content: center;
+      text-align: center;
+      background: rgba(103, 214, 255, 0.12);
+      border: 1px solid rgba(103, 214, 255, 0.24);
+      color: var(--accent);
+    }
+
+    .more-actions-dropdown button:not(.more-actions-toggle):hover {
+      background: rgba(103, 214, 255, 0.24);
+      border-color: rgba(103, 214, 255, 0.5);
+      color: var(--accent);
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-card {
+      background: rgba(11, 24, 45, 0.97);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 18px;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.55);
+      padding: 28px 32px 24px;
+      min-width: 320px;
+      max-width: 480px;
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-card h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+
+    .modal-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      min-width: 90px;
+    }
+
+    @media (max-width: 900px) {
+      .manager-shell {
+        width: 100%;
+      }
+
+      .toolbar-row {
+        align-items: flex-start;
+      }
+
+      .more-actions-dropdown {
+        position: static;
+        margin-left: auto;
+      }
+    }
+  </style>
+</head>
+<body>
+  <main class="manager-shell">
+    <section class="panel header-panel">
+      <div class="toolbar-row">
+        <span id="todayBadge" class="tag">Date:</span>
+        <div class="toolbar-actions">
+          <button id="loadFleetBtn" type="button" class="secondary-btn">Load Fleet</button>
+          <button id="saveFleetBtn" type="button" class="secondary-btn">Save Fleet</button>
+          <a class="return-link" href="./Frontpage.html">Return to Frontpage</a>
+        </div>
+      </div>
+
+      <div id="moreActionsDropdown" class="more-actions-dropdown collapsed">
+        <button id="moreActionsToggle" type="button" class="secondary-btn more-actions-toggle">See More</button>
+        <div class="more-actions-buttons">
+          <button id="registerFleetBtn" type="button" class="secondary-btn">Register Fleet</button>
+          <button id="launchProjectBtn" type="button" class="secondary-btn">Launch Project</button>
+          <button id="editProjectBtn" type="button" class="secondary-btn">Edit Project</button>
+        </div>
+      </div>
+
+      <div>
+        <h1>Vessel Selection and Particulars Editor</h1>
+        <p class="muted">Sort fleet group, manager, and vessel mappings for downstream workflow filters.</p>
+      </div>
+    </section>
+
+    <p id="statusNote" class="status-note">Header shell initialized for phase 1.</p>
+
+    <section class="panel vp-action-panel">
+      <h2 class="section-subheader">Vessel Particulars</h2>
+      <button id="viewEditVesselBtn" type="button" class="primary-btn">View / Edit Vessel Particulars</button>
+    </section>
+
+    <section class="panel filter-panel">
+      <div class="filter-row">
+        <span class="filter-label">Fleet Group</span>
+        <select id="fleetGroupSelect" class="filter-select">
+          <option value="">— Select Fleet Group —</option>
+        </select>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">TM / FM</span>
+        <input id="tmFmDisplay" type="text" class="filter-readonly" readonly placeholder="Auto-populated from Fleet Group" />
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">Vessel Name</span>
+        <select id="vesselSelect" class="filter-select">
+          <option value="">— Select Vessel —</option>
+        </select>
+      </div>
+      <div class="filter-row">
+        <span class="filter-label">TSI Name</span>
+        <input id="tsiDisplay" type="text" class="filter-readonly" readonly placeholder="Auto-populated from Vessel Name" />
+      </div>
+    </section>
+  </main>
+
+  <div id="modalOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <h2 id="modalTitle">Note</h2>
+      <p id="modalMessage"></p>
+      <div class="modal-actions">
+        <button id="modalCancelBtn" type="button" class="secondary-btn hidden">No</button>
+        <button id="modalConfirmBtn" type="button" class="primary-btn">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from './supabaseClient.js';
+    import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
+
+    const todayBadge = document.getElementById('todayBadge');
+    const statusNote = document.getElementById('statusNote');
+    const loadFleetBtn = document.getElementById('loadFleetBtn');
+    const saveFleetBtn = document.getElementById('saveFleetBtn');
+    const moreActionsDropdown = document.getElementById('moreActionsDropdown');
+    const moreActionsToggle = document.getElementById('moreActionsToggle');
+    const registerFleetBtn = document.getElementById('registerFleetBtn');
+    const launchProjectBtn = document.getElementById('launchProjectBtn');
+    const editProjectBtn = document.getElementById('editProjectBtn');
+
+    const modalOverlay = document.getElementById('modalOverlay');
+    const modalTitle = document.getElementById('modalTitle');
+    const modalMessage = document.getElementById('modalMessage');
+    const modalConfirmBtn = document.getElementById('modalConfirmBtn');
+    const modalCancelBtn = document.getElementById('modalCancelBtn');
+    const viewEditVesselBtn = document.getElementById('viewEditVesselBtn');
+    const fleetGroupSelect = document.getElementById('fleetGroupSelect');
+    const tmFmDisplay = document.getElementById('tmFmDisplay');
+    const vesselSelect = document.getElementById('vesselSelect');
+    const tsiDisplay = document.getElementById('tsiDisplay');
+
+    const FLEET_REG_STATE_KEY = 'DOCKPILOT_FLEET_REG_STATE';
+    const FLEET_TREE_CACHE_KEY = 'DOCKPILOT_FLEET_COMPOSITION_TREES';
+    const FLEET_TREE_EXPORT_NAME = 'fleet-composition-trees.json';
+    const FILTER_STATE_KEY = 'DOCKPILOT_VESSEL_FILTER_STATE';
+    const PAGE_PRESENCE_PREFIX = 'DOCKPILOT_PAGE_PRESENCE_';
+    const PAGE_TYPE = 'fleet-composition';
+    const INTERLOCK_BLOCKER_PAGE_TYPE = 'fleet-registration';
+    const PAGE_HEARTBEAT_MS = 4000;
+    const PAGE_STALE_MS = 15000;
+    const SYNC_STATUS_THROTTLE_MS = 5000;
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    let continueAction = null;
+    let cancelAction = null;
+    let latestDerivedTrees = null;
+    let selectedGroupKey = '';
+    let selectedVesselName = '';
+    const presenceTabId = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const ownPresenceKey = `${PAGE_PRESENCE_PREFIX}${presenceTabId}`;
+    let presenceHeartbeatTimer = null;
+    let interlockWarningShown = false;
+    let lastSyncStatusAt = 0;
+
+    function formatBadgeDate(date) {
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${day}-${monthNames[date.getMonth()]}-${date.getFullYear()}`;
+    }
+
+    function setStatus(text, tone = '') {
+      statusNote.textContent = text;
+      statusNote.className = `status-note${tone ? ` ${tone}` : ''}`;
+    }
+
+    function showModal({
+      title,
+      message,
+      confirmText = 'Continue',
+      cancelText = '',
+      onConfirm = null,
+      onCancel = null
+    }) {
+      modalTitle.textContent = title;
+      modalMessage.textContent = message;
+      modalConfirmBtn.textContent = confirmText;
+      modalCancelBtn.textContent = cancelText || 'No';
+      modalCancelBtn.classList.toggle('hidden', !cancelText);
+      continueAction = onConfirm;
+      cancelAction = onCancel;
+      modalOverlay.classList.remove('hidden');
+      modalConfirmBtn.focus();
+    }
+
+    function closeModal(runCancel = false) {
+      const pendingCancel = cancelAction;
+      modalOverlay.classList.add('hidden');
+      continueAction = null;
+      cancelAction = null;
+      if (runCancel && typeof pendingCancel === 'function') {
+        pendingCancel();
+      }
+    }
+
+    function sanitizeLineBreaks(text) {
+      return String(text ?? '').replace(/[\r\n]+/g, ' ');
+    }
+
+    function cleanText(value) {
+      return sanitizeLineBreaks(value).trim();
+    }
+
+    function asArray(value) {
+      return Array.isArray(value) ? value : [];
+    }
+
+    function normalizeFleetRegistrationState(raw) {
+      const source = raw && typeof raw === 'object' && !Array.isArray(raw) ? raw : {};
+      const headerA = asArray(source.subHeaderRowA).map(cleanText);
+      const matrixRows = asArray(source.matrixData).map((row) => asArray(row).map(cleanText));
+
+      const headerColumns = headerA.length;
+      const matrixColumns = matrixRows.reduce((maxCols, row) => Math.max(maxCols, row.length), 0);
+      let columnCount = Math.max(headerColumns, matrixColumns, 2);
+
+      if (columnCount % 2 !== 0) {
+        columnCount -= 1;
+      }
+      columnCount = Math.max(columnCount, 2);
+
+      const normalizedHeaderA = Array.from({ length: columnCount }, (_, index) => (
+        headerA[index] || (index % 2 === 0 ? 'Fleet Group Name' : 'TM / FM Name')
+      ));
+
+      const normalizedMatrix = matrixRows.map((row) => (
+        Array.from({ length: columnCount }, (_, index) => row[index] || '')
+      ));
+
+      return {
+        subHeaderRowA: normalizedHeaderA,
+        matrixData: normalizedMatrix
+      };
+    }
+
+    function readRegistrationState() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(FLEET_REG_STATE_KEY) || 'null');
+        return normalizeFleetRegistrationState(parsed);
+      } catch (error) {
+        console.error('Failed to parse fleet registration state:', error);
+        return normalizeFleetRegistrationState(null);
+      }
+    }
+
+    function uniqueNonBlank(values) {
+      return [...new Set(asArray(values).map(cleanText).filter(Boolean))];
+    }
+
+    function isPlaceholderFleetGroup(value) {
+      return /^fleet\s+group\s+name$/i.test(cleanText(value));
+    }
+
+    function isPlaceholderManager(value) {
+      return /^tm\s*\/\s*fm\s+name$/i.test(cleanText(value));
+    }
+
+    function deriveFleetTreesFromRegistration(state) {
+      const matrix = asArray(state.matrixData);
+      const columnCount = asArray(state.subHeaderRowA).length;
+
+      const groupsByKey = new Map();
+      const managerToTsis = new Map();
+      const tsiToVessels = new Map();
+      const vesselToTsi = new Map();
+
+      for (let groupCol = 0; groupCol < columnCount; groupCol += 2) {
+        const managerCol = groupCol + 1;
+        if (managerCol >= columnCount) break;
+
+        const groupName = cleanText(state.subHeaderRowA[groupCol]);
+        const managerName = cleanText(state.subHeaderRowA[managerCol]);
+
+        const safeGroupName = isPlaceholderFleetGroup(groupName) ? '' : groupName;
+        const safeManagerName = isPlaceholderManager(managerName) ? '' : managerName;
+
+        if (!safeGroupName) {
+          continue;
+        }
+
+        const groupKey = `${safeGroupName}||${safeManagerName}`;
+        if (!groupsByKey.has(groupKey)) {
+          groupsByKey.set(groupKey, {
+            groupName: safeGroupName,
+            managerName: safeManagerName,
+            vessels: [],
+            tsis: []
+          });
+        }
+
+        const groupEntry = groupsByKey.get(groupKey);
+
+        matrix.forEach((row) => {
+          const vesselName = cleanText(row[groupCol]);
+          const tsiName = cleanText(row[managerCol]);
+
+          if (!vesselName) {
+            return;
+          }
+
+          groupEntry.vessels.push(vesselName);
+
+          if (tsiName) {
+            groupEntry.tsis.push(tsiName);
+            const managerMapKey = `${safeGroupName}||${safeManagerName}`;
+            const existingTsis = managerToTsis.get(managerMapKey) || [];
+            existingTsis.push(tsiName);
+            managerToTsis.set(managerMapKey, existingTsis);
+
+            const tsiVessels = tsiToVessels.get(tsiName) || [];
+            tsiVessels.push(vesselName);
+            tsiToVessels.set(tsiName, tsiVessels);
+          }
+
+          if (!vesselToTsi.has(vesselName)) {
+            vesselToTsi.set(vesselName, tsiName || '');
+          }
+        });
+      }
+
+      const fleetGroups = [...groupsByKey.values()].map((entry) => {
+        const vessels = uniqueNonBlank(entry.vessels);
+        const tsis = uniqueNonBlank(entry.tsis);
+        return {
+          groupName: entry.groupName,
+          managerName: entry.managerName,
+          vesselCount: vessels.length,
+          vessels,
+          tsis
+        };
+      });
+
+      const managerToTsiList = {};
+      managerToTsis.forEach((value, key) => {
+        managerToTsiList[key] = uniqueNonBlank(value);
+      });
+
+      const tsiToVesselList = {};
+      tsiToVessels.forEach((value, key) => {
+        tsiToVesselList[key] = uniqueNonBlank(value);
+      });
+
+      const vesselToTsiMap = {};
+      vesselToTsi.forEach((value, key) => {
+        vesselToTsiMap[key] = cleanText(value);
+      });
+
+      return {
+        generatedAt: new Date().toISOString(),
+        source: {
+          key: FLEET_REG_STATE_KEY,
+          groupPairCount: Math.floor(columnCount / 2),
+          rowCount: matrix.length
+        },
+        fleetGroups,
+        managerToTsiList,
+        tsiToVesselList,
+        vesselToTsiMap
+      };
+    }
+
+    function persistDerivedTrees(trees) {
+      try {
+        localStorage.setItem(FLEET_TREE_CACHE_KEY, JSON.stringify(trees));
+      } catch (error) {
+        console.error('Failed to persist fleet composition tree cache:', error);
+        setStatus('Tree cache could not be saved to browser storage.', 'warn');
+      }
+    }
+
+    function buildDerivedTreeExportJson() {
+      const trees = latestDerivedTrees || deriveFleetTreesFromRegistration(readRegistrationState());
+      return JSON.stringify(trees, null, 2);
+    }
+
+    function triggerDerivedTreeExportDownload() {
+      const payload = buildDerivedTreeExportJson();
+      const blob = new Blob([payload], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = FLEET_TREE_EXPORT_NAME;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    function refreshDerivedTrees() {
+      const registrationState = readRegistrationState();
+      latestDerivedTrees = deriveFleetTreesFromRegistration(registrationState);
+      persistDerivedTrees(latestDerivedTrees);
+      return latestDerivedTrees;
+    }
+
+    function getGroupByKey(key) {
+      if (!latestDerivedTrees || !key) return null;
+      return latestDerivedTrees.fleetGroups.find(
+        (g) => `${g.groupName}||${g.managerName}` === key
+      ) || null;
+    }
+
+    function populateFleetGroupDropdown(preserveSelection = false) {
+      const prevValue = fleetGroupSelect.value;
+      fleetGroupSelect.innerHTML = '<option value="">— Select Fleet Group —</option>';
+      const groups = latestDerivedTrees ? latestDerivedTrees.fleetGroups : [];
+      groups.forEach((group) => {
+        const key = `${group.groupName}||${group.managerName}`;
+        const opt = document.createElement('option');
+        opt.value = key;
+        opt.textContent = group.groupName;
+        fleetGroupSelect.appendChild(opt);
+      });
+      if (preserveSelection && prevValue) {
+        const stillExists = [...fleetGroupSelect.options].some((o) => o.value === prevValue);
+        fleetGroupSelect.value = stillExists ? prevValue : '';
+        selectedGroupKey = stillExists ? prevValue : '';
+      } else if (!preserveSelection) {
+        selectedGroupKey = '';
+      } else {
+        selectedGroupKey = fleetGroupSelect.value;
+      }
+    }
+
+    function populateVesselDropdown(preserveSelection = false) {
+      const prevValue = vesselSelect.value;
+      vesselSelect.innerHTML = '<option value="">— Select Vessel —</option>';
+      if (!selectedGroupKey || !latestDerivedTrees) {
+        if (!preserveSelection) selectedVesselName = '';
+        return;
+      }
+      const group = getGroupByKey(selectedGroupKey);
+      const vessels = group ? group.vessels : [];
+      vessels.forEach((vessel) => {
+        const opt = document.createElement('option');
+        opt.value = vessel;
+        opt.textContent = vessel;
+        vesselSelect.appendChild(opt);
+      });
+      if (preserveSelection && prevValue) {
+        const stillExists = [...vesselSelect.options].some((o) => o.value === prevValue);
+        vesselSelect.value = stillExists ? prevValue : '';
+        selectedVesselName = stillExists ? prevValue : '';
+      } else if (!preserveSelection) {
+        selectedVesselName = '';
+      }
+    }
+
+    function applyFleetGroupSelection() {
+      selectedGroupKey = fleetGroupSelect.value;
+      const group = getGroupByKey(selectedGroupKey);
+      tmFmDisplay.value = group ? group.managerName : '';
+      vesselSelect.innerHTML = '<option value="">— Select Vessel —</option>';
+      selectedVesselName = '';
+      tsiDisplay.value = '';
+      if (selectedGroupKey) {
+        populateVesselDropdown(false);
+      }
+      saveFilterState();
+    }
+
+    function applyVesselSelection() {
+      selectedVesselName = vesselSelect.value;
+      if (selectedVesselName && latestDerivedTrees) {
+        tsiDisplay.value = latestDerivedTrees.vesselToTsiMap[selectedVesselName] || '';
+      } else {
+        tsiDisplay.value = '';
+      }
+      saveFilterState();
+    }
+
+    function saveFilterState() {
+      try {
+        localStorage.setItem(FILTER_STATE_KEY, JSON.stringify({
+          groupKey: selectedGroupKey,
+          vesselName: selectedVesselName
+        }));
+      } catch (error) {
+        console.error('Failed to save filter state:', error);
+      }
+    }
+
+    function restoreFilterState() {
+      try {
+        const saved = JSON.parse(localStorage.getItem(FILTER_STATE_KEY) || 'null');
+        if (!saved || typeof saved !== 'object') return;
+        if (saved.groupKey) {
+          const groupOption = [...fleetGroupSelect.options].find((o) => o.value === saved.groupKey);
+          if (groupOption) {
+            fleetGroupSelect.value = saved.groupKey;
+            selectedGroupKey = saved.groupKey;
+            const group = getGroupByKey(selectedGroupKey);
+            tmFmDisplay.value = group ? group.managerName : '';
+            populateVesselDropdown(false);
+            if (saved.vesselName) {
+              const vesselOption = [...vesselSelect.options].find((o) => o.value === saved.vesselName);
+              if (vesselOption) {
+                vesselSelect.value = saved.vesselName;
+                selectedVesselName = saved.vesselName;
+                if (latestDerivedTrees) {
+                  tsiDisplay.value = latestDerivedTrees.vesselToTsiMap[selectedVesselName] || '';
+                }
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('Failed to restore filter state:', error);
+      }
+    }
+
+    function refreshSelectorsAfterTreeUpdate() {
+      populateFleetGroupDropdown(true);
+      if (selectedGroupKey) {
+        const group = getGroupByKey(selectedGroupKey);
+        tmFmDisplay.value = group ? group.managerName : '';
+        populateVesselDropdown(true);
+        if (selectedVesselName && latestDerivedTrees) {
+          tsiDisplay.value = latestDerivedTrees.vesselToTsiMap[selectedVesselName] || '';
+        }
+      } else {
+        tmFmDisplay.value = '';
+        populateVesselDropdown(false);
+        tsiDisplay.value = '';
+      }
+    }
+
+    function parsePresencePayload(rawValue) {
+      try {
+        const parsed = JSON.parse(String(rawValue || 'null'));
+        if (!parsed || typeof parsed !== 'object') {
+          return null;
+        }
+        const pageType = cleanText(parsed.pageType);
+        const tabId = cleanText(parsed.tabId);
+        const updatedAt = Number(parsed.updatedAt);
+        if (!pageType || !tabId || !Number.isFinite(updatedAt)) {
+          return null;
+        }
+        return { pageType, tabId, updatedAt };
+      } catch {
+        return null;
+      }
+    }
+
+    function collectPresenceEntries() {
+      const entries = [];
+      for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index);
+        if (!key || !key.startsWith(PAGE_PRESENCE_PREFIX)) {
+          continue;
+        }
+        const parsed = parsePresencePayload(localStorage.getItem(key));
+        if (!parsed) {
+          continue;
+        }
+        entries.push({ key, ...parsed });
+      }
+      return entries;
+    }
+
+    function pruneStalePresenceEntries() {
+      const now = Date.now();
+      collectPresenceEntries().forEach((entry) => {
+        if (now - entry.updatedAt > PAGE_STALE_MS) {
+          localStorage.removeItem(entry.key);
+        }
+      });
+    }
+
+    function isPageTypeActive(pageType) {
+      const now = Date.now();
+      return collectPresenceEntries().some((entry) => (
+        entry.tabId !== presenceTabId
+        && entry.pageType === pageType
+        && (now - entry.updatedAt) <= PAGE_STALE_MS
+      ));
+    }
+
+    function evaluateInterlockState() {
+      const blockerActive = isPageTypeActive(INTERLOCK_BLOCKER_PAGE_TYPE);
+
+      if (!blockerActive) {
+        interlockWarningShown = false;
+        return false;
+      }
+
+      if (document.visibilityState !== 'visible') {
+        return true;
+      }
+
+      if (interlockWarningShown || !modalOverlay.classList.contains('hidden')) {
+        return true;
+      }
+
+      interlockWarningShown = true;
+      showModal({
+        title: 'Alert',
+        message: 'Fleet Registration is currently active in another tab or window on this device. Continue with caution to avoid conflicting updates.',
+        confirmText: 'Continue'
+      });
+      setStatus('Fleet Registration is active in another tab/window. Continue with caution.', 'warn');
+      return true;
+    }
+
+    function removeOwnPresence() {
+      localStorage.removeItem(ownPresenceKey);
+    }
+
+    function updateOwnPresence() {
+      if (document.visibilityState !== 'visible') {
+        removeOwnPresence();
+        return;
+      }
+
+      const payload = {
+        pageType: PAGE_TYPE,
+        tabId: presenceTabId,
+        updatedAt: Date.now()
+      };
+      localStorage.setItem(ownPresenceKey, JSON.stringify(payload));
+    }
+
+    function startPresenceTracking() {
+      pruneStalePresenceEntries();
+      updateOwnPresence();
+      evaluateInterlockState();
+
+      if (presenceHeartbeatTimer) {
+        window.clearInterval(presenceHeartbeatTimer);
+      }
+      presenceHeartbeatTimer = window.setInterval(() => {
+        pruneStalePresenceEntries();
+        updateOwnPresence();
+        evaluateInterlockState();
+      }, PAGE_HEARTBEAT_MS);
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          updateOwnPresence();
+          evaluateInterlockState();
+        } else {
+          removeOwnPresence();
+          interlockWarningShown = false;
+        }
+      });
+
+      window.addEventListener('pagehide', () => {
+        removeOwnPresence();
+      });
+
+      window.addEventListener('beforeunload', () => {
+        removeOwnPresence();
+      });
+    }
+
+    function wireEvents() {
+      function toggleMoreActions() {
+        moreActionsDropdown.classList.toggle('collapsed');
+        moreActionsToggle.textContent = moreActionsDropdown.classList.contains('collapsed') ? 'See More' : 'See Less';
+      }
+
+      moreActionsToggle.addEventListener('click', toggleMoreActions);
+
+      registerFleetBtn.addEventListener('click', () => {
+        window.location.href = './fleet-registration.html';
+      });
+
+      viewEditVesselBtn.addEventListener('click', () => {
+        const groupFilled = Boolean(selectedGroupKey);
+        const tmFmFilled = Boolean(tmFmDisplay.value.trim());
+        const vesselFilled = Boolean(selectedVesselName);
+        const tsiFilled = Boolean(tsiDisplay.value.trim());
+
+        if (!groupFilled || !tmFmFilled || !vesselFilled || !tsiFilled) {
+          showModal({
+            title: 'Alert',
+            message: 'Please first populate the below 4 sort filter criteria.',
+            confirmText: 'Continue'
+          });
+          return;
+        }
+
+        try {
+          localStorage.setItem('DOCKPILOT_VP_CONTEXT', JSON.stringify({
+            fleetGroup: getGroupByKey(selectedGroupKey)?.groupName || '',
+            managerName: tmFmDisplay.value.trim(),
+            vesselName: selectedVesselName,
+            tsiName: tsiDisplay.value.trim()
+          }));
+        } catch (error) {
+          console.error('Failed to write vessel particulars context:', error);
+        }
+
+        window.location.href = './vessel-particulars-input.html';
+      });
+
+      launchProjectBtn.addEventListener('click', () => {
+        window.location.href = './dry-docking-project.html';
+      });
+
+      editProjectBtn.addEventListener('click', () => {
+        window.location.href = './running-dd-project.html';
+      });
+
+      loadFleetBtn.addEventListener('click', () => {
+        showModal({
+          title: 'Alert',
+          message: 'Load Fleet will be enabled in a later phase.',
+          confirmText: 'Continue'
+        });
+      });
+
+      saveFleetBtn.addEventListener('click', () => {
+        showModal({
+          title: 'Alert',
+          message: 'Save Fleet will be enabled in a later phase.',
+          confirmText: 'Continue'
+        });
+      });
+
+      fleetGroupSelect.addEventListener('change', applyFleetGroupSelection);
+      vesselSelect.addEventListener('change', applyVesselSelection);
+
+      window.addEventListener('storage', (event) => {
+        const eventKey = event.key || '';
+
+        if (eventKey === FLEET_REG_STATE_KEY) {
+          const trees = refreshDerivedTrees();
+          refreshSelectorsAfterTreeUpdate();
+          const now = Date.now();
+          if ((now - lastSyncStatusAt) >= SYNC_STATUS_THROTTLE_MS) {
+            setStatus(
+              `Live sync: fleet trees refreshed from registration updates (${trees.fleetGroups.length} groups).`,
+              'success'
+            );
+            lastSyncStatusAt = now;
+          }
+        }
+
+        if (eventKey.startsWith(PAGE_PRESENCE_PREFIX)) {
+          pruneStalePresenceEntries();
+          evaluateInterlockState();
+        }
+      });
+
+      document.addEventListener('click', (event) => {
+        if (!moreActionsDropdown.contains(event.target) && !moreActionsDropdown.classList.contains('collapsed')) {
+          moreActionsDropdown.classList.add('collapsed');
+          moreActionsToggle.textContent = 'See More';
+        }
+      });
+
+      modalConfirmBtn.addEventListener('click', () => {
+        const nextAction = continueAction;
+        closeModal();
+        if (typeof nextAction === 'function') {
+          nextAction();
+        }
+      });
+
+      modalCancelBtn.addEventListener('click', () => {
+        closeModal(true);
+      });
+
+      modalOverlay.addEventListener('click', (event) => {
+        if (event.target === modalOverlay) {
+          closeModal(true);
+        }
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !modalOverlay.classList.contains('hidden')) {
+          closeModal(true);
+        }
+      });
+    }
+
+    function initFleetComposition() {
+      todayBadge.textContent = `Date: ${formatBadgeDate(new Date())}`;
+      const trees = refreshDerivedTrees();
+
+      populateFleetGroupDropdown(false);
+      restoreFilterState();
+
+      window.dockpilotFleetComposition = {
+        refreshDerivedTrees,
+        buildDerivedTreeExportJson,
+        triggerDerivedTreeExportDownload,
+        getLatestDerivedTrees: () => latestDerivedTrees,
+        getSelectedGroupKey: () => selectedGroupKey,
+        getSelectedVesselName: () => selectedVesselName
+      };
+
+      wireEvents();
+      startPresenceTracking();
+
+      if (!evaluateInterlockState()) {
+        setStatus(
+          `Phase 3 active. Live tree derivation ready with ${trees.fleetGroups.length} fleet groups cached from registration state.`,
+          'success'
+        );
+      }
+    }
+
+    startDockPilotPageGuard({
+      supabase,
+      landingPage: './DockPilot_landing.html'
+    }).then(() => {
+      initFleetComposition();
+    }).catch((error) => {
+      console.error('DockPilot guard startup failed:', error);
+      window.location.href = './DockPilot_landing.html';
+    });
+  </script>
+</body>
+</html>

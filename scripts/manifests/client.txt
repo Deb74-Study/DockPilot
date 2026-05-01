@@ -4,7 +4,8 @@ DockPilot_landing.html
 Frontpage.html
 2nd Page.html
 fleet-registration.html
-fleet-composition.html
+vessel-selector.html
+vessel-particulars-input.html
 dry-docking-project.html
 running-dd-project.html
 fleet-analytics.html

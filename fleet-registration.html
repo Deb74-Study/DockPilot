@@ -723,6 +723,11 @@
     const FLEET_HANDLE_STORE = 'handles';
     const FLEET_HANDLE_KEY = 'default-fleet-handle';
     const INACTIVITY_AUTOSAVE_MS = 5 * 60 * 1000;
+    const PAGE_PRESENCE_PREFIX = 'DOCKPILOT_PAGE_PRESENCE_';
+    const PAGE_TYPE = 'fleet-registration';
+    const INTERLOCK_BLOCKER_PAGE_TYPE = 'fleet-composition';
+    const PAGE_HEARTBEAT_MS = 4000;
+    const PAGE_STALE_MS = 15000;
 
     let mainHeader = DEFAULT_MAIN_HEADER;
     let subHeaderRowA = [...DEFAULT_SUBHEADER_ROW_A];
@@ -733,6 +738,12 @@
     let cancelAction = null;
     let fleetFileHandle = null;
     let inactivityTimer = null;
+    const presenceTabId = typeof crypto !== 'undefined' && typeof crypto.randomUUID === 'function'
+      ? crypto.randomUUID()
+      : `${Date.now()}-${Math.random().toString(16).slice(2)}`;
+    const ownPresenceKey = `${PAGE_PRESENCE_PREFIX}${presenceTabId}`;
+    let presenceHeartbeatTimer = null;
+    let interlockWarningShown = false;
 
     function formatBadgeDate(date) {
       const day = String(date.getDate()).padStart(2, '0');
@@ -1190,6 +1201,135 @@
       }
     }
 
+    function parsePresencePayload(rawValue) {
+      try {
+        const parsed = JSON.parse(String(rawValue || 'null'));
+        if (!parsed || typeof parsed !== 'object') {
+          return null;
+        }
+        const pageType = sanitizeLineBreaks(parsed.pageType).trim();
+        const tabId = sanitizeLineBreaks(parsed.tabId).trim();
+        const updatedAt = Number(parsed.updatedAt);
+        if (!pageType || !tabId || !Number.isFinite(updatedAt)) {
+          return null;
+        }
+        return { pageType, tabId, updatedAt };
+      } catch {
+        return null;
+      }
+    }
+
+    function collectPresenceEntries() {
+      const entries = [];
+      for (let index = 0; index < localStorage.length; index += 1) {
+        const key = localStorage.key(index);
+        if (!key || !key.startsWith(PAGE_PRESENCE_PREFIX)) {
+          continue;
+        }
+        const parsed = parsePresencePayload(localStorage.getItem(key));
+        if (!parsed) {
+          continue;
+        }
+        entries.push({ key, ...parsed });
+      }
+      return entries;
+    }
+
+    function pruneStalePresenceEntries() {
+      const now = Date.now();
+      collectPresenceEntries().forEach((entry) => {
+        if (now - entry.updatedAt > PAGE_STALE_MS) {
+          localStorage.removeItem(entry.key);
+        }
+      });
+    }
+
+    function isPageTypeActive(pageType) {
+      const now = Date.now();
+      return collectPresenceEntries().some((entry) => (
+        entry.tabId !== presenceTabId
+        && entry.pageType === pageType
+        && (now - entry.updatedAt) <= PAGE_STALE_MS
+      ));
+    }
+
+    function evaluateInterlockState() {
+      const blockerActive = isPageTypeActive(INTERLOCK_BLOCKER_PAGE_TYPE);
+
+      if (!blockerActive) {
+        interlockWarningShown = false;
+        return false;
+      }
+
+      if (document.visibilityState !== 'visible') {
+        return true;
+      }
+
+      if (interlockWarningShown || !modalOverlay.classList.contains('hidden')) {
+        return true;
+      }
+
+      interlockWarningShown = true;
+      showModal({
+        title: 'Alert',
+        message: 'Fleet Composition is currently active in another tab or window on this device. Continue with caution to avoid conflicting updates.',
+        confirmText: 'Continue'
+      });
+      setStatus('Fleet Composition is active in another tab/window. Continue with caution.', 'warn');
+      return true;
+    }
+
+    function removeOwnPresence() {
+      localStorage.removeItem(ownPresenceKey);
+    }
+
+    function updateOwnPresence() {
+      if (document.visibilityState !== 'visible') {
+        removeOwnPresence();
+        return;
+      }
+
+      const payload = {
+        pageType: PAGE_TYPE,
+        tabId: presenceTabId,
+        updatedAt: Date.now()
+      };
+      localStorage.setItem(ownPresenceKey, JSON.stringify(payload));
+    }
+
+    function startPresenceTracking() {
+      pruneStalePresenceEntries();
+      updateOwnPresence();
+      evaluateInterlockState();
+
+      if (presenceHeartbeatTimer) {
+        window.clearInterval(presenceHeartbeatTimer);
+      }
+      presenceHeartbeatTimer = window.setInterval(() => {
+        pruneStalePresenceEntries();
+        updateOwnPresence();
+        evaluateInterlockState();
+      }, PAGE_HEARTBEAT_MS);
+
+      document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible') {
+          updateOwnPresence();
+          evaluateInterlockState();
+        } else {
+          removeOwnPresence();
+          interlockWarningShown = false;
+        }
+      });
+
+      window.addEventListener('pagehide', () => {
+        removeOwnPresence();
+      });
+
+      window.addEventListener('beforeunload', () => {
+        removeOwnPresence();
+      });
+    }
+
     function renderTable() {
       const columnCount = subHeaderRowA.length;
       rowLabels = normalizeRowLabelsToSequence(rowLabels);
@@ -1506,7 +1646,7 @@
       moreActionsToggle.addEventListener('click', toggleMoreActions);
 
       modifyFleetBtn.addEventListener('click', () => {
-        window.location.href = './fleet-composition.html';
+        window.location.href = './vessel-selector.html';
       });
 
       launchProjectBtn.addEventListener('click', () => {
@@ -1522,6 +1662,15 @@
           moreActionsDropdown.classList.add('collapsed');
           moreActionsToggle.textContent = 'See More';
         }
+      });
+
+      window.addEventListener('storage', (event) => {
+        const eventKey = event.key || '';
+        if (!eventKey.startsWith(PAGE_PRESENCE_PREFIX)) {
+          return;
+        }
+        pruneStalePresenceEntries();
+        evaluateInterlockState();
       });
 
       window.addEventListener('resize', syncScrollControls);
@@ -1569,7 +1718,10 @@
       renderTable();
       wireEvents();
       wireAutoSaveEvents();
-      setStatus('Fleet table loaded with paired-column baseline and 3 header rows.', 'success');
+      startPresenceTracking();
+      if (!evaluateInterlockState()) {
+        setStatus('Fleet table loaded with paired-column baseline and 3 header rows.', 'success');
+      }
     }
 
     startDockPilotPageGuard({

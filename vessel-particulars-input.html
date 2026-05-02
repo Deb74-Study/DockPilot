@@ -5,14 +5,21 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Vessel Particulars | DockPilot</title>
   <style>
+    /* ── CSS variables (fleet-registration parity) ── */
     :root {
       --edge-padding: clamp(12px, 1.6vw, 22px);
+      --panel: rgba(11, 24, 45, 0.92);
+      --line: rgba(255, 255, 255, 0.1);
       --text: #eef4ff;
       --muted: #aebcda;
       --accent: #67d6ff;
+      --accent-2: #72f1cb;
       --ok: #8ef0b1;
       --warn: #ffd28c;
-      --border: rgba(255,255,255,0.1);
+      --blue-text: #163b73;
+      --badge-fill: #093046;
+      --badge-line: rgba(107, 215, 255, 0.24);
+      --border: rgba(255, 255, 255, 0.1);
       --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
     }
 
@@ -26,8 +33,9 @@
     body {
       min-height: 100dvh;
       display: grid;
-      place-items: center;
+      place-items: start center;
       padding: var(--edge-padding);
+      overflow: hidden;
       font-family: Inter, "Segoe UI", Roboto, sans-serif;
       background:
         radial-gradient(circle at top left, #133977 0%, transparent 32%),
@@ -36,52 +44,255 @@
       color: var(--text);
     }
 
-    main {
-      width: min(980px, 100%);
-      border: 1px solid var(--border);
-      border-radius: 20px;
-      background: linear-gradient(180deg, rgba(9,16,32,.92), rgba(8,12,25,.95));
-      box-shadow: var(--shadow);
-      padding: clamp(20px, 2.2vw, 30px);
+    /* ── Shell ── */
+    .manager-shell {
+      width: min(1280px, 100%);
+      max-width: calc(100vw - (2 * var(--edge-padding)));
+      height: calc(100dvh - (2 * var(--edge-padding)));
+      margin: 0 auto;
       display: grid;
-      gap: 14px;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      gap: 10px;
+      min-height: 0;
+      padding-bottom: 0;
+    }
+
+    .panel {
+      width: 100%;
+      min-width: 0;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .header-panel {
+      display: grid;
+      gap: 10px;
+      position: relative;
+    }
+
+    /* ── Toolbar ── */
+    .toolbar-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      display: inline-flex;
+      min-width: 158px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      color: var(--accent);
+      background: var(--badge-fill);
+      border: 1px solid var(--badge-line);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      white-space: nowrap;
     }
 
     h1 {
       margin: 0;
-      font-size: clamp(1.6rem, 2.4vw, 2.2rem);
+      font-size: clamp(1.45rem, 2.4vw, 1.95rem);
+      line-height: 1.1;
     }
 
-    p {
+    p, .muted {
       margin: 0;
       color: var(--muted);
-      line-height: 1.6;
+      line-height: 1.35;
+      font-size: 0.86rem;
+    }
+
+    /* ── Buttons ── */
+    .return-link,
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 9px 13px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      white-space: nowrap;
     }
 
     .return-link {
-      margin-top: 10px;
-      width: fit-content;
-      text-decoration: none;
-      color: #06263a;
-      background: var(--accent);
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-weight: 700;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
     }
 
-    .return-link:focus-visible {
+    .secondary-btn {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+    }
+
+    .primary-btn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #04101d;
+    }
+
+    button[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .return-link:focus-visible,
+    button:focus-visible {
       outline: 2px solid rgba(103,214,255,.5);
       outline-offset: 2px;
     }
 
     .return-link:hover,
-    .return-link:focus-visible {
+    .return-link:focus-visible,
+    .secondary-btn:hover,
+    .secondary-btn:focus-visible {
       transform: translateY(-2px);
       border-color: rgba(103,214,255,.60);
       background: linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72));
-      color: #eef4ff;
     }
 
+    button[disabled]:hover {
+      transform: none;
+      filter: none;
+      background: rgba(255, 255, 255, 0.06);
+      border-color: var(--line);
+    }
+
+    .primary-btn:hover,
+    .primary-btn:focus-visible {
+      transform: translateY(-2px);
+      filter: brightness(1.1);
+    }
+
+    /* ── Status note ── */
+    .status-note {
+      margin: 0;
+      padding: 7px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      line-height: 1.3;
+      font-size: 0.8rem;
+    }
+
+    .status-note.success {
+      color: var(--ok);
+      background: rgba(142, 240, 177, 0.08);
+      border-color: rgba(142, 240, 177, 0.18);
+    }
+
+    .status-note.error,
+    .status-note.warn {
+      color: var(--warn);
+      background: rgba(255, 210, 140, 0.08);
+      border-color: rgba(255, 210, 140, 0.18);
+    }
+
+    /* ── More-actions dropdown ── */
+    .more-actions-dropdown {
+      position: absolute;
+      top: calc(36px + 2px + 20px);
+      right: 16px;
+      display: flex;
+      width: 168px;
+      z-index: 10;
+    }
+
+    .more-actions-dropdown.collapsed {
+      flex-direction: row;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 2px;
+      height: 36px;
+      justify-content: center;
+    }
+
+    .more-actions-dropdown:not(.collapsed) {
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(11, 24, 45, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 8px;
+      width: 168px;
+    }
+
+    .more-actions-toggle {
+      padding: 9px 13px !important;
+      border-radius: 12px !important;
+      font-size: 0.86rem !important;
+      font-weight: 700 !important;
+      background: transparent !important;
+      border: 1px solid transparent !important;
+      color: var(--text) !important;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .more-actions-toggle:hover {
+      transform: translateY(-2px);
+      text-decoration: underline;
+    }
+
+    .more-actions-dropdown:not(.collapsed) .more-actions-toggle {
+      align-self: stretch;
+      padding: 9px 13px !important;
+      width: auto;
+      min-width: 0;
+    }
+
+    .more-actions-buttons {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .more-actions-dropdown:not(.collapsed) .more-actions-buttons {
+      display: flex;
+    }
+
+    .more-actions-dropdown button {
+      width: 100%;
+      justify-content: center;
+      text-align: center;
+      background: rgba(103, 214, 255, 0.12);
+      border: 1px solid rgba(103, 214, 255, 0.24);
+      color: var(--accent);
+    }
+
+    .more-actions-dropdown button:not(.more-actions-toggle):hover {
+      background: rgba(103, 214, 255, 0.24);
+      border-color: rgba(103, 214, 255, 0.5);
+      color: var(--accent);
+    }
+
+    .more-actions-dropdown:not(.collapsed) button {
+      width: 100%;
+    }
+
+    /* ── Context banner ── */
     .context-banner {
       display: grid;
       gap: 6px;
@@ -100,15 +311,48 @@
       text-transform: uppercase;
     }
 
+    /* 4-up row — all items side by side */
+    .context-banner-items {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 6px 12px;
+    }
+
+    /* 2×2 when there isn't room for 4 */
+    @media (max-width: 860px) {
+      .context-banner-items {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* 1 column on very narrow screens */
+    @media (max-width: 480px) {
+      .context-banner-items {
+        grid-template-columns: 1fr;
+      }
+    }
+
     .context-banner-row {
       display: flex;
-      gap: 8px;
+      flex-direction: column;
+      gap: 2px;
       color: var(--muted);
+      min-width: 0;
     }
 
     .context-banner-row strong {
       color: var(--text);
-      min-width: 110px;
+      font-size: 0.72rem;
+      letter-spacing: 0.04em;
+      text-transform: uppercase;
+    }
+
+    .context-banner-row span {
+      color: var(--muted);
+      font-size: 0.84rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .context-banner.missing {
@@ -119,23 +363,1517 @@
     .context-banner.missing .context-banner-title {
       color: var(--warn);
     }
+
+    /* ── Progress bar ── */
+    .progress-bar-wrapper {
+      display: grid;
+      gap: 5px;
+    }
+
+    .progress-bar-label {
+      font-size: 0.75rem;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+    }
+
+    .progress-bar-track {
+      width: 100%;
+      height: 24px;
+      border-radius: 8px;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      overflow: hidden;
+      position: relative;
+    }
+
+    .progress-bar-fill {
+      height: 100%;
+      width: 0%;
+      border-radius: 8px;
+      background: var(--warn);
+      transition: width 0.35s ease, background 0.35s ease;
+    }
+
+    .progress-bar-fill.complete {
+      background: var(--ok);
+    }
+
+    .progress-bar-percent {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.75rem;
+      font-weight: 700;
+      color: var(--text);
+      text-shadow: 0 0 6px rgba(0, 0, 0, 0.65);
+      pointer-events: none;
+    }
+
+    /* ── Two-column workspace ── */
+    .workspace-area {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 5px;
+      align-items: stretch;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .workspace-area > .panel {
+      height: 100%;
+      min-height: 0;
+      overflow: auto;
+    }
+
+    .panel-header {
+      margin: 0 0 14px 0;
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--accent);
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+      border-bottom: 1px solid rgba(103, 214, 255, 0.15);
+      padding-bottom: 10px;
+    }
+
+    /* ── Form grid (vessel details) ── */
+    .form-grid {
+      display: grid;
+      gap: 10px;
+    }
+
+    .form-row {
+      display: grid;
+      grid-template-columns: 140px 1fr;
+      gap: 8px;
+      align-items: start;
+    }
+
+    .paired-fields {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 8px;
+    }
+
+    .paired-field {
+      display: grid;
+      gap: 4px;
+      min-width: 0;
+    }
+
+    .paired-field-label {
+      font-size: 0.72rem;
+      color: var(--muted);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .form-label {
+      font-size: 0.8rem;
+      color: var(--muted);
+      font-weight: 600;
+      padding-top: 8px;
+      line-height: 1.3;
+    }
+
+    .form-input,
+    .form-textarea {
+      width: 100%;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 7px 10px;
+      font-size: 0.83rem;
+      color: var(--text);
+      font-family: inherit;
+      outline: none;
+      resize: none;
+      box-sizing: border-box;
+    }
+
+    .form-input::placeholder,
+    .form-textarea::placeholder {
+      color: rgba(174, 188, 218, 0.4);
+      font-style: italic;
+    }
+
+    .form-input:focus,
+    .form-textarea:focus {
+      border-color: rgba(103, 214, 255, 0.45);
+      background: rgba(255, 255, 255, 0.08);
+    }
+
+    .form-input.is-readonly {
+      opacity: 0.7;
+      cursor: default;
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .form-input.is-valid,
+    .form-textarea.is-valid {
+      border-color: rgba(142, 240, 177, 0.35);
+    }
+
+    .form-input.is-error,
+    .form-textarea.is-error {
+      border-color: rgba(255, 210, 140, 0.45);
+    }
+
+    .form-textarea {
+      line-height: 1.4;
+      overflow: hidden;
+    }
+
+    input:-webkit-autofill,
+    input:-webkit-autofill:hover,
+    input:-webkit-autofill:focus,
+    textarea:-webkit-autofill,
+    textarea:-webkit-autofill:hover,
+    textarea:-webkit-autofill:focus {
+      -webkit-text-fill-color: var(--text);
+      -webkit-box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.05) inset;
+      box-shadow: 0 0 0 1000px rgba(255, 255, 255, 0.05) inset;
+      border: 1px solid var(--line);
+      transition: background-color 9999s ease-in-out 0s;
+    }
+
+    /* ── Rolodex wheel ── */
+    .rolodex-cell {
+      position: relative;
+      min-height: 34px;
+    }
+
+    .rolodex-preview {
+      width: 100%;
+      min-height: 34px;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      color: var(--text);
+      font-size: 0.83rem;
+      font-family: inherit;
+      text-align: left;
+      padding: 7px 10px;
+      cursor: pointer;
+    }
+
+    .rolodex-preview:hover,
+    .rolodex-preview:focus-visible {
+      border-color: rgba(103, 214, 255, 0.45);
+      background: rgba(255, 255, 255, 0.08);
+      outline: none;
+    }
+
+    .rolodex-pair {
+      display: flex;
+      gap: 6px;
+      align-items: flex-start;
+      position: absolute;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%) scale(0.98);
+      opacity: 0;
+      pointer-events: none;
+      z-index: 20;
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid rgba(103, 214, 255, 0.18);
+      background: rgba(11, 24, 45, 0.72);
+      backdrop-filter: blur(3px);
+      box-shadow: 0 18px 40px rgba(0, 0, 0, 0.45);
+      transition: opacity 0.16s ease, transform 0.16s ease;
+    }
+
+    .rolodex-cell.open .rolodex-pair {
+      opacity: 1;
+      pointer-events: auto;
+      transform: translateY(-50%) scale(1);
+    }
+
+    .rolodex-wrapper {
+      position: relative;
+      width: 72px;
+      height: 196px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.04);
+      overflow: hidden;
+      flex-shrink: 0;
+    }
+
+    .rolodex-drum {
+      height: 100%;
+      overflow-y: scroll;
+      scroll-snap-type: y mandatory;
+      scrollbar-width: none;
+      -ms-overflow-style: none;
+    }
+
+    .rolodex-drum::-webkit-scrollbar {
+      display: none;
+    }
+
+    .rolodex-item {
+      height: 28px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.78rem;
+      color: var(--muted);
+      cursor: pointer;
+      scroll-snap-align: center;
+      transition: color 0.1s;
+      user-select: none;
+    }
+
+    .rolodex-item:not(.rolodex-phantom):hover {
+      color: var(--text);
+    }
+
+    .rolodex-item.rolodex-selected {
+      color: var(--accent);
+      font-weight: 700;
+    }
+
+    .rolodex-item.rolodex-phantom {
+      pointer-events: none;
+      visibility: hidden;
+    }
+
+    .rolodex-center-line {
+      position: absolute;
+      top: calc(50% - 14px);
+      left: 0;
+      right: 0;
+      height: 28px;
+      border-top: 1px solid rgba(103, 214, 255, 0.2);
+      border-bottom: 1px solid rgba(103, 214, 255, 0.2);
+      background: rgba(103, 214, 255, 0.04);
+      pointer-events: none;
+      z-index: 1;
+    }
+
+    .rolodex-fade {
+      position: absolute;
+      left: 0;
+      right: 0;
+      height: 40%;
+      pointer-events: none;
+      z-index: 2;
+    }
+
+    .rolodex-fade-top {
+      top: 0;
+      background: linear-gradient(to bottom, rgba(11, 24, 45, 0.82) 0%, transparent 100%);
+    }
+
+    .rolodex-fade-bottom {
+      bottom: 0;
+      background: linear-gradient(to top, rgba(11, 24, 45, 0.82) 0%, transparent 100%);
+    }
+
+    /* ── Upload panel ── */
+    .upload-panel-desc {
+      font-size: 0.76rem;
+      color: var(--muted);
+      margin: -8px 0 18px 0;
+      font-style: italic;
+    }
+
+    .upload-panel-grid {
+      display: grid;
+      gap: 20px;
+    }
+
+    .upload-row {
+      display: grid;
+      gap: 6px;
+    }
+
+    .upload-row-controls {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .upload-label {
+      font-size: 0.82rem;
+      color: var(--muted);
+      font-weight: 600;
+      flex: 1;
+      min-width: 0;
+    }
+
+    .upload-btn {
+      flex-shrink: 0;
+      width: 110px;
+      background: rgba(255, 200, 80, 0.14);
+      border: 1px solid rgba(255, 200, 80, 0.35);
+      color: #ffd28c;
+      border-radius: 10px;
+      padding: 7px 10px;
+      font-size: 0.78rem;
+      font-weight: 700;
+      font-family: inherit;
+      cursor: pointer;
+      transition: background 0.18s, border-color 0.18s, color 0.18s;
+    }
+
+    .upload-btn:not(:disabled):hover {
+      background: rgba(255, 200, 80, 0.24);
+    }
+
+    .upload-btn:disabled {
+      opacity: 0.38;
+      cursor: not-allowed;
+    }
+
+    .upload-btn.upload-done {
+      background: rgba(142, 240, 177, 0.18);
+      border-color: rgba(142, 240, 177, 0.40);
+      color: #8ef0b1;
+    }
+
+    .upload-btn.upload-done:not(:disabled):hover {
+      background: rgba(142, 240, 177, 0.28);
+    }
+
+    .upload-status {
+      font-size: 0.75rem;
+      color: var(--muted);
+      min-height: 16px;
+      padding-left: 2px;
+      word-break: break-all;
+    }
+
+    .upload-status a {
+      color: var(--accent);
+      text-decoration: underline;
+      word-break: break-all;
+    }
+
+    .upload-status a:hover {
+      opacity: 0.8;
+    }
+
+    @media (max-width: 900px) {
+      body {
+        overflow-x: hidden;
+        overflow-y: auto;
+      }
+
+      .workspace-area {
+        grid-template-columns: 1fr;
+        overflow: visible;
+      }
+
+      .workspace-area > .panel {
+        height: auto;
+        overflow: visible;
+      }
+
+      .form-row {
+        grid-template-columns: 1fr;
+      }
+
+      .paired-fields {
+        grid-template-columns: 1fr;
+      }
+
+      .form-label {
+        padding-top: 0;
+        padding-bottom: 2px;
+      }
+    }
+
+    /* ── Modal ── */
+    .hidden {
+      display: none !important;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-card {
+      background: rgba(11, 24, 45, 0.97);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 18px;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.55);
+      padding: 28px 32px 24px;
+      min-width: 320px;
+      max-width: 480px;
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-card h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+
+    .modal-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      min-width: 90px;
+    }
+
+    .modal-card .secondary-btn {
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+    }
+
+    .modal-card .secondary-btn:hover {
+      background: rgba(255, 255, 255, 0.1);
+    }
+
+    @media (max-width: 900px) {
+      .manager-shell {
+        width: 100%;
+        height: auto;
+        grid-template-rows: auto auto auto;
+      }
+
+      .toolbar-row {
+        align-items: flex-start;
+      }
+    }
   </style>
 </head>
 <body>
-  <main>
-    <h1>Vessel Particulars</h1>
-    <div id="contextBanner" class="context-banner" aria-label="Vessel selection context"></div>
-    <p>This page scaffold is ready for feature implementation.</p>
-    <a class="return-link" href="./vessel-selector.html">Return to Vessel Selector</a>
+  <main class="manager-shell">
+
+    <!-- ── Top section / header panel ── -->
+    <section class="panel header-panel">
+
+      <div class="toolbar-row">
+        <span id="todayBadge" class="tag">Date:</span>
+        <div class="toolbar-actions">
+          <button id="saveVpBtn" type="button" class="primary-btn" disabled>Save Vessel Particulars</button>
+          <a class="return-link" href="./vessel-selector.html">Return to Vessel Selector</a>
+          <a class="return-link" href="./Frontpage.html">Return to Frontpage</a>
+        </div>
+      </div>
+
+      <div id="moreActionsDropdown" class="more-actions-dropdown collapsed">
+        <button id="moreActionsToggle" type="button" class="secondary-btn more-actions-toggle">See More</button>
+        <div class="more-actions-buttons">
+          <button id="registerFleetBtn" type="button" class="secondary-btn">Register Fleet</button>
+          <button id="launchProjectBtn" type="button" class="secondary-btn">Launch Project</button>
+          <button id="editProjectBtn" type="button" class="secondary-btn">Edit Project</button>
+        </div>
+      </div>
+
+      <div>
+        <h1>Vessel Particulars</h1>
+        <p class="muted">Enter vessel technical details and upload required drawings for dry-dock workflow.</p>
+      </div>
+
+      <!-- Selected Vessel Context -->
+      <div id="contextBanner" class="context-banner" aria-label="Vessel selection context"></div>
+
+      <!-- Completion progress bar -->
+      <div class="progress-bar-wrapper">
+        <span class="progress-bar-label">Completion — fill all 14 fields and upload 4 files to enable Save Vessel Particulars</span>
+        <div class="progress-bar-track"
+             role="progressbar"
+             aria-valuenow="0"
+             aria-valuemin="0"
+             aria-valuemax="100"
+             aria-label="Vessel particulars completion progress">
+          <div id="progressBarFill" class="progress-bar-fill"></div>
+          <span id="progressBarPercent" class="progress-bar-percent">0%</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ── Status / action note ── -->
+    <p id="statusNote" class="status-note"></p>
+
+    <!-- ── Main workspace ── -->
+    <div class="workspace-area">
+
+      <!-- LEFT: Vessel Details form -->
+      <section class="panel">
+        <h2 class="panel-header">Vessel Details</h2>
+        <div class="form-grid">
+
+          <div class="form-row">
+            <span class="form-label">Vessel Name</span>
+            <input id="fieldVesselName" class="form-input is-readonly" type="text" readonly
+                   placeholder="— loaded from context —" />
+          </div>
+
+          <div class="form-row">
+            <span class="form-label">IMO Number</span>
+            <input id="fieldImo" class="form-input" type="text" inputmode="numeric" maxlength="7"
+                   placeholder="7-digit number" autocomplete="off" />
+          </div>
+
+          <div class="form-row">
+            <span class="form-label">Month-Year of Build</span>
+            <div class="rolodex-cell">
+              <button id="monthYearPreview" class="rolodex-preview" type="button" aria-label="Edit month and year of build"></button>
+              <div class="rolodex-pair">
+                <div class="rolodex-wrapper" aria-label="Month of build">
+                  <div class="rolodex-center-line"></div>
+                  <div class="rolodex-fade rolodex-fade-top"></div>
+                  <div id="monthDrum" class="rolodex-drum" role="listbox" tabindex="0"
+                       aria-label="Month of build"></div>
+                  <div class="rolodex-fade rolodex-fade-bottom"></div>
+                </div>
+                <div class="rolodex-wrapper" aria-label="Year of build">
+                  <div class="rolodex-center-line"></div>
+                  <div class="rolodex-fade rolodex-fade-top"></div>
+                  <div id="yearDrum" class="rolodex-drum" role="listbox" tabindex="0"
+                       aria-label="Year of build"></div>
+                  <div class="rolodex-fade rolodex-fade-bottom"></div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <span class="form-label">Yard of Build</span>
+            <input id="fieldYardBuild" class="form-input" type="text" maxlength="30"
+                   placeholder="CAPS only · max 30" autocomplete="off" />
+          </div>
+
+          <div class="form-row">
+            <span class="form-label">Flag</span>
+            <input id="fieldFlag" class="form-input" type="text" maxlength="30"
+                   placeholder="CAPS only · max 30" autocomplete="off" />
+          </div>
+
+          <div class="form-row">
+            <span class="form-label">Class</span>
+            <input id="fieldClass" class="form-input" type="text" maxlength="30"
+                   placeholder="CAPS only · max 30" autocomplete="off" />
+          </div>
+
+          <div class="form-row">
+            <span class="form-label">Dimensions</span>
+            <div class="paired-fields">
+              <div class="paired-field">
+                <span class="paired-field-label">LOA</span>
+                <input id="fieldLoa" class="form-input" type="text" inputmode="decimal"
+                       placeholder="in metres" autocomplete="off" />
+              </div>
+              <div class="paired-field">
+                <span class="paired-field-label">LBP</span>
+                <input id="fieldLbp" class="form-input" type="text" inputmode="decimal"
+                       placeholder="in metres" autocomplete="off" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <span class="form-label">Hull</span>
+            <div class="paired-fields">
+              <div class="paired-field">
+                <span class="paired-field-label">Breadth</span>
+                <input id="fieldBreadth" class="form-input" type="text" inputmode="decimal"
+                       placeholder="in metres" autocomplete="off" />
+              </div>
+              <div class="paired-field">
+                <span class="paired-field-label">Depth</span>
+                <input id="fieldDepths" class="form-input" type="text" inputmode="decimal"
+                       placeholder="in metres" autocomplete="off" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <span class="form-label">Draught / DWT</span>
+            <div class="paired-fields">
+              <div class="paired-field">
+                <span class="paired-field-label">Summer Draught</span>
+                <input id="fieldSummerDraught" class="form-input" type="text" inputmode="decimal"
+                       placeholder="in metres" autocomplete="off" />
+              </div>
+              <div class="paired-field">
+                <span class="paired-field-label">DWT</span>
+                <input id="fieldDwt" name="deadweightTonnageValue" class="form-input" type="text" inputmode="decimal"
+                       placeholder="in tonnes" autocomplete="one-time-code" autocapitalize="off" autocorrect="off"
+                       data-lpignore="true" data-1p-ignore="true" data-form-type="other" data-gramm="false"
+                       spellcheck="false" aria-autocomplete="none" />
+              </div>
+            </div>
+          </div>
+
+          <div class="form-row">
+            <span class="form-label">Tonnage</span>
+            <div class="paired-fields">
+              <div class="paired-field">
+                <span class="paired-field-label">GT</span>
+                <input id="fieldGt" name="grossTonnageValue" class="form-input" type="text" inputmode="decimal"
+                       placeholder="in tonnes" autocomplete="one-time-code" autocapitalize="off" autocorrect="off"
+                       data-lpignore="true" data-1p-ignore="true" data-form-type="other" data-gramm="false"
+                       spellcheck="false" aria-autocomplete="none" />
+              </div>
+              <div class="paired-field">
+                <span class="paired-field-label">NT</span>
+                <input id="fieldNt" name="netTonnageValue" class="form-input" type="text" inputmode="decimal"
+                       placeholder="in tonnes" autocomplete="one-time-code" autocapitalize="off" autocorrect="off"
+                       data-lpignore="true" data-1p-ignore="true" data-form-type="other" data-gramm="false"
+                       spellcheck="false" aria-autocomplete="none" />
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </section>
+
+      <!-- RIGHT: Upload panel -->
+      <section class="panel" id="uploadPanel">
+        <h2 class="panel-header">Upload 4 Required Files + 3 Optional Files</h2>
+        <p class="upload-panel-desc">Accepted formats: pdf &middot; jpg &middot; jpeg &middot; png &middot; tiff &middot; zip &middot; 7z &middot; rar &middot; tar &middot; gz &middot; bz2 &middot; xz</p>
+        <div class="upload-panel-grid">
+
+          <!-- GAP -->
+          <div class="upload-row">
+            <div class="upload-row-controls">
+              <span class="upload-label">General Arrangement Plan (GAP)</span>
+              <button type="button" id="uploadBtnGap" class="upload-btn" disabled>Upload File</button>
+              <input type="file" id="fileInputGap" class="hidden"
+                accept=".pdf,.jpg,.jpeg,.png,.tiff,.zip,.7z,.rar,.tar,.gz,.bz2,.xz,application/pdf,image/jpeg,image/png,image/tiff,application/zip,application/x-zip-compressed,application/x-7z-compressed,application/vnd.rar,application/x-rar-compressed,application/x-tar,application/gzip,application/x-gzip,application/x-bzip2,application/x-xz,application/octet-stream" />
+            </div>
+            <div id="uploadStatusGap" class="upload-status"></div>
+          </div>
+
+          <!-- MSP -->
+          <div class="upload-row">
+            <div class="upload-row-controls">
+              <span class="upload-label">Midship Section Plan (MSP)</span>
+              <button type="button" id="uploadBtnMsp" class="upload-btn" disabled>Upload File</button>
+              <input type="file" id="fileInputMsp" class="hidden"
+                accept=".pdf,.jpg,.jpeg,.png,.tiff,.zip,.7z,.rar,.tar,.gz,.bz2,.xz,application/pdf,image/jpeg,image/png,image/tiff,application/zip,application/x-zip-compressed,application/x-7z-compressed,application/vnd.rar,application/x-rar-compressed,application/x-tar,application/gzip,application/x-gzip,application/x-bzip2,application/x-xz,application/octet-stream" />
+            </div>
+            <div id="uploadStatusMsp" class="upload-status"></div>
+          </div>
+
+          <!-- SEP -->
+          <div class="upload-row">
+            <div class="upload-row-controls">
+              <span class="upload-label">Shell Expansion Plan (SEP)</span>
+              <button type="button" id="uploadBtnSep" class="upload-btn" disabled>Upload File</button>
+              <input type="file" id="fileInputSep" class="hidden"
+                accept=".pdf,.jpg,.jpeg,.png,.tiff,.zip,.7z,.rar,.tar,.gz,.bz2,.xz,application/pdf,image/jpeg,image/png,image/tiff,application/zip,application/x-zip-compressed,application/x-7z-compressed,application/vnd.rar,application/x-rar-compressed,application/x-tar,application/gzip,application/x-gzip,application/x-bzip2,application/x-xz,application/octet-stream" />
+            </div>
+            <div id="uploadStatusSep" class="upload-status"></div>
+          </div>
+
+          <!-- DP -->
+          <div class="upload-row">
+            <div class="upload-row-controls">
+              <span class="upload-label">Docking Plan (DP)</span>
+              <button type="button" id="uploadBtnDp" class="upload-btn" disabled>Upload File</button>
+              <input type="file" id="fileInputDp" class="hidden"
+                     accept=".pdf,.jpg,.jpeg,.png,.tiff,.zip,.7z,.rar,.tar,.gz,.bz2,.xz,application/pdf,image/jpeg,image/png,image/tiff,application/zip,application/x-zip-compressed,application/x-7z-compressed,application/vnd.rar,application/x-rar-compressed,application/x-tar,application/gzip,application/x-gzip,application/x-bzip2,application/x-xz,application/octet-stream" />
+            </div>
+            <div id="uploadStatusDp" class="upload-status"></div>
+          </div>
+
+          <!-- PDU (Optional) -->
+          <div class="upload-row">
+            <div class="upload-row-controls">
+              <span class="upload-label">Predocking UTM (Optional)</span>
+              <button type="button" id="uploadBtnPdu" class="upload-btn" disabled>Upload File</button>
+              <input type="file" id="fileInputPdu" class="hidden"
+                     accept=".pdf,.jpg,.jpeg,.png,.tiff,.zip,.7z,.rar,.tar,.gz,.bz2,.xz,application/pdf,image/jpeg,image/png,image/tiff,application/zip,application/x-zip-compressed,application/x-7z-compressed,application/vnd.rar,application/x-rar-compressed,application/x-tar,application/gzip,application/x-gzip,application/x-bzip2,application/x-xz,application/octet-stream" />
+            </div>
+            <div id="uploadStatusPdu" class="upload-status"></div>
+          </div>
+
+          <!-- PBB (Optional) -->
+          <div class="upload-row">
+            <div class="upload-row-controls">
+              <span class="upload-label">Predocking Boiler Boroscopy (Optional)</span>
+              <button type="button" id="uploadBtnPbb" class="upload-btn" disabled>Upload File</button>
+              <input type="file" id="fileInputPbb" class="hidden"
+                     accept=".pdf,.jpg,.jpeg,.png,.tiff,.zip,.7z,.rar,.tar,.gz,.bz2,.xz,application/pdf,image/jpeg,image/png,image/tiff,application/zip,application/x-zip-compressed,application/x-7z-compressed,application/vnd.rar,application/x-rar-compressed,application/x-tar,application/gzip,application/x-gzip,application/x-bzip2,application/x-xz,application/octet-stream" />
+            </div>
+            <div id="uploadStatusPbb" class="upload-status"></div>
+          </div>
+
+          <!-- LDM (Optional) -->
+          <div class="upload-row">
+            <div class="upload-row-controls">
+              <span class="upload-label">Predocking Main Engine LDM (Optional)</span>
+              <button type="button" id="uploadBtnLdm" class="upload-btn" disabled>Upload File</button>
+              <input type="file" id="fileInputLdm" class="hidden"
+                     accept=".pdf,.jpg,.jpeg,.png,.tiff,.zip,.7z,.rar,.tar,.gz,.bz2,.xz,application/pdf,image/jpeg,image/png,image/tiff,application/zip,application/x-zip-compressed,application/x-7z-compressed,application/vnd.rar,application/x-rar-compressed,application/x-tar,application/gzip,application/x-gzip,application/x-bzip2,application/x-xz,application/octet-stream" />
+            </div>
+            <div id="uploadStatusLdm" class="upload-status"></div>
+          </div>
+
+        </div>
+      </section>
+
+    </div>
+
   </main>
+
+  <!-- ── Modal ── -->
+  <div id="modalOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <h2 id="modalTitle">Note</h2>
+      <p id="modalMessage"></p>
+      <div class="modal-actions">
+        <button id="modalCancelBtn" type="button" class="secondary-btn hidden">No</button>
+        <button id="modalConfirmBtn" type="button" class="primary-btn">Continue</button>
+      </div>
+    </div>
+  </div>
 
   <script type="module">
     import { supabase } from './supabaseClient.js';
     import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
 
+    // ── Constants ──
     const VP_CONTEXT_KEY = 'DOCKPILOT_VP_CONTEXT';
-    const contextBanner = document.getElementById('contextBanner');
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+                        'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
+    // ── Upload constants ──
+    const VP_DRAFT_DB_NAME    = 'DOCKPILOT_VP_DRAFTS';
+    const VP_DRAFT_STORE_NAME = 'files';
+    const UPLOAD_SIZE_LIMIT   = 1048576;  // 1 MB
+    const UPLOAD_TARGET_BYTES = 563200;   // ~550 KB (mid-point of 500–600 KB range)
+    const ALLOWED_EXTENSIONS  = new Set([
+      '.pdf', '.jpg', '.jpeg', '.png', '.tiff',
+      '.zip', '.7z', '.rar', '.tar', '.gz', '.bz2', '.xz'
+    ]);
+    const ALLOWED_MIME        = new Set([
+      'application/pdf', 'image/jpeg', 'image/jpg', 'image/png', 'image/tiff',
+      'application/zip', 'application/x-zip-compressed',
+      'application/x-7z-compressed',
+      'application/vnd.rar', 'application/x-rar-compressed',
+      'application/x-tar',
+      'application/gzip', 'application/x-gzip',
+      'application/x-bzip2',
+      'application/x-xz',
+      'application/octet-stream'
+    ]);
+    const REQUIRED_UPLOAD_DEFS = [
+      { prefix: 'GAP', btnId: 'uploadBtnGap', inputId: 'fileInputGap', statusId: 'uploadStatusGap' },
+      { prefix: 'MSP', btnId: 'uploadBtnMsp', inputId: 'fileInputMsp', statusId: 'uploadStatusMsp' },
+      { prefix: 'SEP', btnId: 'uploadBtnSep', inputId: 'fileInputSep', statusId: 'uploadStatusSep' },
+      { prefix: 'DP',  btnId: 'uploadBtnDp',  inputId: 'fileInputDp',  statusId: 'uploadStatusDp'  },
+    ];
+    const OPTIONAL_UPLOAD_DEFS = [
+      { prefix: 'PDU', btnId: 'uploadBtnPdu', inputId: 'fileInputPdu', statusId: 'uploadStatusPdu' },
+      { prefix: 'PBB', btnId: 'uploadBtnPbb', inputId: 'fileInputPbb', statusId: 'uploadStatusPbb' },
+      { prefix: 'LDM', btnId: 'uploadBtnLdm', inputId: 'fileInputLdm', statusId: 'uploadStatusLdm' },
+    ];
+    const UPLOAD_DEFS = [...REQUIRED_UPLOAD_DEFS, ...OPTIONAL_UPLOAD_DEFS];
+
+    // ── DOM refs ──
+    const todayBadge          = document.getElementById('todayBadge');
+    const statusNote          = document.getElementById('statusNote');
+    const saveVpBtn           = document.getElementById('saveVpBtn');
+    const contextBanner       = document.getElementById('contextBanner');
+    const progressBarFill     = document.getElementById('progressBarFill');
+    const progressBarPercent  = document.getElementById('progressBarPercent');
+    const moreActionsDropdown = document.getElementById('moreActionsDropdown');
+    const moreActionsToggle   = document.getElementById('moreActionsToggle');
+    const registerFleetBtn    = document.getElementById('registerFleetBtn');
+    const launchProjectBtn    = document.getElementById('launchProjectBtn');
+    const editProjectBtn      = document.getElementById('editProjectBtn');
+    const modalOverlay        = document.getElementById('modalOverlay');
+    const modalTitle          = document.getElementById('modalTitle');
+    const modalMessage        = document.getElementById('modalMessage');
+    const modalConfirmBtn     = document.getElementById('modalConfirmBtn');
+    const modalCancelBtn      = document.getElementById('modalCancelBtn');
+
+    // ── Form field DOM refs ──
+    const fieldVesselName    = document.getElementById('fieldVesselName');
+    const fieldImo           = document.getElementById('fieldImo');
+    const monthYearPreview   = document.getElementById('monthYearPreview');
+    const rolodexCell        = document.querySelector('.rolodex-cell');
+    const monthDrumEl        = document.getElementById('monthDrum');
+    const yearDrumEl         = document.getElementById('yearDrum');
+    const fieldYardBuild     = document.getElementById('fieldYardBuild');
+    const fieldFlag          = document.getElementById('fieldFlag');
+    const fieldClass         = document.getElementById('fieldClass');
+    const fieldLoa           = document.getElementById('fieldLoa');
+    const fieldLbp           = document.getElementById('fieldLbp');
+    const fieldBreadth       = document.getElementById('fieldBreadth');
+    const fieldDepths        = document.getElementById('fieldDepths');
+    const fieldSummerDraught = document.getElementById('fieldSummerDraught');
+    const fieldDwt           = document.getElementById('fieldDwt');
+    const fieldGt            = document.getElementById('fieldGt');
+    const fieldNt            = document.getElementById('fieldNt');
+
+    // ── Module state ──
+    let continueAction   = null;
+    let cancelAction     = null;
+    let vpContext        = null;  // populated by renderContextBanner()
+    let uploadsCompleted = 0;
+    let monthRolodex     = null;
+    let yearRolodex      = null;
+    const uploadState    = { GAP: null, MSP: null, SEP: null, DP: null, PDU: null, PBB: null, LDM: null };
+
+    // ── Utility helpers ──
+    function formatBadgeDate(date) {
+      const day = String(date.getDate()).padStart(2, '0');
+      return `Date: ${day}-${monthNames[date.getMonth()]}-${date.getFullYear()}`;
+    }
+
+    function setStatus(text, tone = '') {
+      statusNote.textContent = text;
+      statusNote.className = `status-note${tone ? ` ${tone}` : ''}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, (char) => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+      }[char]));
+    }
+
+    // ── Field normalization helpers ──
+
+    // Strip everything except digits and the first decimal point
+    function stripToNumeric(value) {
+      let s = String(value ?? '');
+      let hasDot = false;
+      let out = '';
+      for (const ch of s) {
+        if (ch >= '0' && ch <= '9') {
+          out += ch;
+        } else if (ch === '.' && !hasDot) {
+          out += ch;
+          hasDot = true;
+        }
+      }
+      return out;
+    }
+
+    // Called on focus for metre fields — strip unit so user can edit raw number
+    function onMetreFocus(el) {
+      el.value = el.value.replace(/\s*m\s*$/i, '').trim();
+    }
+
+    // Called on input for metre fields — enforce digits only, max 4.2 format
+    function onMetreInput(el) {
+      const raw = el.value.replace(/\s*m\s*$/i, '');
+      let s = stripToNumeric(raw);
+      const dot = s.indexOf('.');
+      if (dot === -1) {
+        s = s.slice(0, 4);
+      } else {
+        s = s.slice(0, dot).slice(0, 4) + '.' + s.slice(dot + 1).slice(0, 2);
+      }
+      if (el.value !== s) {
+        const pos = el.selectionStart;
+        el.value = s;
+        try { el.setSelectionRange(pos, pos); } catch {}
+      }
+    }
+
+    // Called on blur for metre fields — normalize to "X.XX m"
+    function onMetreBlur(el) {
+      const raw = el.value.replace(/\s*m\s*$/i, '').trim();
+      if (!raw || raw === '.') {
+        el.value = '';
+        el.classList.remove('is-valid');
+        computeAndUpdateProgress();
+        return;
+      }
+      const num = parseFloat(raw);
+      if (!Number.isFinite(num) || num < 0) {
+        el.value = '';
+        el.classList.remove('is-valid');
+        computeAndUpdateProgress();
+        return;
+      }
+      el.value = `${num.toFixed(2)} m`;
+      el.classList.add('is-valid');
+      if (!applyCrossFieldRules(el)) return;
+      computeAndUpdateProgress();
+    }
+
+    // Called on input for tonne fields — digits + max 1 decimal
+    function onTonneInput(el) {
+      let s = stripToNumeric(el.value);
+      const dot = s.indexOf('.');
+      if (dot !== -1) {
+        s = s.slice(0, dot + 1) + s.slice(dot + 1).slice(0, 1);
+      }
+      if (el.value !== s) {
+        const pos = el.selectionStart;
+        el.value = s;
+        try { el.setSelectionRange(pos, pos); } catch {}
+      }
+      const v = s.trim();
+      el.classList.toggle('is-valid', v.length > 0 && Number.isFinite(parseFloat(v)));
+      computeAndUpdateProgress();
+    }
+
+    // Called on blur for tonne fields — validate and check constraints
+    function onTonneBlur(el) {
+      const raw = el.value.trim();
+      if (!raw) { el.classList.remove('is-valid'); computeAndUpdateProgress(); return; }
+      const num = parseFloat(raw);
+      if (!Number.isFinite(num) || num < 0) {
+        el.value = '';
+        el.classList.remove('is-valid');
+        computeAndUpdateProgress();
+        return;
+      }
+      el.classList.add('is-valid');
+      if (!applyCrossFieldRules(el)) return;
+      computeAndUpdateProgress();
+    }
+
+    function getMetreValue(el) {
+      const raw = el.value.replace(/\s*m\s*$/i, '').trim();
+      if (!raw) return null;
+      const n = parseFloat(raw);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function getTonneValue(el) {
+      const raw = el.value.trim();
+      if (!raw) return null;
+      const n = parseFloat(raw);
+      return Number.isFinite(n) ? n : null;
+    }
+
+    function clearAndPrompt(el, message) {
+      el.value = '';
+      el.classList.remove('is-valid');
+      showAlertError(message);
+      computeAndUpdateProgress();
+      return false;
+    }
+
+    function applyCrossFieldRules(sourceField) {
+      const sourceId = sourceField.id;
+
+      if (sourceId === 'fieldLoa') {
+        const loa = getMetreValue(fieldLoa);
+        if (loa !== null && loa >= 500) {
+          return clearAndPrompt(fieldLoa, 'LOA maximum expected is 499.99 m. Recheck correctness of data');
+        }
+        const lbp = getMetreValue(fieldLbp);
+        if (loa !== null && lbp !== null && lbp > loa) {
+          clearAndPrompt(fieldLbp, 'LBP expected to be less than or equal to LOA. Recheck correctness of data.');
+        }
+        const breadth = getMetreValue(fieldBreadth);
+        if (loa !== null && breadth !== null && breadth > loa) {
+          clearAndPrompt(fieldBreadth, 'Breadth expected to be less than or equal to LOA. Recheck correctness of data.');
+        }
+        return true;
+      }
+
+      if (sourceId === 'fieldLbp') {
+        const lbp = getMetreValue(fieldLbp);
+        const loa = getMetreValue(fieldLoa);
+        if (lbp !== null && loa !== null && lbp > loa) {
+          return clearAndPrompt(fieldLbp, 'LBP is expected is to be less than or equal to LOA. Recheck correctness of data');
+        }
+        return true;
+      }
+
+      if (sourceId === 'fieldBreadth') {
+        const breadth = getMetreValue(fieldBreadth);
+        const loa = getMetreValue(fieldLoa);
+        if (breadth !== null && (breadth >= 125 || (loa !== null && breadth > loa))) {
+          return clearAndPrompt(fieldBreadth, 'Breadth is expected is to be less than or equal to LOA and less than 125.00 m. Recheck correctness of data');
+        }
+        const depth = getMetreValue(fieldDepths);
+        if (breadth !== null && depth !== null && depth > breadth) {
+          clearAndPrompt(fieldDepths, 'Depth expected to be less than or equal to Breadth. Recheck correctness of data.');
+        }
+        return true;
+      }
+
+      if (sourceId === 'fieldDepths') {
+        const depth = getMetreValue(fieldDepths);
+        const breadth = getMetreValue(fieldBreadth);
+        if (depth !== null && (depth >= 35 || (breadth !== null && depth > breadth))) {
+          return clearAndPrompt(fieldDepths, 'Depth is expected is to be less than or equal to Breadth and less than 35.00 m. Recheck correctness of data');
+        }
+        const summerDraught = getMetreValue(fieldSummerDraught);
+        if (depth !== null && summerDraught !== null && summerDraught > depth) {
+          clearAndPrompt(fieldSummerDraught, 'Summer Draught expected to be less than or equal to Depth. Recheck correctness of data.');
+        }
+        return true;
+      }
+
+      if (sourceId === 'fieldSummerDraught') {
+        const summerDraught = getMetreValue(fieldSummerDraught);
+        const depth = getMetreValue(fieldDepths);
+        if (summerDraught !== null && (summerDraught >= 26 || (depth !== null && summerDraught > depth))) {
+          return clearAndPrompt(fieldSummerDraught, 'Summer Draught is expected is to be less than Depth and less than 26.00 m. Recheck correctness of data');
+        }
+        return true;
+      }
+
+      if (sourceId === 'fieldDwt') {
+        const dwt = getTonneValue(fieldDwt);
+        if (dwt !== null && dwt >= 565000) {
+          return clearAndPrompt(fieldDwt, 'DWT maximum expected is 565,000 based on commercial ships ever constructed. Recheck correctness of data');
+        }
+        const gt = getTonneValue(fieldGt);
+        if (dwt !== null && gt !== null && gt > dwt) {
+          clearAndPrompt(fieldGt, 'GT expected to be less than or equal to DWT. Recheck correctness of data.');
+        }
+        return true;
+      }
+
+      if (sourceId === 'fieldGt') {
+        const gt = getTonneValue(fieldGt);
+        const dwt = getTonneValue(fieldDwt);
+        if (gt !== null && (gt > 260000 || (dwt !== null && gt > dwt))) {
+          return clearAndPrompt(fieldGt, 'GT is expected is to be less than DWT and less than 260,000 tonnes. Recheck correctness of data');
+        }
+        const nt = getTonneValue(fieldNt);
+        if (gt !== null && nt !== null && nt > gt) {
+          clearAndPrompt(fieldNt, 'NT expected to be less than or equal to GT. Recheck correctness of data.');
+        }
+        return true;
+      }
+
+      if (sourceId === 'fieldNt') {
+        const nt = getTonneValue(fieldNt);
+        const gt = getTonneValue(fieldGt);
+        if (nt !== null && (nt > 403000 || (gt !== null && nt > gt))) {
+          return clearAndPrompt(fieldNt, 'NT is expected is to be less than GT and less than 403,000 tonnes based on largest commercial ship ever constructed. Recheck correctness of data');
+        }
+        return true;
+      }
+
+      return true;
+    }
+
+    // Called on input for IMO — digits only, exactly 7
+    function onImoInput(el) {
+      let s = el.value.replace(/\D/g, '').slice(0, 7);
+      if (el.value !== s) {
+        const pos = el.selectionStart;
+        el.value = s;
+        try { el.setSelectionRange(pos, pos); } catch {}
+      }
+      el.classList.toggle('is-valid', s.length === 7);
+      computeAndUpdateProgress();
+    }
+
+    // Called on input for uppercase text fields
+    function onUpperInput(el) {
+      const pos = el.selectionStart;
+      el.value = el.value.toUpperCase();
+      try { el.setSelectionRange(pos, pos); } catch {}
+      el.classList.toggle('is-valid', el.value.trim().length > 0);
+      computeAndUpdateProgress();
+    }
+
+    // ── Upload helpers ──
+
+    function makeVesselToken(name) {
+      const words = name.trim().replace(/\s+/g, ' ').split(' ').filter(Boolean);
+      const first  = words[0] || '';
+      const last   = words[words.length - 1] || first;
+      const token  = (first.slice(0, 2) + last.slice(-2)).toUpperCase();
+      return token.replace(/[^A-Z0-9]/g, '-') || 'XX';
+    }
+
+    function makeImoToken(imo) {
+      const d = imo.replace(/\D/g, '');
+      return d.slice(0, 2) + d.slice(-2);
+    }
+
+    function getFileExt(fileName) {
+      const m = fileName.toLowerCase().match(/(\.[a-z0-9]+)$/);
+      return m ? m[1] : '';
+    }
+
+    function isAllowedFile(file) {
+      const ext  = getFileExt(file.name);
+      const mime = (file.type || '').toLowerCase();
+      return ALLOWED_EXTENSIONS.has(ext) || ALLOWED_MIME.has(mime);
+    }
+
+    function isCompressibleImage(file) {
+      const mime = (file.type || '').toLowerCase();
+      const ext  = getFileExt(file.name);
+      return mime.startsWith('image/') || ['.jpg', '.jpeg', '.png', '.tiff'].includes(ext);
+    }
+
+    function compressImageToTarget(file, targetBytes) {
+      return new Promise((resolve) => {
+        const img = new Image();
+        const blobUrl = URL.createObjectURL(file);
+        img.onload = () => {
+          URL.revokeObjectURL(blobUrl);
+          const canvas = document.createElement('canvas');
+          canvas.width  = img.naturalWidth;
+          canvas.height = img.naturalHeight;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0);
+          // Output as JPEG for best compression (handles PNG and TIFF too)
+          const mimeOut = 'image/jpeg';
+          function tryQuality(q) {
+            canvas.toBlob((blob) => {
+              if (!blob) { resolve(null); return; }
+              if (blob.size <= targetBytes || q <= 0.05) {
+                resolve(blob);
+              } else {
+                tryQuality(Math.max(0.05, q - 0.08));
+              }
+            }, mimeOut, q);
+          }
+          tryQuality(0.92);
+        };
+        img.onerror = () => {
+          URL.revokeObjectURL(blobUrl);
+          resolve(null);
+        };
+        img.src = blobUrl;
+      });
+    }
+
+    function openVpDraftDb() {
+      return new Promise((resolve, reject) => {
+        const req = indexedDB.open(VP_DRAFT_DB_NAME, 1);
+        req.onupgradeneeded = () => {
+          const db = req.result;
+          if (!db.objectStoreNames.contains(VP_DRAFT_STORE_NAME)) {
+            db.createObjectStore(VP_DRAFT_STORE_NAME);
+          }
+        };
+        req.onsuccess = () => resolve(req.result);
+        req.onerror   = () => reject(req.error);
+      });
+    }
+
+    async function saveDraftFile(key, record) {
+      try {
+        const db = await openVpDraftDb();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(VP_DRAFT_STORE_NAME, 'readwrite');
+          tx.objectStore(VP_DRAFT_STORE_NAME).put(record, key);
+          tx.oncomplete = () => resolve();
+          tx.onerror    = () => reject(tx.error);
+        });
+        db.close();
+      } catch (err) {
+        console.error('[VP Draft] IndexedDB save failed:', err);
+      }
+    }
+
+    function countUploads() {
+      return REQUIRED_UPLOAD_DEFS.reduce((count, def) => {
+        return count + (uploadState[def.prefix] ? 1 : 0);
+      }, 0);
+    }
+
+    function updateUploadButtonGating() {
+      const vesselOk = fieldVesselName.value.trim().length > 0;
+      const imoOk    = /^\d{7}$/.test(fieldImo.value);
+      const enabled  = vesselOk && imoOk;
+      for (const def of UPLOAD_DEFS) {
+        const btn = document.getElementById(def.btnId);
+        if (btn) btn.disabled = !enabled;
+      }
+    }
+
+    async function handleFileChosen(prefix, file, btnEl, statusEl) {
+      if (!isAllowedFile(file)) {
+        showModal({
+          title:   'Invalid File Type',
+          message: `Only pdf, jpg, jpeg, png, tiff, zip, 7z, rar, tar, gz, bz2, and xz files are accepted. "${file.name}" was not uploaded.`
+        });
+        return;
+      }
+
+      let finalBlob  = file;
+      let wasResized = false;
+
+      if (file.size > UPLOAD_SIZE_LIMIT && isCompressibleImage(file)) {
+        setStatus('Compressing image…', 'warn');
+        const compressed = await compressImageToTarget(file, UPLOAD_TARGET_BYTES);
+        if (compressed && compressed.size < file.size) {
+          finalBlob  = compressed;
+          wasResized = true;
+        }
+      }
+
+      const vesselToken = makeVesselToken(fieldVesselName.value);
+      const imoToken    = makeImoToken(fieldImo.value);
+      let   ext         = getFileExt(file.name);
+      // Canvas always outputs JPEG when compressing; update extension accordingly
+      if (wasResized) ext = '.jpg';
+      const fileName = `${prefix}_${vesselToken}_${imoToken}${ext}`;
+
+      // Revoke any previous object URL for this slot
+      if (uploadState[prefix]?.objectUrl) {
+        URL.revokeObjectURL(uploadState[prefix].objectUrl);
+      }
+
+      const objectUrl = URL.createObjectURL(finalBlob);
+      uploadState[prefix] = { blob: finalBlob, fileName, objectUrl };
+      uploadsCompleted = countUploads();
+
+      // Persist to IndexedDB
+      const dbKey = `${prefix}_${vesselToken}_${imoToken}`;
+      await saveDraftFile(dbKey, { blob: finalBlob, fileName, prefix, uploadedAt: Date.now() });
+
+      // Update upload row UI
+      btnEl.classList.add('upload-done');
+      statusEl.innerHTML =
+        `File uploaded: <a href="${escapeHtml(objectUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(fileName)}</a>`;
+
+      computeAndUpdateProgress();
+
+      if (wasResized) {
+        showModal({
+          title:   'Alert',
+          message: 'The uploaded file was resized as per file size restrictions.'
+        });
+      }
+    }
+
+    function wireUploadPanel() {
+      // Revoke all object URLs on page unload
+      window.addEventListener('unload', () => {
+        for (const slot of Object.values(uploadState)) {
+          if (slot?.objectUrl) URL.revokeObjectURL(slot.objectUrl);
+        }
+      });
+
+      for (const def of UPLOAD_DEFS) {
+        const btn      = document.getElementById(def.btnId);
+        const input    = document.getElementById(def.inputId);
+        const statusEl = document.getElementById(def.statusId);
+        btn.addEventListener('click', () => input.click());
+        input.addEventListener('change', async () => {
+          const file = input.files?.[0];
+          if (!file) return;
+          input.value = '';  // reset so same file can be re-chosen
+          await handleFileChosen(def.prefix, file, btn, statusEl);
+        });
+      }
+    }
+
+    // ── Rolodex builder ──
+    const ROLODEX_ITEM_H = 28;
+    const ROLODEX_PAD    = 3;
+
+    function buildRolodex(drumEl, items, defaultIndex, onChange) {
+      // Leading phantom padding so first real item can reach center
+      for (let p = 0; p < ROLODEX_PAD; p++) {
+        const ph = document.createElement('div');
+        ph.className = 'rolodex-item rolodex-phantom';
+        ph.setAttribute('aria-hidden', 'true');
+        drumEl.appendChild(ph);
+      }
+
+      items.forEach((label, idx) => {
+        const item = document.createElement('div');
+        item.className = 'rolodex-item';
+        item.textContent = label;
+        item.setAttribute('role', 'option');
+        item.addEventListener('click', () => {
+          drumEl.scrollTo({ top: idx * ROLODEX_ITEM_H, behavior: 'smooth' });
+        });
+        drumEl.appendChild(item);
+      });
+
+      // Trailing phantom padding so last real item can reach center
+      for (let p = 0; p < ROLODEX_PAD; p++) {
+        const ph = document.createElement('div');
+        ph.className = 'rolodex-item rolodex-phantom';
+        ph.setAttribute('aria-hidden', 'true');
+        drumEl.appendChild(ph);
+      }
+
+      function getIndex() {
+        return Math.round(drumEl.scrollTop / ROLODEX_ITEM_H);
+      }
+
+      function updateSelected() {
+        const selIdx = getIndex();
+        const realItems = drumEl.querySelectorAll('.rolodex-item:not(.rolodex-phantom)');
+        realItems.forEach((el, i) => {
+          el.classList.toggle('rolodex-selected', i === selIdx);
+          el.setAttribute('aria-selected', String(i === selIdx));
+        });
+        if (typeof onChange === 'function') onChange(selIdx, items[selIdx]);
+      }
+
+      // Set default without animation
+      drumEl.scrollTop = defaultIndex * ROLODEX_ITEM_H;
+      updateSelected();
+
+      let snapTimer = null;
+      drumEl.addEventListener('scroll', () => {
+        clearTimeout(snapTimer);
+        snapTimer = setTimeout(() => {
+          const nearest = Math.round(drumEl.scrollTop / ROLODEX_ITEM_H);
+          const target  = nearest * ROLODEX_ITEM_H;
+          if (Math.abs(drumEl.scrollTop - target) > 1) {
+            drumEl.scrollTo({ top: target, behavior: 'smooth' });
+          }
+          updateSelected();
+          computeAndUpdateProgress();
+        }, 150);
+      });
+
+      // Keyboard navigation
+      drumEl.addEventListener('keydown', (e) => {
+        const cur = getIndex();
+        if (e.key === 'ArrowDown' && cur < items.length - 1) {
+          e.preventDefault();
+          drumEl.scrollTo({ top: (cur + 1) * ROLODEX_ITEM_H, behavior: 'smooth' });
+        } else if (e.key === 'ArrowUp' && cur > 0) {
+          e.preventDefault();
+          drumEl.scrollTo({ top: (cur - 1) * ROLODEX_ITEM_H, behavior: 'smooth' });
+        }
+      });
+
+      return {
+        getValue:  () => getIndex(),
+        getLabel:  () => items[getIndex()] ?? null,
+        getIndex:  () => getIndex()
+      };
+    }
+
+    function updateMonthYearPreview() {
+      const month = monthRolodex?.getLabel() || monthNames[new Date().getMonth()];
+      const year  = yearRolodex?.getLabel() || String(new Date().getFullYear());
+      monthYearPreview.textContent = `${month} ${year}`;
+    }
+
+    // ── Rolodex init ──
+    function initRolodex() {
+      const now = new Date();
+      const curMonthIdx = now.getMonth();   // 0 = Jan
+      const curYear     = now.getFullYear();
+
+      const years = [];
+      for (let y = 1980; y <= 2050; y++) years.push(String(y));
+      const defaultYearIdx = Math.max(0, Math.min(years.length - 1, curYear - 1980));
+
+      monthRolodex = buildRolodex(monthDrumEl, monthNames, curMonthIdx, updateMonthYearPreview);
+      yearRolodex  = buildRolodex(yearDrumEl,  years, defaultYearIdx, updateMonthYearPreview);
+      updateMonthYearPreview();
+    }
+
+    // ── Field state init ──
+    function initFormFields() {
+      if (vpContext && vpContext.vesselName) {
+        fieldVesselName.value = vpContext.vesselName;
+        fieldVesselName.classList.add('is-valid');
+      }
+      updateUploadButtonGating();
+    }
+
+    // ── Progress computation (fields side — uploads added by Phase 3) ──
+    function computeFieldProgress() {
+      let done = 0;
+
+      // 1. Vessel Name (auto-filled from context)
+      if (fieldVesselName.value.trim()) done++;
+
+      // 2. IMO — exactly 7 digits
+      if (/^\d{7}$/.test(fieldImo.value)) done++;
+
+      // 3. Month-Year of Build (rolodex always has a default — counts immediately)
+      done++;
+
+      // 4-6. Uppercase text fields
+      for (const el of [fieldYardBuild, fieldFlag, fieldClass]) {
+        if (el.value.trim().length > 0) done++;
+      }
+
+      // 7-11. Metre fields — must end with " m"
+      for (const el of [fieldLoa, fieldLbp, fieldBreadth, fieldDepths, fieldSummerDraught]) {
+        if (/\d\.\d{2}\s*m$/i.test(el.value.trim())) done++;
+      }
+
+      // 12-14. Tonne fields — must be a valid number
+      for (const el of [fieldDwt, fieldGt, fieldNt]) {
+        const v = el.value.trim();
+        if (v && Number.isFinite(parseFloat(v))) done++;
+      }
+
+      return done;  // max 14
+    }
+
+    function computeAndUpdateProgress() {
+      updateProgress(computeFieldProgress() + uploadsCompleted);
+    }
+
+    // ── Modal ──
+    function showModal({
+      title,
+      message,
+      confirmText = 'Continue',
+      cancelText  = '',
+      onConfirm   = null,
+      onCancel    = null
+    }) {
+      modalTitle.textContent = title;
+      modalMessage.textContent = message;
+      modalConfirmBtn.textContent = confirmText;
+      modalCancelBtn.textContent  = cancelText || 'No';
+      modalCancelBtn.classList.toggle('hidden', !cancelText);
+      continueAction = onConfirm;
+      cancelAction   = onCancel;
+      modalOverlay.classList.remove('hidden');
+      modalConfirmBtn.focus();
+    }
+
+    function closeModal(runCancel = false) {
+      const pendingCancel = cancelAction;
+      modalOverlay.classList.add('hidden');
+      continueAction = null;
+      cancelAction   = null;
+      if (runCancel && typeof pendingCancel === 'function') {
+        pendingCancel();
+      }
+    }
+    
+    // Show alert modal with standard error handling (acts like Esc)
+    function showAlertError(errorMessage) {
+      showModal({
+        title: 'Alert',
+        message: errorMessage || 'Check correctness of data input!',
+        confirmText: 'Continue',
+        onConfirm: () => closeModal(),
+      });
+    }
+
+    // ── Context banner ──
     function renderContextBanner() {
       let context = null;
       try {
@@ -147,40 +1885,313 @@
       } catch {
         context = null;
       }
+      vpContext = context;
 
       if (!context) {
         contextBanner.classList.add('missing');
         contextBanner.innerHTML = `
           <span class="context-banner-title">No Selection Context</span>
-          <span class="context-banner-row">No vessel filter criteria were passed. Please return to Fleet Composition and populate all 4 filters before opening this page.</span>
+          <div class="context-banner-row">No vessel filter criteria were passed. Please return to Vessel Selector and populate all 4 filters before opening this page.</div>
         `;
         return;
       }
 
+      contextBanner.classList.remove('missing');
       contextBanner.innerHTML = `
         <span class="context-banner-title">Selected Vessel Context</span>
-        <div class="context-banner-row"><strong>Fleet Group</strong><span>${escapeHtml(context.fleetGroup || '—')}</span></div>
-        <div class="context-banner-row"><strong>TM / FM</strong><span>${escapeHtml(context.managerName || '—')}</span></div>
-        <div class="context-banner-row"><strong>Vessel Name</strong><span>${escapeHtml(context.vesselName || '—')}</span></div>
-        <div class="context-banner-row"><strong>TSI Name</strong><span>${escapeHtml(context.tsiName || '—')}</span></div>
+        <div class="context-banner-items">
+          <div class="context-banner-row"><strong>Fleet Group</strong><span>${escapeHtml(context.fleetGroup   || '—')}</span></div>
+          <div class="context-banner-row"><strong>TM / FM</strong><span>${escapeHtml(context.managerName || '—')}</span></div>
+          <div class="context-banner-row"><strong>Vessel Name</strong><span>${escapeHtml(context.vesselName  || '—')}</span></div>
+          <div class="context-banner-row"><strong>TSI Name</strong><span>${escapeHtml(context.tsiName     || '—')}</span></div>
+        </div>
       `;
     }
 
-    function escapeHtml(value) {
-      return String(value ?? '').replace(/[&<>"']/g, (char) => ({
-        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
-      }[char]));
+    // ── Progress bar ──
+    function updateProgress(completed, total = 18) {
+      const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
+      progressBarFill.style.width = `${pct}%`;
+      progressBarPercent.textContent = `${pct}%`;
+      progressBarFill.classList.toggle('complete', pct === 100);
+      const track = progressBarFill.closest('[role="progressbar"]');
+      if (track) track.setAttribute('aria-valuenow', String(pct));
+      saveVpBtn.disabled = pct < 100;
+      // Drive status note based on completion state
+      if (pct === 100) {
+        setStatus('All 18 checkpoints complete — vessel particulars ready to save.', 'success');
+      } else if (pct > 0) {
+        setStatus(`${pct}% complete — fill all 14 fields and upload 4 required files to save.`);
+      } else {
+        setStatus('Vessel particulars ready.');
+      }
     }
 
+    // ── Save workflow ──
+
+    function collectParticulars() {
+      const now         = new Date();
+      const vesselToken = makeVesselToken(fieldVesselName.value);
+      const imoToken    = makeImoToken(fieldImo.value);
+      return {
+        savedAt:         now.toISOString(),
+        validationStamp: 'VP_COMPLETE_18_18',
+        context: {
+          fleetGroup:  vpContext?.fleetGroup  || '',
+          managerName: vpContext?.managerName || '',
+          vesselName:  vpContext?.vesselName  || '',
+          tsiName:     vpContext?.tsiName     || '',
+        },
+        particulars: {
+          vesselName:    fieldVesselName.value.trim(),
+          imo:           fieldImo.value.trim(),
+          monthOfBuild:  monthRolodex?.getLabel() || '',
+          yearOfBuild:   yearRolodex?.getLabel()  || '',
+          yardBuild:     fieldYardBuild.value.trim(),
+          flag:          fieldFlag.value.trim(),
+          class:         fieldClass.value.trim(),
+          loa:           fieldLoa.value.trim(),
+          lbp:           fieldLbp.value.trim(),
+          breadth:       fieldBreadth.value.trim(),
+          depths:        fieldDepths.value.trim(),
+          summerDraught: fieldSummerDraught.value.trim(),
+          dwt:           fieldDwt.value.trim(),
+          gt:            fieldGt.value.trim(),
+          nt:            fieldNt.value.trim(),
+        },
+        files: UPLOAD_DEFS.map(def => {
+          const slot = uploadState[def.prefix];
+          return {
+            prefix:    def.prefix,
+            required:  REQUIRED_UPLOAD_DEFS.some(req => req.prefix === def.prefix),
+            fileName:  slot?.fileName  ?? null,
+            sizeBytes: slot?.blob?.size ?? null,
+          };
+        }),
+        tokens: { vesselToken, imoToken },
+      };
+    }
+
+    async function saveDraftMetadata(metadata) {
+      try {
+        const db = await openVpDraftDb();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(VP_DRAFT_STORE_NAME, 'readwrite');
+          tx.objectStore(VP_DRAFT_STORE_NAME).put(metadata, '__draft_metadata__');
+          tx.oncomplete = () => resolve();
+          tx.onerror    = () => reject(tx.error);
+        });
+        db.close();
+      } catch (err) {
+        console.error('[VP Draft] Metadata save failed:', err);
+      }
+    }
+
+    function triggerDownload(blob, fileName) {
+      const url = URL.createObjectURL(blob);
+      const a   = document.createElement('a');
+      a.href     = url;
+      a.download = fileName;
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      setTimeout(() => URL.revokeObjectURL(url), 30000);
+    }
+
+    async function exportVpPackage(metadata) {
+      const { vesselToken, imoToken } = metadata.tokens;
+      // 1. JSON metadata file
+      const jsonBlob = new Blob(
+        [JSON.stringify(metadata, null, 2)],
+        { type: 'application/json' }
+      );
+      triggerDownload(jsonBlob, `VP_${vesselToken}_${imoToken}_particulars.json`);
+      // Stagger downloads so browsers don't suppress simultaneous triggers
+      await new Promise(r => setTimeout(r, 450));
+      // 2. Four document files in UPLOAD_DEFS order
+      for (const def of UPLOAD_DEFS) {
+        const slot = uploadState[def.prefix];
+        if (slot?.blob) {
+          triggerDownload(slot.blob, slot.fileName);
+          await new Promise(r => setTimeout(r, 350));
+        }
+      }
+    }
+
+    async function executeVpSave() {
+      saveVpBtn.disabled = true;
+      setStatus('Saving vessel particulars…', 'warn');
+      try {
+        const metadata = collectParticulars();
+        await saveDraftMetadata(metadata);
+        await exportVpPackage(metadata);
+        setStatus('Vessel particulars saved and package exported successfully.', 'success');
+        // Ask user to move files to working folder
+        showModal({
+          title: 'File Management',
+          message: 'The JSON record and 4 files have been downloaded. Please move them to your project\'s working folder.',
+          confirmText: 'Done',
+          onConfirm: () => closeModal(),
+        });
+      } catch (err) {
+        console.error('[VP Save] Save failed:', err);
+        setStatus('Save failed — please try again.', 'error');
+        saveVpBtn.disabled = false;
+      }
+    }
+
+    // ── More-actions dropdown ──
+    function toggleMoreActions() {
+      moreActionsDropdown.classList.toggle('collapsed');
+      moreActionsToggle.textContent = moreActionsDropdown.classList.contains('collapsed')
+        ? 'See More' : 'See Less';
+    }
+
+    // ── Event wiring ──
+    function wireEvents() {
+      moreActionsToggle.addEventListener('click', toggleMoreActions);
+
+      registerFleetBtn.addEventListener('click', () => {
+        window.location.href = './fleet-registration.html';
+      });
+      launchProjectBtn.addEventListener('click', () => {
+        window.location.href = './dry-docking-project.html';
+      });
+      editProjectBtn.addEventListener('click', () => {
+        window.location.href = './running-dd-project.html';
+      });
+
+      // Close dropdown when clicking outside
+      document.addEventListener('click', (event) => {
+        if (!moreActionsDropdown.contains(event.target) &&
+            !moreActionsDropdown.classList.contains('collapsed')) {
+          moreActionsDropdown.classList.add('collapsed');
+          moreActionsToggle.textContent = 'See More';
+        }
+      });
+
+      // Save button
+      saveVpBtn.addEventListener('click', () => {
+        showModal({
+          title:       'Save Vessel Particulars',
+          message:     'This will save your vessel particulars to local storage and download an export package — the JSON record plus all 4 required files. Continue?',
+          confirmText: 'Save & Export',
+          cancelText:  'Cancel',
+          onConfirm:   () => executeVpSave(),
+        });
+      });
+
+      // ── Form field event wiring ──
+
+      fieldImo.addEventListener('input', () => { onImoInput(fieldImo); updateUploadButtonGating(); });
+
+      monthYearPreview.addEventListener('click', () => {
+        rolodexCell?.classList.add('open');
+        monthDrumEl.focus();
+      });
+
+      let rolodexHideTimer = null;
+      const openRolodex = () => {
+        clearTimeout(rolodexHideTimer);
+        rolodexCell?.classList.add('open');
+      };
+      const closeRolodexSoon = () => {
+        clearTimeout(rolodexHideTimer);
+        rolodexHideTimer = setTimeout(() => {
+          rolodexCell?.classList.remove('open');
+          if (rolodexCell?.contains(document.activeElement)) {
+            document.activeElement.blur();
+          }
+          updateMonthYearPreview();
+          computeAndUpdateProgress();
+        }, 200);
+      };
+
+      rolodexCell?.addEventListener('mouseenter', openRolodex);
+      rolodexCell?.addEventListener('mouseleave', closeRolodexSoon);
+      rolodexCell?.addEventListener('focusin', openRolodex);
+      rolodexCell?.addEventListener('focusout', (event) => {
+        if (!rolodexCell.contains(event.relatedTarget)) {
+          closeRolodexSoon();
+        }
+      });
+
+      for (const el of [fieldYardBuild, fieldFlag, fieldClass]) {
+        el.addEventListener('input', () => onUpperInput(el));
+      }
+
+      for (const el of [fieldLoa, fieldLbp, fieldBreadth, fieldDepths, fieldSummerDraught]) {
+        el.addEventListener('focus', () => onMetreFocus(el));
+        el.addEventListener('input', () => onMetreInput(el));
+        el.addEventListener('blur',  () => onMetreBlur(el));
+      }
+
+      for (const el of [fieldDwt, fieldGt, fieldNt]) {
+        el.addEventListener('input', () => onTonneInput(el));
+        el.addEventListener('blur',  () => onTonneBlur(el));
+      }
+
+      const hardenTonnageFields = () => {
+        // Some password managers attempt to reclassify tonnage inputs; force text/decimal semantics for GT, DWT, NT.
+        for (const el of [fieldGt, fieldDwt, fieldNt]) {
+          if (el.type !== 'text') el.type = 'text';
+          el.setAttribute('inputmode', 'decimal');
+          el.setAttribute('autocomplete', 'one-time-code');
+        }
+      };
+      hardenTonnageFields();
+      for (const el of [fieldGt, fieldDwt, fieldNt]) {
+        el.addEventListener('focus', hardenTonnageFields);
+        el.addEventListener('input', hardenTonnageFields);
+        el.addEventListener('blur', hardenTonnageFields);
+        el.addEventListener('pointerdown', hardenTonnageFields);
+      }
+
+      // ── Modal controls ──
+      modalConfirmBtn.addEventListener('click', () => {
+        const action = continueAction;
+        closeModal();
+        if (typeof action === 'function') action();
+      });
+
+      modalCancelBtn.addEventListener('click', () => {
+        closeModal(true);
+      });
+
+      modalOverlay.addEventListener('click', (event) => {
+        if (event.target === modalOverlay) closeModal(true);
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !modalOverlay.classList.contains('hidden')) {
+          closeModal(true);
+        }
+      });
+
+      wireUploadPanel();
+    }
+
+    // ── Init ──
+    function initVesselParticulars() {
+      todayBadge.textContent = formatBadgeDate(new Date());
+      renderContextBanner();
+      initRolodex();
+      initFormFields();
+      wireEvents();
+      computeAndUpdateProgress();
+    }
+
+    // ── Guard + boot ──
     startDockPilotPageGuard({
       supabase,
       landingPage: './DockPilot_landing.html'
     }).then(() => {
-      renderContextBanner();
+      initVesselParticulars();
     }).catch((error) => {
       console.error('DockPilot guard startup failed:', error);
       window.location.href = './DockPilot_landing.html';
     });
+
   </script>
 </body>
 </html>

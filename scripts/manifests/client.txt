@@ -15,6 +15,7 @@ spec_template.html
 
 dockpilotAuthContract.js
 dockpilotPageGuard.js
+dockpilotTheme.js
 supabaseClient.js
 
 test-assets

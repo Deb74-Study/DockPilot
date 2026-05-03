@@ -653,6 +653,10 @@
   <script type="module">
     import { supabase } from './supabaseClient.js';
     import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
+    import { loadSavedTheme } from './dockpilotTheme.js';
+
+    // Apply saved theme before anything renders
+    loadSavedTheme();
 
     startDockPilotPageGuard({
       supabase,

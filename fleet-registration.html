@@ -676,6 +676,10 @@
   <script type="module">
     import { supabase } from './supabaseClient.js';
     import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
+    import { loadSavedTheme } from './dockpilotTheme.js';
+
+    // Apply saved theme before anything renders
+    loadSavedTheme();
 
     const STATE_KEY = 'DOCKPILOT_FLEET_REG_STATE';
     const MIN_DATA_COLUMNS = 2;

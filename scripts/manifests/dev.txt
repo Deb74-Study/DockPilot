@@ -1,5 +1,6 @@
 # Developer-only bundle
 fpadevDockPilot.html
+dockpilotTheme.js
 supabaseClient.js
 
 test-assets

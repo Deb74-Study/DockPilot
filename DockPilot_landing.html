@@ -389,6 +389,7 @@
   </div>
   <script type="module">
     import { supabase } from './supabaseClient.js';
+    import { loadSavedTheme } from './dockpilotTheme.js';
     import {
       AUTH_GUARD_OUTCOME,
       getGuardOutcome,
@@ -402,6 +403,9 @@
       clearReturnTarget,
       isExpired
     } from './dockpilotAuthContract.js';
+
+    // Apply saved theme before anything renders
+    loadSavedTheme();
 
     const pageShell = document.querySelector('.page-shell');
     const form = document.getElementById('loginForm');

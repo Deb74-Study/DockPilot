@@ -425,17 +425,45 @@
       height: 100%;
       min-height: 0;
       overflow: auto;
+      position: relative;
     }
 
     .panel-header {
-      margin: 0 0 14px 0;
+      margin: 0;
       font-size: 0.88rem;
       font-weight: 700;
       color: var(--accent);
       letter-spacing: 0.05em;
       text-transform: uppercase;
+      min-width: 0;
+    }
+
+    .panel-sticky-row {
+      position: sticky;
+      top: -16px;
+      z-index: 4;
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) auto;
+      gap: 10px;
+      align-items: center;
+      margin: 0 -16px 14px -16px;
+      padding: 8px 16px 9px;
       border-bottom: 1px solid rgba(103, 214, 255, 0.15);
-      padding-bottom: 10px;
+      background: linear-gradient(180deg, rgba(11, 24, 45, 0.98), rgba(11, 24, 45, 0.9));
+      backdrop-filter: blur(2px);
+    }
+
+    .panel-scroll-note {
+      justify-self: end;
+      max-width: 120px;
+      padding: 3px 6px;
+      border-radius: 8px;
+      border: 1px solid rgba(255, 210, 140, 0.32);
+      background: rgba(255, 210, 140, 0.12);
+      color: #ffe6ba;
+      font-size: 0.62rem;
+      line-height: 1.15;
+      text-align: right;
     }
 
     /* ── Form grid (vessel details) ── */
@@ -460,6 +488,12 @@
     .paired-field {
       display: grid;
       gap: 4px;
+      min-width: 0;
+      position: relative;
+    }
+
+    .field-box {
+      position: relative;
       min-width: 0;
     }
 
@@ -519,6 +553,24 @@
     .form-input.is-error,
     .form-textarea.is-error {
       border-color: rgba(255, 210, 140, 0.45);
+    }
+
+    .field-indicator {
+      position: absolute;
+      top: 8px;
+      right: 8px;
+      width: 3px;
+      height: 3px;
+      border-radius: 50%;
+      background: #ffb347;
+      box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.25);
+      pointer-events: none;
+      z-index: 3;
+      transition: background-color 0.2s ease;
+    }
+
+    .field-indicator.is-valid {
+      background: #39ff73;
     }
 
     .form-textarea {
@@ -592,6 +644,11 @@
       transform: translateY(-50%) scale(1);
     }
 
+    .rolodex-single {
+      left: auto;
+      right: 0;
+    }
+
     .rolodex-wrapper {
       position: relative;
       width: 72px;
@@ -601,6 +658,27 @@
       background: rgba(255, 255, 255, 0.04);
       overflow: hidden;
       flex-shrink: 0;
+    }
+
+    .rolodex-wrapper-wide {
+      width: 332px;
+    }
+
+    .rolodex-wrapper-wide .rolodex-item {
+      justify-content: flex-start;
+      padding: 0 10px;
+      font-size: 0.72rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    #classPreview {
+      font-size: 0.78rem;
+      padding-right: 14px;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .rolodex-drum {
@@ -774,6 +852,14 @@
         overflow: visible;
       }
 
+      .panel-sticky-row {
+        position: static;
+        margin: 0 0 8px 0;
+        padding: 0 0 10px 0;
+        background: transparent;
+        backdrop-filter: none;
+      }
+
       .form-row {
         grid-template-columns: 1fr;
       }
@@ -922,25 +1008,35 @@
 
       <!-- LEFT: Vessel Details form -->
       <section class="panel">
-        <h2 class="panel-header">Vessel Details</h2>
+        <div class="panel-sticky-row">
+          <h2 class="panel-header">Vessel Details</h2>
+          <span class="panel-scroll-note">Scroll down to bottom<br>of section for more</span>
+        </div>
         <div class="form-grid">
 
           <div class="form-row">
             <span class="form-label">Vessel Name</span>
-            <input id="fieldVesselName" class="form-input is-readonly" type="text" readonly
-                   placeholder="— loaded from context —" />
+            <div class="field-box">
+              <input id="fieldVesselName" class="form-input is-readonly" type="text" readonly
+                     placeholder="— loaded from context —" />
+              <span id="dotVesselName" class="field-indicator" aria-hidden="true"></span>
+            </div>
           </div>
 
           <div class="form-row">
             <span class="form-label">IMO Number</span>
-            <input id="fieldImo" class="form-input" type="text" inputmode="numeric" maxlength="7"
-                   placeholder="7-digit number" autocomplete="off" />
+            <div class="field-box">
+              <input id="fieldImo" class="form-input" type="text" inputmode="numeric" maxlength="7"
+                     placeholder="7-digit number" autocomplete="off" />
+              <span id="dotImo" class="field-indicator" aria-hidden="true"></span>
+            </div>
           </div>
 
           <div class="form-row">
             <span class="form-label">Month-Year of Build</span>
             <div class="rolodex-cell">
               <button id="monthYearPreview" class="rolodex-preview" type="button" aria-label="Edit month and year of build"></button>
+              <span id="dotMonthYear" class="field-indicator" aria-hidden="true"></span>
               <div class="rolodex-pair">
                 <div class="rolodex-wrapper" aria-label="Month of build">
                   <div class="rolodex-center-line"></div>
@@ -962,20 +1058,37 @@
 
           <div class="form-row">
             <span class="form-label">Yard of Build</span>
-            <input id="fieldYardBuild" class="form-input" type="text" maxlength="30"
-                   placeholder="CAPS only · max 30" autocomplete="off" />
+            <div class="field-box">
+              <input id="fieldYardBuild" class="form-input" type="text" maxlength="40"
+                     placeholder="Country of build, Yard Name - max 40 letters" autocomplete="off" />
+              <span id="dotYardBuild" class="field-indicator" aria-hidden="true"></span>
+            </div>
           </div>
 
           <div class="form-row">
             <span class="form-label">Flag</span>
-            <input id="fieldFlag" class="form-input" type="text" maxlength="30"
-                   placeholder="CAPS only · max 30" autocomplete="off" />
+            <div class="field-box">
+              <input id="fieldFlag" class="form-input" type="text" maxlength="30"
+                     placeholder="Max. 30 characters" autocomplete="off" />
+              <span id="dotFlag" class="field-indicator" aria-hidden="true"></span>
+            </div>
           </div>
 
           <div class="form-row">
             <span class="form-label">Class</span>
-            <input id="fieldClass" class="form-input" type="text" maxlength="30"
-                   placeholder="CAPS only · max 30" autocomplete="off" />
+            <div class="rolodex-cell" id="classRolodexCell">
+              <button id="classPreview" class="rolodex-preview" type="button" aria-label="Edit classification society"></button>
+              <span id="dotClass" class="field-indicator" aria-hidden="true"></span>
+              <div class="rolodex-pair rolodex-single">
+                <div class="rolodex-wrapper rolodex-wrapper-wide" aria-label="Classification society">
+                  <div class="rolodex-center-line"></div>
+                  <div class="rolodex-fade rolodex-fade-top"></div>
+                  <div id="classDrum" class="rolodex-drum" role="listbox" tabindex="0"
+                       aria-label="Classification society"></div>
+                  <div class="rolodex-fade rolodex-fade-bottom"></div>
+                </div>
+              </div>
+            </div>
           </div>
 
           <div class="form-row">
@@ -983,13 +1096,19 @@
             <div class="paired-fields">
               <div class="paired-field">
                 <span class="paired-field-label">LOA</span>
-                <input id="fieldLoa" class="form-input" type="text" inputmode="decimal"
-                       placeholder="in metres" autocomplete="off" />
+                <div class="field-box">
+                  <input id="fieldLoa" class="form-input" type="text" inputmode="decimal"
+                         placeholder="in metres" autocomplete="off" />
+                  <span id="dotLoa" class="field-indicator" aria-hidden="true"></span>
+                </div>
               </div>
               <div class="paired-field">
                 <span class="paired-field-label">LBP</span>
-                <input id="fieldLbp" class="form-input" type="text" inputmode="decimal"
-                       placeholder="in metres" autocomplete="off" />
+                <div class="field-box">
+                  <input id="fieldLbp" class="form-input" type="text" inputmode="decimal"
+                         placeholder="in metres" autocomplete="off" />
+                  <span id="dotLbp" class="field-indicator" aria-hidden="true"></span>
+                </div>
               </div>
             </div>
           </div>
@@ -999,13 +1118,19 @@
             <div class="paired-fields">
               <div class="paired-field">
                 <span class="paired-field-label">Breadth</span>
-                <input id="fieldBreadth" class="form-input" type="text" inputmode="decimal"
-                       placeholder="in metres" autocomplete="off" />
+                <div class="field-box">
+                  <input id="fieldBreadth" class="form-input" type="text" inputmode="decimal"
+                         placeholder="in metres" autocomplete="off" />
+                  <span id="dotBreadth" class="field-indicator" aria-hidden="true"></span>
+                </div>
               </div>
               <div class="paired-field">
                 <span class="paired-field-label">Depth</span>
-                <input id="fieldDepths" class="form-input" type="text" inputmode="decimal"
-                       placeholder="in metres" autocomplete="off" />
+                <div class="field-box">
+                  <input id="fieldDepths" class="form-input" type="text" inputmode="decimal"
+                         placeholder="in metres" autocomplete="off" />
+                  <span id="dotDepths" class="field-indicator" aria-hidden="true"></span>
+                </div>
               </div>
             </div>
           </div>
@@ -1015,15 +1140,21 @@
             <div class="paired-fields">
               <div class="paired-field">
                 <span class="paired-field-label">Summer Draught</span>
-                <input id="fieldSummerDraught" class="form-input" type="text" inputmode="decimal"
-                       placeholder="in metres" autocomplete="off" />
+                <div class="field-box">
+                  <input id="fieldSummerDraught" class="form-input" type="text" inputmode="decimal"
+                         placeholder="in metres" autocomplete="off" />
+                  <span id="dotSummerDraught" class="field-indicator" aria-hidden="true"></span>
+                </div>
               </div>
               <div class="paired-field">
                 <span class="paired-field-label">DWT</span>
-                <input id="fieldDwt" name="deadweightTonnageValue" class="form-input" type="text" inputmode="decimal"
-                       placeholder="in tonnes" autocomplete="one-time-code" autocapitalize="off" autocorrect="off"
-                       data-lpignore="true" data-1p-ignore="true" data-form-type="other" data-gramm="false"
-                       spellcheck="false" aria-autocomplete="none" />
+                <div class="field-box">
+                  <input id="fieldDwt" name="deadweightTonnageValue" class="form-input" type="text" inputmode="decimal"
+                         placeholder="in tonnes" autocomplete="one-time-code" autocapitalize="off" autocorrect="off"
+                         data-lpignore="true" data-1p-ignore="true" data-form-type="other" data-gramm="false"
+                         spellcheck="false" aria-autocomplete="none" />
+                  <span id="dotDwt" class="field-indicator" aria-hidden="true"></span>
+                </div>
               </div>
             </div>
           </div>
@@ -1033,17 +1164,23 @@
             <div class="paired-fields">
               <div class="paired-field">
                 <span class="paired-field-label">GT</span>
-                <input id="fieldGt" name="grossTonnageValue" class="form-input" type="text" inputmode="decimal"
-                       placeholder="in tonnes" autocomplete="one-time-code" autocapitalize="off" autocorrect="off"
-                       data-lpignore="true" data-1p-ignore="true" data-form-type="other" data-gramm="false"
-                       spellcheck="false" aria-autocomplete="none" />
+                <div class="field-box">
+                  <input id="fieldGt" name="grossTonnageValue" class="form-input" type="text" inputmode="decimal"
+                         placeholder="in tonnes" autocomplete="one-time-code" autocapitalize="off" autocorrect="off"
+                         data-lpignore="true" data-1p-ignore="true" data-form-type="other" data-gramm="false"
+                         spellcheck="false" aria-autocomplete="none" />
+                  <span id="dotGt" class="field-indicator" aria-hidden="true"></span>
+                </div>
               </div>
               <div class="paired-field">
                 <span class="paired-field-label">NT</span>
-                <input id="fieldNt" name="netTonnageValue" class="form-input" type="text" inputmode="decimal"
-                       placeholder="in tonnes" autocomplete="one-time-code" autocapitalize="off" autocorrect="off"
-                       data-lpignore="true" data-1p-ignore="true" data-form-type="other" data-gramm="false"
-                       spellcheck="false" aria-autocomplete="none" />
+                <div class="field-box">
+                  <input id="fieldNt" name="netTonnageValue" class="form-input" type="text" inputmode="decimal"
+                         placeholder="in tonnes" autocomplete="one-time-code" autocapitalize="off" autocorrect="off"
+                         data-lpignore="true" data-1p-ignore="true" data-form-type="other" data-gramm="false"
+                         spellcheck="false" aria-autocomplete="none" />
+                  <span id="dotNt" class="field-indicator" aria-hidden="true"></span>
+                </div>
               </div>
             </div>
           </div>
@@ -1053,14 +1190,17 @@
 
       <!-- RIGHT: Upload panel -->
       <section class="panel" id="uploadPanel">
-        <h2 class="panel-header">Upload 4 Required Files + 3 Optional Files</h2>
+        <div class="panel-sticky-row">
+          <h2 class="panel-header">Upload 4 Required Files + 3 Optional Files</h2>
+          <span class="panel-scroll-note">Scroll down to bottom<br>of section for more</span>
+        </div>
         <p class="upload-panel-desc">Accepted formats: pdf &middot; jpg &middot; jpeg &middot; png &middot; tiff &middot; zip &middot; 7z &middot; rar &middot; tar &middot; gz &middot; bz2 &middot; xz</p>
         <div class="upload-panel-grid">
 
           <!-- GAP -->
           <div class="upload-row">
             <div class="upload-row-controls">
-              <span class="upload-label">General Arrangement Plan (GAP)</span>
+              <span class="upload-label">General Arrangement Plan (GAP)*</span>
               <button type="button" id="uploadBtnGap" class="upload-btn" disabled>Upload File</button>
               <input type="file" id="fileInputGap" class="hidden"
                 accept=".pdf,.jpg,.jpeg,.png,.tiff,.zip,.7z,.rar,.tar,.gz,.bz2,.xz,application/pdf,image/jpeg,image/png,image/tiff,application/zip,application/x-zip-compressed,application/x-7z-compressed,application/vnd.rar,application/x-rar-compressed,application/x-tar,application/gzip,application/x-gzip,application/x-bzip2,application/x-xz,application/octet-stream" />
@@ -1071,7 +1211,7 @@
           <!-- MSP -->
           <div class="upload-row">
             <div class="upload-row-controls">
-              <span class="upload-label">Midship Section Plan (MSP)</span>
+              <span class="upload-label">Midship Section Plan (MSP)*</span>
               <button type="button" id="uploadBtnMsp" class="upload-btn" disabled>Upload File</button>
               <input type="file" id="fileInputMsp" class="hidden"
                 accept=".pdf,.jpg,.jpeg,.png,.tiff,.zip,.7z,.rar,.tar,.gz,.bz2,.xz,application/pdf,image/jpeg,image/png,image/tiff,application/zip,application/x-zip-compressed,application/x-7z-compressed,application/vnd.rar,application/x-rar-compressed,application/x-tar,application/gzip,application/x-gzip,application/x-bzip2,application/x-xz,application/octet-stream" />
@@ -1082,7 +1222,7 @@
           <!-- SEP -->
           <div class="upload-row">
             <div class="upload-row-controls">
-              <span class="upload-label">Shell Expansion Plan (SEP)</span>
+              <span class="upload-label">Shell Expansion Plan (SEP)*</span>
               <button type="button" id="uploadBtnSep" class="upload-btn" disabled>Upload File</button>
               <input type="file" id="fileInputSep" class="hidden"
                 accept=".pdf,.jpg,.jpeg,.png,.tiff,.zip,.7z,.rar,.tar,.gz,.bz2,.xz,application/pdf,image/jpeg,image/png,image/tiff,application/zip,application/x-zip-compressed,application/x-7z-compressed,application/vnd.rar,application/x-rar-compressed,application/x-tar,application/gzip,application/x-gzip,application/x-bzip2,application/x-xz,application/octet-stream" />
@@ -1093,7 +1233,7 @@
           <!-- DP -->
           <div class="upload-row">
             <div class="upload-row-controls">
-              <span class="upload-label">Docking Plan (DP)</span>
+              <span class="upload-label">Docking Plan (DP)*</span>
               <button type="button" id="uploadBtnDp" class="upload-btn" disabled>Upload File</button>
               <input type="file" id="fileInputDp" class="hidden"
                      accept=".pdf,.jpg,.jpeg,.png,.tiff,.zip,.7z,.rar,.tar,.gz,.bz2,.xz,application/pdf,image/jpeg,image/png,image/tiff,application/zip,application/x-zip-compressed,application/x-7z-compressed,application/vnd.rar,application/x-rar-compressed,application/x-tar,application/gzip,application/x-gzip,application/x-bzip2,application/x-xz,application/octet-stream" />
@@ -1101,10 +1241,10 @@
             <div id="uploadStatusDp" class="upload-status"></div>
           </div>
 
-          <!-- PDU (Optional) -->
+          <!-- PDU -->
           <div class="upload-row">
             <div class="upload-row-controls">
-              <span class="upload-label">Predocking UTM (Optional)</span>
+              <span class="upload-label">Predocking UTM (PDU)</span>
               <button type="button" id="uploadBtnPdu" class="upload-btn" disabled>Upload File</button>
               <input type="file" id="fileInputPdu" class="hidden"
                      accept=".pdf,.jpg,.jpeg,.png,.tiff,.zip,.7z,.rar,.tar,.gz,.bz2,.xz,application/pdf,image/jpeg,image/png,image/tiff,application/zip,application/x-zip-compressed,application/x-7z-compressed,application/vnd.rar,application/x-rar-compressed,application/x-tar,application/gzip,application/x-gzip,application/x-bzip2,application/x-xz,application/octet-stream" />
@@ -1112,10 +1252,10 @@
             <div id="uploadStatusPdu" class="upload-status"></div>
           </div>
 
-          <!-- PBB (Optional) -->
+          <!-- PBB -->
           <div class="upload-row">
             <div class="upload-row-controls">
-              <span class="upload-label">Predocking Boiler Boroscopy (Optional)</span>
+              <span class="upload-label">Predocking Boiler Boroscopy (PBB)</span>
               <button type="button" id="uploadBtnPbb" class="upload-btn" disabled>Upload File</button>
               <input type="file" id="fileInputPbb" class="hidden"
                      accept=".pdf,.jpg,.jpeg,.png,.tiff,.zip,.7z,.rar,.tar,.gz,.bz2,.xz,application/pdf,image/jpeg,image/png,image/tiff,application/zip,application/x-zip-compressed,application/x-7z-compressed,application/vnd.rar,application/x-rar-compressed,application/x-tar,application/gzip,application/x-gzip,application/x-bzip2,application/x-xz,application/octet-stream" />
@@ -1123,10 +1263,10 @@
             <div id="uploadStatusPbb" class="upload-status"></div>
           </div>
 
-          <!-- LDM (Optional) -->
+          <!-- LDM -->
           <div class="upload-row">
             <div class="upload-row-controls">
-              <span class="upload-label">Predocking Main Engine LDM (Optional)</span>
+              <span class="upload-label">Predocking Main Engine LDM (LDM)</span>
               <button type="button" id="uploadBtnLdm" class="upload-btn" disabled>Upload File</button>
               <input type="file" id="fileInputLdm" class="hidden"
                      accept=".pdf,.jpg,.jpeg,.png,.tiff,.zip,.7z,.rar,.tar,.gz,.bz2,.xz,application/pdf,image/jpeg,image/png,image/tiff,application/zip,application/x-zip-compressed,application/x-7z-compressed,application/vnd.rar,application/x-rar-compressed,application/x-tar,application/gzip,application/x-gzip,application/x-bzip2,application/x-xz,application/octet-stream" />
@@ -1161,6 +1301,34 @@
     const VP_CONTEXT_KEY = 'DOCKPILOT_VP_CONTEXT';
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const classOptions = [
+      'Russian Class - RMRS',
+      'Indian Register of Shipping - IRS',
+      'Nippon Kaiji Kyokai - NKK',
+      'American Bureau of Shipping - ABS',
+      'Bureau Veritas - BV',
+      'Det Norske Veritas - DNV',
+      'Lloyds Register - LR',
+      'China Classification Society - CCS',
+      'Korean Register of Shipping - KR',
+      'Registro Italiano Navale - RINA',
+      'Croatian Register of Shipping - CRS',
+      'Polski Rejestr Statkow - PRS',
+      'Non-IACS / NASHA',
+      'Non-IACS / INTLREG',
+      'Non-IACS / MEDLLOYD',
+      'Non-IACS / IMPERIAL',
+      'Non-IACS / ECS',
+      'Non-IACS / OMCS',
+      'Non-IACS / UMS',
+      'Non-IACS / TL',
+      'Non-IACS / MBA',
+      'Non-IACS / IMC',
+      'Non-IACS / ACS',
+      'Non-IACS / DAKAR',
+      'Non-IACS / HR',
+      'Non-IACS / Others'
+    ];
 
     // ── Upload constants ──
     const VP_DRAFT_DB_NAME    = 'DOCKPILOT_VP_DRAFTS';
@@ -1217,12 +1385,14 @@
     const fieldVesselName    = document.getElementById('fieldVesselName');
     const fieldImo           = document.getElementById('fieldImo');
     const monthYearPreview   = document.getElementById('monthYearPreview');
-    const rolodexCell        = document.querySelector('.rolodex-cell');
+    const monthRolodexCell   = monthYearPreview?.closest('.rolodex-cell') || null;
     const monthDrumEl        = document.getElementById('monthDrum');
     const yearDrumEl         = document.getElementById('yearDrum');
+    const classPreview       = document.getElementById('classPreview');
+    const classRolodexCell   = document.getElementById('classRolodexCell');
+    const classDrumEl        = document.getElementById('classDrum');
     const fieldYardBuild     = document.getElementById('fieldYardBuild');
     const fieldFlag          = document.getElementById('fieldFlag');
-    const fieldClass         = document.getElementById('fieldClass');
     const fieldLoa           = document.getElementById('fieldLoa');
     const fieldLbp           = document.getElementById('fieldLbp');
     const fieldBreadth       = document.getElementById('fieldBreadth');
@@ -1231,6 +1401,20 @@
     const fieldDwt           = document.getElementById('fieldDwt');
     const fieldGt            = document.getElementById('fieldGt');
     const fieldNt            = document.getElementById('fieldNt');
+    const dotVesselName      = document.getElementById('dotVesselName');
+    const dotImo             = document.getElementById('dotImo');
+    const dotMonthYear       = document.getElementById('dotMonthYear');
+    const dotYardBuild       = document.getElementById('dotYardBuild');
+    const dotFlag            = document.getElementById('dotFlag');
+    const dotClass           = document.getElementById('dotClass');
+    const dotLoa             = document.getElementById('dotLoa');
+    const dotLbp             = document.getElementById('dotLbp');
+    const dotBreadth         = document.getElementById('dotBreadth');
+    const dotDepths          = document.getElementById('dotDepths');
+    const dotSummerDraught   = document.getElementById('dotSummerDraught');
+    const dotDwt             = document.getElementById('dotDwt');
+    const dotGt              = document.getElementById('dotGt');
+    const dotNt              = document.getElementById('dotNt');
 
     // ── Module state ──
     let continueAction   = null;
@@ -1239,6 +1423,11 @@
     let uploadsCompleted = 0;
     let monthRolodex     = null;
     let yearRolodex      = null;
+    let classRolodex     = null;
+    let monthYearCommitted = false;
+    let classCommitted     = false;
+    let monthYearCommitTimer = null;
+    let classCommitTimer     = null;
     const uploadState    = { GAP: null, MSP: null, SEP: null, DP: null, PDU: null, PBB: null, LDM: null };
 
     // ── Utility helpers ──
@@ -1256,6 +1445,18 @@
       return String(value ?? '').replace(/[&<>"']/g, (char) => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
       }[char]));
+    }
+
+    function normalizeValueLength(value) {
+      return String(value ?? '').trim().length;
+    }
+
+    function metreEntryLength(el) {
+      return normalizeValueLength(el.value.replace(/\s*m\s*$/i, ''));
+    }
+
+    function setIndicatorState(dotEl, isValid) {
+      dotEl?.classList.toggle('is-valid', !!isValid);
     }
 
     // ── Field normalization helpers ──
@@ -1296,6 +1497,7 @@
         el.value = s;
         try { el.setSelectionRange(pos, pos); } catch {}
       }
+      computeAndUpdateProgress();
     }
 
     // Called on blur for metre fields — normalize to "X.XX m"
@@ -1487,12 +1689,19 @@
       computeAndUpdateProgress();
     }
 
-    // Called on input for uppercase text fields
-    function onUpperInput(el) {
+    function onYardInput(el) {
+      el.classList.toggle('is-valid', normalizeValueLength(el.value) >= 5);
+      computeAndUpdateProgress();
+    }
+
+    function onFlagInput(el) {
       const pos = el.selectionStart;
-      el.value = el.value.toUpperCase();
-      try { el.setSelectionRange(pos, pos); } catch {}
-      el.classList.toggle('is-valid', el.value.trim().length > 0);
+      const sanitized = el.value.toUpperCase().replace(/[^A-Z.\s]/g, '');
+      if (el.value !== sanitized) {
+        el.value = sanitized;
+        try { el.setSelectionRange(pos, pos); } catch {}
+      }
+      el.classList.toggle('is-valid', normalizeValueLength(el.value) >= 5);
       computeAndUpdateProgress();
     }
 
@@ -1768,24 +1977,27 @@
     }
 
     function updateMonthYearPreview() {
-      const month = monthRolodex?.getLabel() || monthNames[new Date().getMonth()];
-      const year  = yearRolodex?.getLabel() || String(new Date().getFullYear());
+      const month = monthRolodex?.getLabel() || 'Jan';
+      const year  = yearRolodex?.getLabel() || '1980';
       monthYearPreview.textContent = `${month} ${year}`;
+    }
+
+    function updateClassPreview() {
+      classPreview.textContent = classRolodex?.getLabel() || classOptions[0];
     }
 
     // ── Rolodex init ──
     function initRolodex() {
-      const now = new Date();
-      const curMonthIdx = now.getMonth();   // 0 = Jan
-      const curYear     = now.getFullYear();
-
       const years = [];
       for (let y = 1980; y <= 2050; y++) years.push(String(y));
-      const defaultYearIdx = Math.max(0, Math.min(years.length - 1, curYear - 1980));
+      const defaultMonthIdx = 0;
+      const defaultYearIdx  = 0;
 
-      monthRolodex = buildRolodex(monthDrumEl, monthNames, curMonthIdx, updateMonthYearPreview);
-      yearRolodex  = buildRolodex(yearDrumEl,  years, defaultYearIdx, updateMonthYearPreview);
+      monthRolodex = buildRolodex(monthDrumEl, monthNames, defaultMonthIdx, updateMonthYearPreview);
+      yearRolodex  = buildRolodex(yearDrumEl, years, defaultYearIdx, updateMonthYearPreview);
+      classRolodex = buildRolodex(classDrumEl, classOptions, 0, updateClassPreview);
       updateMonthYearPreview();
+      updateClassPreview();
     }
 
     // ── Field state init ──
@@ -1794,39 +2006,37 @@
         fieldVesselName.value = vpContext.vesselName;
         fieldVesselName.classList.add('is-valid');
       }
+      monthYearCommitted = false;
+      classCommitted = false;
       updateUploadButtonGating();
+      computeAndUpdateProgress();
     }
 
     // ── Progress computation (fields side — uploads added by Phase 3) ──
     function computeFieldProgress() {
+      const checks = [
+        { dot: dotVesselName, ok: normalizeValueLength(fieldVesselName.value) > 0 },
+        { dot: dotImo, ok: /^\d{7}$/.test(fieldImo.value) },
+        { dot: dotMonthYear, ok: monthYearCommitted },
+        { dot: dotYardBuild, ok: normalizeValueLength(fieldYardBuild.value) >= 5 },
+        { dot: dotFlag, ok: normalizeValueLength(fieldFlag.value) >= 5 },
+        { dot: dotClass, ok: classCommitted && normalizeValueLength(classPreview.textContent) > 0 },
+        { dot: dotLoa, ok: metreEntryLength(fieldLoa) >= 3 },
+        { dot: dotLbp, ok: metreEntryLength(fieldLbp) >= 3 },
+        { dot: dotBreadth, ok: metreEntryLength(fieldBreadth) >= 2 },
+        { dot: dotDepths, ok: metreEntryLength(fieldDepths) >= 2 },
+        { dot: dotSummerDraught, ok: metreEntryLength(fieldSummerDraught) >= 1 },
+        { dot: dotDwt, ok: normalizeValueLength(fieldDwt.value) >= 4 },
+        { dot: dotGt, ok: normalizeValueLength(fieldGt.value) >= 3 },
+        { dot: dotNt, ok: normalizeValueLength(fieldNt.value) >= 3 },
+      ];
+
       let done = 0;
-
-      // 1. Vessel Name (auto-filled from context)
-      if (fieldVesselName.value.trim()) done++;
-
-      // 2. IMO — exactly 7 digits
-      if (/^\d{7}$/.test(fieldImo.value)) done++;
-
-      // 3. Month-Year of Build (rolodex always has a default — counts immediately)
-      done++;
-
-      // 4-6. Uppercase text fields
-      for (const el of [fieldYardBuild, fieldFlag, fieldClass]) {
-        if (el.value.trim().length > 0) done++;
+      for (const check of checks) {
+        setIndicatorState(check.dot, check.ok);
+        if (check.ok) done++;
       }
-
-      // 7-11. Metre fields — must end with " m"
-      for (const el of [fieldLoa, fieldLbp, fieldBreadth, fieldDepths, fieldSummerDraught]) {
-        if (/\d\.\d{2}\s*m$/i.test(el.value.trim())) done++;
-      }
-
-      // 12-14. Tonne fields — must be a valid number
-      for (const el of [fieldDwt, fieldGt, fieldNt]) {
-        const v = el.value.trim();
-        if (v && Number.isFinite(parseFloat(v))) done++;
-      }
-
-      return done;  // max 14
+      return done;
     }
 
     function computeAndUpdateProgress() {
@@ -1949,7 +2159,7 @@
           yearOfBuild:   yearRolodex?.getLabel()  || '',
           yardBuild:     fieldYardBuild.value.trim(),
           flag:          fieldFlag.value.trim(),
-          class:         fieldClass.value.trim(),
+          class:         (classRolodex?.getLabel() || classPreview.textContent || '').trim(),
           loa:           fieldLoa.value.trim(),
           lbp:           fieldLbp.value.trim(),
           breadth:       fieldBreadth.value.trim(),
@@ -2086,39 +2296,89 @@
       fieldImo.addEventListener('input', () => { onImoInput(fieldImo); updateUploadButtonGating(); });
 
       monthYearPreview.addEventListener('click', () => {
-        rolodexCell?.classList.add('open');
+        clearTimeout(monthYearCommitTimer);
+        monthYearCommitted = false;
+        monthRolodexCell?.classList.add('open');
         monthDrumEl.focus();
+        computeAndUpdateProgress();
       });
 
-      let rolodexHideTimer = null;
-      const openRolodex = () => {
-        clearTimeout(rolodexHideTimer);
-        rolodexCell?.classList.add('open');
+      let monthRolodexHideTimer = null;
+      const openMonthRolodex = () => {
+        clearTimeout(monthRolodexHideTimer);
+        clearTimeout(monthYearCommitTimer);
+        monthYearCommitted = false;
+        monthRolodexCell?.classList.add('open');
+        computeAndUpdateProgress();
       };
-      const closeRolodexSoon = () => {
-        clearTimeout(rolodexHideTimer);
-        rolodexHideTimer = setTimeout(() => {
-          rolodexCell?.classList.remove('open');
-          if (rolodexCell?.contains(document.activeElement)) {
+      const closeMonthRolodexSoon = () => {
+        clearTimeout(monthRolodexHideTimer);
+        monthRolodexHideTimer = setTimeout(() => {
+          monthRolodexCell?.classList.remove('open');
+          if (monthRolodexCell?.contains(document.activeElement)) {
             document.activeElement.blur();
           }
           updateMonthYearPreview();
-          computeAndUpdateProgress();
+          clearTimeout(monthYearCommitTimer);
+          monthYearCommitTimer = setTimeout(() => {
+            monthYearCommitted = true;
+            computeAndUpdateProgress();
+          }, 500);
         }, 200);
       };
 
-      rolodexCell?.addEventListener('mouseenter', openRolodex);
-      rolodexCell?.addEventListener('mouseleave', closeRolodexSoon);
-      rolodexCell?.addEventListener('focusin', openRolodex);
-      rolodexCell?.addEventListener('focusout', (event) => {
-        if (!rolodexCell.contains(event.relatedTarget)) {
-          closeRolodexSoon();
+      monthRolodexCell?.addEventListener('mouseenter', openMonthRolodex);
+      monthRolodexCell?.addEventListener('mouseleave', closeMonthRolodexSoon);
+      monthRolodexCell?.addEventListener('focusin', openMonthRolodex);
+      monthRolodexCell?.addEventListener('focusout', (event) => {
+        if (!monthRolodexCell.contains(event.relatedTarget)) {
+          closeMonthRolodexSoon();
         }
       });
 
-      for (const el of [fieldYardBuild, fieldFlag, fieldClass]) {
-        el.addEventListener('input', () => onUpperInput(el));
-      }
+      classPreview.addEventListener('click', () => {
+        clearTimeout(classCommitTimer);
+        classCommitted = false;
+        classRolodexCell?.classList.add('open');
+        classDrumEl.focus();
+        computeAndUpdateProgress();
+      });
+
+      let classRolodexHideTimer = null;
+      const openClassRolodex = () => {
+        clearTimeout(classRolodexHideTimer);
+        clearTimeout(classCommitTimer);
+        classCommitted = false;
+        classRolodexCell?.classList.add('open');
+        computeAndUpdateProgress();
+      };
+      const closeClassRolodexSoon = () => {
+        clearTimeout(classRolodexHideTimer);
+        classRolodexHideTimer = setTimeout(() => {
+          classRolodexCell?.classList.remove('open');
+          if (classRolodexCell?.contains(document.activeElement)) {
+            document.activeElement.blur();
+          }
+          updateClassPreview();
+          clearTimeout(classCommitTimer);
+          classCommitTimer = setTimeout(() => {
+            classCommitted = true;
+            computeAndUpdateProgress();
+          }, 500);
+        }, 200);
+      };
+
+      classRolodexCell?.addEventListener('mouseenter', openClassRolodex);
+      classRolodexCell?.addEventListener('mouseleave', closeClassRolodexSoon);
+      classRolodexCell?.addEventListener('focusin', openClassRolodex);
+      classRolodexCell?.addEventListener('focusout', (event) => {
+        if (!classRolodexCell.contains(event.relatedTarget)) {
+          closeClassRolodexSoon();
+        }
+      });
+
+      fieldYardBuild.addEventListener('input', () => onYardInput(fieldYardBuild));
+      fieldFlag.addEventListener('input', () => onFlagInput(fieldFlag));
 
       for (const el of [fieldLoa, fieldLbp, fieldBreadth, fieldDepths, fieldSummerDraught]) {
         el.addEventListener('focus', () => onMetreFocus(el));

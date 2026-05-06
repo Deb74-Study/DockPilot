@@ -245,18 +245,41 @@ export async function startDockPilotPageGuard({
   const overlay = createIdleOverlay();
   let isLocked = false;
 
-  const activityEvents = ['mousedown', 'mousemove', 'keydown', 'touchstart', 'scroll'];
-  const activityHandler = () => {
+  let lastActivityMarkAt = Date.now();
+  const ACTIVITY_WRITE_THROTTLE_MS = 2000;
+
+  const activityEvents = [
+    'pointerdown',
+    'pointermove',
+    'mousedown',
+    'mousemove',
+    'keydown',
+    'touchstart',
+    'touchmove',
+    'wheel',
+    'click',
+    'input',
+    'change'
+  ];
+
+  const markActivityIfNeeded = () => {
     if (isLocked) return;
+    const now = Date.now();
+    if (now - lastActivityMarkAt < ACTIVITY_WRITE_THROTTLE_MS) return;
+    lastActivityMarkAt = now;
     markActivity();
   };
 
   activityEvents.forEach((eventName) => {
-    window.addEventListener(eventName, activityHandler, { passive: true });
+    window.addEventListener(eventName, markActivityIfNeeded, { passive: true, capture: true });
   });
+
+  // `scroll` does not reliably bubble from nested containers.
+  document.addEventListener('scroll', markActivityIfNeeded, { passive: true, capture: true });
 
   const visibilityHandler = () => {
     if (document.visibilityState === 'visible' && !isLocked) {
+      lastActivityMarkAt = Date.now();
       markActivity();
     }
   };
@@ -271,6 +294,7 @@ export async function startDockPilotPageGuard({
   function unlockSession(nextSession) {
     isLocked = false;
     session = saveSession(nextSession) || nextSession;
+    lastActivityMarkAt = Date.now();
     markActivity();
     overlay.hide();
   }
@@ -340,8 +364,9 @@ export async function startDockPilotPageGuard({
       clearInterval(idleInterval);
       overlay.destroy();
       activityEvents.forEach((eventName) => {
-        window.removeEventListener(eventName, activityHandler);
+        window.removeEventListener(eventName, markActivityIfNeeded, { capture: true });
       });
+      document.removeEventListener('scroll', markActivityIfNeeded, { capture: true });
       document.removeEventListener('visibilitychange', visibilityHandler);
     }
   };

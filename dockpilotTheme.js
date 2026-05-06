@@ -130,7 +130,51 @@ export function applyTheme(mode) {
     // Prepend so page-specific rules declared later still win in edge cases
     (document.head || document.documentElement).prepend(styleEl);
   }
-  styleEl.textContent = `body { background: ${theme.bodyBg} !important; }`;
+
+  const lightModeOverrides = `
+    /* Frontpage: make primary shell and button containers white in Light Mode */
+    .writing-area {
+      background: linear-gradient(180deg, #ffffff 0%, #f4f5f7 100%) !important;
+      border: 1px solid #b5bcc8 !important;
+    }
+
+    .screen,
+    .berth,
+    .colour-pref-wrap,
+    .cp-btn,
+    .cp-options {
+      background: #ffffff !important;
+      border-color: #c2c9d4 !important;
+    }
+
+    .berth strong,
+    .berth small,
+    .cp-btn {
+      color: #151922 !important;
+    }
+
+    .berth-link:hover .berth,
+    .berth-link:focus-visible .berth,
+    .cp-btn:hover,
+    .cp-btn:focus-visible {
+      background: #f3f5f8 !important;
+      border-color: #9ea8b8 !important;
+      box-shadow: 0 0 0 2px rgba(120, 132, 150, 0.24) !important;
+    }
+
+    /* Global status notification contrast improvement for Light Mode */
+    .status-note.success {
+      color: #1f6b3a !important;
+      background: rgba(31, 107, 58, 0.14) !important;
+      border-color: rgba(31, 107, 58, 0.45) !important;
+    }
+  `;
+
+  const cssBlocks = [`body { background: ${theme.bodyBg} !important; }`];
+  if (resolved === 'light') {
+    cssBlocks.push(lightModeOverrides);
+  }
+  styleEl.textContent = cssBlocks.join('\n');
 
   // Persist selection
   try { localStorage.setItem(STORAGE_KEY, resolved); } catch { /* private browsing */ }

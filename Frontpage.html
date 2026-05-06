@@ -266,9 +266,14 @@
     .berth-link:hover,
     .berth-link:focus-visible {
       transform: translateY(-2px);
-      border-color: rgba(103,214,255,.60);
-      background: linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72));
       outline: none;
+    }
+
+    .berth-link:hover .berth,
+    .berth-link:focus-visible .berth {
+      border-color: rgba(103,214,255,.86);
+      background: linear-gradient(135deg, rgba(20,88,190,.92), rgba(16,150,176,.86));
+      box-shadow: 0 14px 30px rgba(10, 98, 152, 0.52);
     }
 
     .berth-link:focus-visible {
@@ -332,6 +337,14 @@
       white-space: nowrap;
       cursor: pointer;
       transition: opacity 0.18s ease, color 0.18s ease, border-color 0.18s ease;
+    }
+
+    .cp-btn:hover,
+    .cp-btn:focus-visible {
+      border-color: rgba(103,214,255,.95);
+      background: rgba(103,214,255,.18);
+      box-shadow: 0 0 0 2px rgba(103,214,255,.30), 0 0 16px rgba(103,214,255,.32);
+      outline: none;
     }
 
     .cp-btn:disabled,

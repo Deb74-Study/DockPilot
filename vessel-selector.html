@@ -292,9 +292,15 @@
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid var(--line);
       border-radius: 12px;
-      padding: 2px;
-      height: 36px;
+      padding: 8px;
+      height: auto;
       justify-content: center;
+    }
+
+    .more-actions-dropdown.collapsed .more-actions-toggle {
+      width: 100%;
+      height: 32px;
+      padding: 0 13px !important;
     }
 
     .more-actions-dropdown:not(.collapsed) {
@@ -312,8 +318,8 @@
       border-radius: 12px !important;
       font-size: 0.86rem !important;
       font-weight: 700 !important;
-      background: transparent !important;
-      border: 1px solid transparent !important;
+      background: rgba(255, 255, 255, 0.06) !important;
+      border: 1px solid var(--line) !important;
       color: var(--text) !important;
       cursor: pointer;
       flex-shrink: 0;
@@ -321,12 +327,13 @@
 
     .more-actions-toggle:hover {
       transform: translateY(-2px);
-      text-decoration: underline;
+      border-color: rgba(103,214,255,.60) !important;
+      background: linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72)) !important;
     }
 
     .more-actions-dropdown:not(.collapsed) .more-actions-toggle {
       align-self: stretch;
-      width: auto;
+      width: 100%;
       min-width: 0;
     }
 
@@ -342,17 +349,20 @@
 
     .more-actions-dropdown button {
       width: 100%;
+      height: 32px;
+      padding: 0 13px !important;
       justify-content: center;
       text-align: center;
-      background: rgba(103, 214, 255, 0.12);
-      border: 1px solid rgba(103, 214, 255, 0.24);
-      color: var(--accent);
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
     }
 
     .more-actions-dropdown button:not(.more-actions-toggle):hover {
-      background: rgba(103, 214, 255, 0.24);
-      border-color: rgba(103, 214, 255, 0.5);
-      color: var(--accent);
+      transform: translateY(-2px);
+      border-color: rgba(103,214,255,.60);
+      background: linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72));
+      color: var(--text);
     }
 
     .hidden {

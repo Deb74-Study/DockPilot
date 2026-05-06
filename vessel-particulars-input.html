@@ -139,6 +139,10 @@
       border: 1px solid var(--line);
     }
 
+    .return-frontpage-link {
+      width: 168px;
+    }
+
     .secondary-btn {
       color: var(--text);
       background: rgba(255, 255, 255, 0.06);
@@ -224,9 +228,15 @@
       background: rgba(255, 255, 255, 0.06);
       border: 1px solid var(--line);
       border-radius: 12px;
-      padding: 2px;
-      height: 36px;
+      padding: 8px;
+      height: auto;
       justify-content: center;
+    }
+
+    .more-actions-dropdown.collapsed .more-actions-toggle {
+      width: 100%;
+      height: 32px;
+      padding: 0 13px !important;
     }
 
     .more-actions-dropdown:not(.collapsed) {
@@ -244,8 +254,8 @@
       border-radius: 12px !important;
       font-size: 0.86rem !important;
       font-weight: 700 !important;
-      background: transparent !important;
-      border: 1px solid transparent !important;
+      background: rgba(255, 255, 255, 0.06) !important;
+      border: 1px solid var(--line) !important;
       color: var(--text) !important;
       cursor: pointer;
       flex-shrink: 0;
@@ -253,13 +263,13 @@
 
     .more-actions-toggle:hover {
       transform: translateY(-2px);
-      text-decoration: underline;
+      border-color: rgba(103,214,255,.60) !important;
+      background: linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72)) !important;
     }
 
     .more-actions-dropdown:not(.collapsed) .more-actions-toggle {
       align-self: stretch;
-      padding: 9px 13px !important;
-      width: auto;
+      width: 100%;
       min-width: 0;
     }
 
@@ -275,17 +285,20 @@
 
     .more-actions-dropdown button {
       width: 100%;
+      height: 32px;
+      padding: 0 13px !important;
       justify-content: center;
       text-align: center;
-      background: rgba(103, 214, 255, 0.12);
-      border: 1px solid rgba(103, 214, 255, 0.24);
-      color: var(--accent);
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
     }
 
     .more-actions-dropdown button:not(.more-actions-toggle):hover {
-      background: rgba(103, 214, 255, 0.24);
-      border-color: rgba(103, 214, 255, 0.5);
-      color: var(--accent);
+      transform: translateY(-2px);
+      border-color: rgba(103,214,255,.60);
+      background: linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72));
+      color: var(--text);
     }
 
     .more-actions-dropdown:not(.collapsed) button {
@@ -963,7 +976,7 @@
         <div class="toolbar-actions">
           <button id="saveVpBtn" type="button" class="primary-btn" disabled>Save Vessel Particulars</button>
           <a class="return-link" href="./vessel-selector.html">Return to Vessel Selector</a>
-          <a class="return-link" href="./Frontpage.html">Return to Frontpage</a>
+          <a class="return-link return-frontpage-link" href="./Frontpage.html">Return to Frontpage</a>
         </div>
       </div>
 
@@ -1333,6 +1346,7 @@
       'Non-IACS / HR',
       'Non-IACS / Others'
     ];
+    const CLASS_PROMPT = 'Select the class from the options provided';
 
     // ── Upload constants ──
     const VP_DRAFT_DB_NAME    = 'DOCKPILOT_VP_DRAFTS';
@@ -1705,7 +1719,7 @@
         el.value = sanitized;
         try { el.setSelectionRange(pos, pos); } catch {}
       }
-      el.classList.toggle('is-valid', normalizeValueLength(el.value) >= 5);
+      el.classList.toggle('is-valid', normalizeValueLength(el.value) >= 2);
       computeAndUpdateProgress();
     }
 
@@ -1803,6 +1817,21 @@
       }
     }
 
+    async function deleteDraftFile(key) {
+      try {
+        const db = await openVpDraftDb();
+        await new Promise((resolve, reject) => {
+          const tx = db.transaction(VP_DRAFT_STORE_NAME, 'readwrite');
+          tx.objectStore(VP_DRAFT_STORE_NAME).delete(key);
+          tx.oncomplete = () => resolve();
+          tx.onerror    = () => reject(tx.error);
+        });
+        db.close();
+      } catch (err) {
+        console.error('[VP Draft] IndexedDB delete failed:', err);
+      }
+    }
+
     function countUploads() {
       return REQUIRED_UPLOAD_DEFS.reduce((count, def) => {
         return count + (uploadState[def.prefix] ? 1 : 0);
@@ -1815,8 +1844,33 @@
       const enabled  = vesselOk && imoOk;
       for (const def of UPLOAD_DEFS) {
         const btn = document.getElementById(def.btnId);
-        if (btn) btn.disabled = !enabled;
+        if (!btn) continue;
+        // Allow delete action even when upload gating is otherwise disabled.
+        btn.disabled = uploadState[def.prefix] ? false : !enabled;
       }
+    }
+
+    async function clearUploadedFile(prefix, btnEl, statusEl) {
+      const slot = uploadState[prefix];
+      if (!slot) return;
+
+      if (slot.objectUrl) {
+        URL.revokeObjectURL(slot.objectUrl);
+      }
+
+      if (slot.dbKey) {
+        await deleteDraftFile(slot.dbKey);
+      }
+
+      uploadState[prefix] = null;
+      uploadsCompleted = countUploads();
+
+      btnEl.classList.remove('upload-done');
+      btnEl.textContent = 'Upload File';
+      statusEl.textContent = '';
+
+      updateUploadButtonGating();
+      computeAndUpdateProgress();
     }
 
     async function handleFileChosen(prefix, file, btnEl, statusEl) {
@@ -1846,6 +1900,7 @@
       // Canvas always outputs JPEG when compressing; update extension accordingly
       if (wasResized) ext = '.jpg';
       const fileName = `${prefix}_${vesselToken}_${imoToken}${ext}`;
+      const dbKey = `${prefix}_${vesselToken}_${imoToken}`;
 
       // Revoke any previous object URL for this slot
       if (uploadState[prefix]?.objectUrl) {
@@ -1853,18 +1908,19 @@
       }
 
       const objectUrl = URL.createObjectURL(finalBlob);
-      uploadState[prefix] = { blob: finalBlob, fileName, objectUrl };
+      uploadState[prefix] = { blob: finalBlob, fileName, objectUrl, dbKey };
       uploadsCompleted = countUploads();
 
       // Persist to IndexedDB
-      const dbKey = `${prefix}_${vesselToken}_${imoToken}`;
       await saveDraftFile(dbKey, { blob: finalBlob, fileName, prefix, uploadedAt: Date.now() });
 
       // Update upload row UI
       btnEl.classList.add('upload-done');
+      btnEl.textContent = 'Delete File';
       statusEl.innerHTML =
         `File uploaded: <a href="${escapeHtml(objectUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(fileName)}</a>`;
 
+      updateUploadButtonGating();
       computeAndUpdateProgress();
 
       if (wasResized) {
@@ -1887,7 +1943,23 @@
         const btn      = document.getElementById(def.btnId);
         const input    = document.getElementById(def.inputId);
         const statusEl = document.getElementById(def.statusId);
-        btn.addEventListener('click', () => input.click());
+        btn.addEventListener('click', async () => {
+          if (uploadState[def.prefix]) {
+            showModal({
+              title: 'Alert',
+              message: 'Are you sure you want to delete the uploaded file?',
+              confirmText: 'Yes',
+              cancelText: 'No',
+              onConfirm: () => {
+                clearUploadedFile(def.prefix, btn, statusEl).catch((err) => {
+                  console.error('[VP Upload] Delete failed:', err);
+                });
+              }
+            });
+            return;
+          }
+          input.click();
+        });
         input.addEventListener('change', async () => {
           const file = input.files?.[0];
           if (!file) return;
@@ -2012,6 +2084,7 @@
       }
       monthYearCommitted = false;
       classCommitted = false;
+      classPreview.textContent = CLASS_PROMPT;
       updateUploadButtonGating();
       computeAndUpdateProgress();
     }
@@ -2023,7 +2096,7 @@
         { dot: dotImo, ok: /^\d{7}$/.test(fieldImo.value) },
         { dot: dotMonthYear, ok: monthYearCommitted },
         { dot: dotYardBuild, ok: normalizeValueLength(fieldYardBuild.value) >= 5 },
-        { dot: dotFlag, ok: normalizeValueLength(fieldFlag.value) >= 5 },
+        { dot: dotFlag, ok: normalizeValueLength(fieldFlag.value) >= 2 },
         { dot: dotClass, ok: classCommitted && normalizeValueLength(classPreview.textContent) > 0 },
         { dot: dotLoa, ok: metreEntryLength(fieldLoa) >= 3 },
         { dot: dotLbp, ok: metreEntryLength(fieldLbp) >= 3 },
@@ -2308,14 +2381,21 @@
       });
 
       let monthRolodexHideTimer = null;
+      let monthRolodexHoverOpenTimer = null;
       const openMonthRolodex = () => {
+        clearTimeout(monthRolodexHoverOpenTimer);
         clearTimeout(monthRolodexHideTimer);
         clearTimeout(monthYearCommitTimer);
         monthYearCommitted = false;
         monthRolodexCell?.classList.add('open');
         computeAndUpdateProgress();
       };
+      const openMonthRolodexAfterHoverDelay = () => {
+        clearTimeout(monthRolodexHoverOpenTimer);
+        monthRolodexHoverOpenTimer = setTimeout(openMonthRolodex, 1000);
+      };
       const closeMonthRolodexSoon = () => {
+        clearTimeout(monthRolodexHoverOpenTimer);
         clearTimeout(monthRolodexHideTimer);
         monthRolodexHideTimer = setTimeout(() => {
           monthRolodexCell?.classList.remove('open');
@@ -2331,7 +2411,7 @@
         }, 200);
       };
 
-      monthRolodexCell?.addEventListener('mouseenter', openMonthRolodex);
+      monthRolodexCell?.addEventListener('mouseenter', openMonthRolodexAfterHoverDelay);
       monthRolodexCell?.addEventListener('mouseleave', closeMonthRolodexSoon);
       monthRolodexCell?.addEventListener('focusin', openMonthRolodex);
       monthRolodexCell?.addEventListener('focusout', (event) => {
@@ -2349,14 +2429,21 @@
       });
 
       let classRolodexHideTimer = null;
+      let classRolodexHoverOpenTimer = null;
       const openClassRolodex = () => {
+        clearTimeout(classRolodexHoverOpenTimer);
         clearTimeout(classRolodexHideTimer);
         clearTimeout(classCommitTimer);
         classCommitted = false;
         classRolodexCell?.classList.add('open');
         computeAndUpdateProgress();
       };
+      const openClassRolodexAfterHoverDelay = () => {
+        clearTimeout(classRolodexHoverOpenTimer);
+        classRolodexHoverOpenTimer = setTimeout(openClassRolodex, 1000);
+      };
       const closeClassRolodexSoon = () => {
+        clearTimeout(classRolodexHoverOpenTimer);
         clearTimeout(classRolodexHideTimer);
         classRolodexHideTimer = setTimeout(() => {
           classRolodexCell?.classList.remove('open');
@@ -2372,7 +2459,7 @@
         }, 200);
       };
 
-      classRolodexCell?.addEventListener('mouseenter', openClassRolodex);
+      classRolodexCell?.addEventListener('mouseenter', openClassRolodexAfterHoverDelay);
       classRolodexCell?.addEventListener('mouseleave', closeClassRolodexSoon);
       classRolodexCell?.addEventListener('focusin', openClassRolodex);
       classRolodexCell?.addEventListener('focusout', (event) => {

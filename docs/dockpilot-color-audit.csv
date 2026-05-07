@@ -1,0 +1,103 @@
+SECTION,Shared Theme Tokens,,,,,
+Token,Purpose,Theme Colour,Light Mode,Dark Mode,,
+--text,Primary text,#eef4ff,#151922,#f4f6fa,,
+--muted,Secondary text,#aebcda,#4f5a6b,#c2c9d4,,
+--accent,Primary accent,#67d6ff,#3a6fb0,#8ea4c2,,
+--accent-2,Secondary accent,#72f1cb,#6f8db6,#b8c4d6,,
+--panel,Main panel background,"rgba(11, 24, 45, 0.92)","rgba(255, 255, 255, 0.95)","rgba(17, 19, 23, 0.96)",,
+--panel-soft,Secondary panel background,"rgba(18, 29, 54, 0.72)","rgba(238, 241, 245, 0.90)","rgba(26, 29, 34, 0.90)",,
+--border,Standard border,"rgba(255, 255, 255, 0.10)","rgba(0, 0, 0, 0.12)","rgba(255, 255, 255, 0.06)",,
+--line,Standard line/border,"rgba(255, 255, 255, 0.10)","rgba(0, 0, 0, 0.10)","rgba(255, 255, 255, 0.07)",,
+--ok,Success colour,#8ef0b1,#8ef0b1,#8ef0b1,,
+--warn,Warning colour,#ffd28c,#ffd28c,#ffd28c,,
+--blue-text,Blue utility/data text,#163b73,#3a6fb0,#8ea4c2,,
+--badge-fill,Badge/table-header fill,#093046,#dde8f5,#1a1d22,,
+--badge-line,Badge/table-header border,"rgba(107, 215, 255, 0.24)","rgba(58, 111, 176, 0.30)","rgba(142, 164, 194, 0.24)",,
+--shadow,Shadow,"0 24px 60px rgba(0, 0, 0, 0.35)","0 24px 60px rgba(0, 0, 0, 0.12)","0 24px 60px rgba(0, 0, 0, 0.60)",,
+body-bg,Page background,"radial-gradient(circle at top left, #133977 0%, transparent 32%), radial-gradient(circle at bottom right, #0f8f98 0%, transparent 30%), linear-gradient(135deg, #06111f, #0a1830 40%, #07111e 100%)",#f6f7f9,"radial-gradient(circle at top left, #12151a 0%, transparent 32%), radial-gradient(circle at bottom right, #12151a 0%, transparent 30%), linear-gradient(135deg, #050608, #0d0f13 40%, #050608 100%)",,
+light-override-writing-area,Frontpage main shell,N/A,"linear-gradient(180deg, #ffffff 0%, #f4f5f7 100%)",N/A,,
+light-override-writing-area-border,Frontpage main shell border,N/A,#b5bcc8,N/A,,
+light-override-white-surfaces,"Frontpage .screen/.berth/.colour-pref-wrap/.cp-btn/.cp-options",N/A,#ffffff,N/A,,
+light-override-hover,Frontpage hover surface,N/A,#f3f5f8,N/A,,
+light-override-hover-border,Frontpage hover border,N/A,#9ea8b8,N/A,,
+light-override-success-text,Success notification text,N/A,#1f6b3a,N/A,,
+light-override-success-bg,Success notification background,N/A,"rgba(31, 107, 58, 0.14)",N/A,,
+light-override-success-border,Success notification border,N/A,"rgba(31, 107, 58, 0.45)",N/A,,
+,,,,,,
+SECTION,Per-Page UI Color Audit,,,,,
+Page,Location,Purpose,Theme Colour,Light Mode,Dark Mode,Notes
+Frontpage.html,.writing-area,Main application shell,"linear-gradient(180deg, rgba(9,16,32,.92), rgba(8,12,25,.95)) + border rgba(255,255,255,.08)","linear-gradient(180deg, #ffffff 0%, #f4f5f7 100%) + border #b5bcc8",dark panel family from theme,Light mode explicitly overridden in dockpilotTheme.js
+Frontpage.html,.logo-container,Logo group background,#020d19,#020d19,#020d19,Fixed local color not theme-tokenized
+Frontpage.html,.logo,Logo fill and text,"linear-gradient(135deg, #67d6ff, #72f1cb); text #06111f","linear-gradient(135deg, #3a6fb0, #6f8db6); text #06111f","linear-gradient(135deg, #8ea4c2, #b8c4d6); text #06111f",Accent pair follows theme
+Frontpage.html,.berth,Navigation cards,"linear-gradient(135deg, rgba(10,38,90,.68), rgba(8,78,98,.58)); border rgba(103,214,255,.14)","#ffffff; border #c2c9d4",dark grey/cool panel look,Light mode explicitly forced white
+Frontpage.html,.berth:hover,Navigation hover highlight,"linear-gradient(135deg, rgba(20,88,190,.92), rgba(16,150,176,.86)); shadow rgba(10,98,152,.52)","#f3f5f8; border #9ea8b8; shadow rgba(120,132,150,.24)",dark hover with muted accent,Light mode explicitly overridden
+Frontpage.html,.colour-pref-wrap,Theme picker container,"rgba(9,16,32,.55)",#ffffff,dark panel family,Light mode explicitly forced white
+Frontpage.html,.cp-btn,Theme picker button,transparent + border/text #67d6ff,#ffffff + dark text #151922,dark panel + off-white text,Border/text track theme accent outside light override
+Frontpage.html,.dev-note,Development chip,"text #67d6ff; bg rgba(103,214,255,.10); border rgba(103,214,255,.42)",same unless further overridden,same unless further overridden,Local hardcoded chip
+fleet-registration.html,.panel,Main panels,"rgba(11,24,45,.92)","rgba(255,255,255,.95)","rgba(17,19,23,.96)",Token-driven
+fleet-registration.html,.return-link,Return to Frontpage button,"bg rgba(255,255,255,.06); border rgba(255,255,255,.10); text #eef4ff","light panel bg; line rgba(0,0,0,.10); text #151922",dark neutral bg; off-white text,Token-driven
+fleet-registration.html,.return-link:hover,Neutral button hover,"linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72)); border rgba(103,214,255,.60)",lighter hover surface from theme context,dark hover surface from theme context,Same hover pattern reused across pages
+fleet-registration.html,.table-area,Main data table,#ffffff,#ffffff,#ffffff,Always light for readability
+fleet-registration.html,table borders,Grid lines,#1a243a,#1a243a,#1a243a,Hardcoded table structure color
+fleet-registration.html,.header-main/.table-title-band,Header band text/fill,"fill #093046; accent #67d6ff; text #7de6ff","fill #dde8f5; accent #3a6fb0","fill #1a1d22; accent #8ea4c2",Mix of tokenized and hardcoded text accent
+fleet-registration.html,.action-head/.action-cell,Right sticky action pane,"bg rgba(11,24,45,.92); text #eef4ff","bg rgba(255,255,255,.95); text #151922","bg rgba(17,19,23,.96); text #f4f6fa",Token-driven
+fleet-registration.html,.status-note.success,Success notification,var(--ok)-tinted success style,"text #1f6b3a; bg rgba(31,107,58,.14); border rgba(31,107,58,.45)",var(--ok)-tinted success style,Light mode explicitly overridden
+vessel-selector.html,.panel,Main panels,"rgba(11,24,45,.92)","rgba(255,255,255,.95)","rgba(17,19,23,.96)",Token-driven
+vessel-selector.html,.filter-select,Filter input background,"rgba(9,48,70,.55) + border rgba(255,255,255,.15)",same local colors over light shell,same local colors over dark shell,Local hardcoded control fill
+vessel-selector.html,.filter-select:focus,Filter focus state,"border rgba(103,214,255,.60); shadow rgba(103,214,255,.14)",same,same,Accent focus ring
+vessel-selector.html,.filter-readonly,Read-only field background,"rgba(9,48,70,.30)",same,same,Local hardcoded
+vessel-selector.html,.filter-select option,Dropdown option background,#0a1830,#0a1830,#0a1830,Native rendering may vary by browser
+vessel-selector.html,.modal-overlay,Modal backdrop,"rgba(0,0,0,.65)","rgba(0,0,0,.65)","rgba(0,0,0,.65)",Shared modal backdrop style
+vessel-selector.html,.modal-card,Modal card,"rgba(11,24,45,.97) + border rgba(255,255,255,.14)",local dark modal unless separately overridden,same,Not fully theme-retokenized
+vessel-particulars-input.html,.panel,Main panels,"rgba(11,24,45,.92)","rgba(255,255,255,.95)","rgba(17,19,23,.96)",Token-driven
+vessel-particulars-input.html,.context-banner,Selection context info,"border rgba(103,214,255,.22); bg rgba(103,214,255,.06)",same,same,Accent info banner
+vessel-particulars-input.html,.context-banner.missing,Missing context warning,"border rgba(255,210,140,.22); bg rgba(255,210,140,.06)",same,same,Warning banner
+vessel-particulars-input.html,.progress-bar-track,Progress background,"bg rgba(255,255,255,.06); border rgba(255,255,255,.10)",lighter context around same local values,dark context around same local values,Track not fully tokenized
+vessel-particulars-input.html,.progress-bar-fill,Progress state fill,#ffd28c until complete / #8ef0b1 when complete,same,same,Token-based state fill
+vessel-particulars-input.html,.panel-sticky-row,Sticky header strip,"linear-gradient(180deg, rgba(11,24,45,.98), rgba(11,24,45,.90)) + border-bottom rgba(103,214,255,.15)",same unless explicitly retokenized,same,Local hardcoded
+vessel-particulars-input.html,.panel-scroll-note,Scroll hint badge,"text #ffe6ba; border rgba(255,210,140,.32); bg rgba(255,210,140,.12)",same,same,Local warning chip
+vessel-particulars-input.html,.form-input,Input field default,"bg rgba(255,255,255,.05); border rgba(255,255,255,.10); text #eef4ff",same local bg but theme text may shift on some surfaces,same,Input fill not fully tokenized
+vessel-particulars-input.html,.form-input::placeholder,Input placeholder,"rgba(174,188,218,.4) italic",same,same,Used as reference for Class prompt
+vessel-particulars-input.html,.form-input.is-valid,Valid border,"rgba(142,240,177,.35)",same,same,Validation success border
+vessel-particulars-input.html,.form-input.is-error,Error border,"rgba(255,210,140,.45)",same,same,Validation warning border
+vessel-particulars-input.html,.field-indicator,Indicator dots,#ffb347 default / #39ff73 valid,same,same,Hardcoded indicator colors
+vessel-particulars-input.html,.rolodex-pair,Inline rolodex popup,"bg rgba(11,24,45,.72); border rgba(103,214,255,.18)",same,same,Local hardcoded popup styling
+vessel-particulars-input.html,#classPreview.is-placeholder,Class field prompt text,"rgba(174,188,218,.4) italic",same,same,Matches IMO placeholder style
+vessel-particulars-input.html,.status-note.success,Success notification,var(--ok)-tinted success style,"text #1f6b3a; bg rgba(31,107,58,.14); border rgba(31,107,58,.45)",var(--ok)-tinted success style,Light mode explicitly overridden
+dry-docking-project.html,main,Main shell,"linear-gradient(180deg, rgba(9,16,32,.92), rgba(8,12,25,.95))",light shell via theme,dark shell via theme,Local shell gradient in default mode
+dry-docking-project.html,.return-link,Return button,"bg #67d6ff; text #06263a",light-accent variant,dark-accent variant,Local hardcoded accent button
+dry-docking-project.html,.return-link:hover,Hover state,"linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72)); text #eef4ff",lighter hover equivalent,darker hover equivalent,Shared hover pattern
+running-dd-project.html,.panel/.panel-soft,Main shell family,"rgba(9,16,32,.82) / rgba(18,29,54,.72)",light panel family,dark panel family,Token-driven
+running-dd-project.html,.btn.primary,Primary action button,"linear-gradient(135deg, #67d6ff, #77f1d5); text #07111e",accent pair shifts toward #3a6fb0 / #6f8db6,accent pair shifts toward #8ea4c2 / #b8c4d6,Mixed token and local accent-2 variant
+running-dd-project.html,.btn.secondary,Secondary action,"bg rgba(255,255,255,.04); border token",light neutral surface,dark neutral surface,Neutral action style
+running-dd-project.html,.btn:hover,Button hover highlight,"linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72)); text #eef4ff",lighter hover surface,darker hover surface,Shared hover pattern
+running-dd-project.html,.dot,Live status dot,"#41d37d + glow rgba(65,211,125,.55)",same,same,Hardcoded
+running-dd-project.html,.pill.ok,Success pill,"bg rgba(65,211,125,.12); text #7ff0aa",same,same,Hardcoded
+running-dd-project.html,.pill.warn,Warning pill,"bg rgba(255,182,72,.12); text #ffd48b",same,same,Hardcoded
+running-dd-project.html,.return-link,Navigation return link,"bg #67d6ff; text #06263a",light-accent variant,dark-accent variant,Local hardcoded
+2nd Page.html,.logo,Logo fill and text,"linear-gradient(135deg, #67d6ff, #72f1cb); text #06111f","linear-gradient(135deg, #3a6fb0, #6f8db6); text #06111f","linear-gradient(135deg, #8ea4c2, #b8c4d6); text #06111f",Accent pair follows theme
+2nd Page.html,.eyebrow,Feature badge,"bg rgba(103,214,255,.12); border rgba(103,214,255,.18)",lighter context,darker context,Hardcoded accent chip
+2nd Page.html,.dot,Status dot,"#41d37d + glow rgba(65,211,125,.55)",same,same,Hardcoded
+2nd Page.html,.pill.ok,Success pill,"bg rgba(65,211,125,.12); text #7ff0aa",same,same,Hardcoded
+2nd Page.html,.pill.warn,Warning pill,"bg rgba(255,182,72,.12); text #ffd48b",same,same,Hardcoded
+2nd Page.html,.screen,Screen panel,"linear-gradient(180deg, rgba(255,255,255,.05), transparent), #0a1326",lighter outer shell but local screen remains navy,same,Local hardcoded screen
+2nd Page.html,.berth,List card,"bg rgba(255,255,255,.03); border rgba(255,255,255,.05)",lighter context,darker context,Subtle card layering
+fleet-analytics.html,main,Main shell,"linear-gradient(180deg, rgba(9,16,32,.92), rgba(8,12,25,.95))",light shell via theme,dark shell via theme,Same scaffold family
+fleet-analytics.html,.return-link,Return button,"bg #67d6ff; text #06263a",light-accent variant,dark-accent variant,Local hardcoded accent button
+fleet-analytics.html,.return-link:hover,Hover state,"linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72)); text #eef4ff",lighter hover equivalent,darker hover equivalent,Shared hover pattern
+provisional-page.html,main,Main shell,"linear-gradient(180deg, rgba(9,16,32,.92), rgba(8,12,25,.95))",light shell via theme,dark shell via theme,Same scaffold family
+provisional-page.html,.return-link,Return button,"bg #67d6ff; text #06263a",light-accent variant,dark-accent variant,Local hardcoded accent button
+provisional-page.html,.return-link:hover,Hover state,"linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72)); text #eef4ff",lighter hover equivalent,darker hover equivalent,Shared hover pattern
+job_index.html,table th,Table header,#f2f2f2 + text #111827,N/A,N/A,Standalone page — not theme-managed
+job_index.html,table borders,Table borders,#888,N/A,N/A,Standalone page — not theme-managed
+job_index.html,body text,Main text,#111827,N/A,N/A,Standalone page — not theme-managed
+running-dd-project2.html,main,Main shell,"linear-gradient(180deg, rgba(9,16,32,.92), rgba(8,12,25,.95))",light shell via theme,dark shell via theme,Same scaffold family
+running-dd-project2.html,.return-link,Return button,"bg #67d6ff; text #06263a",light-accent variant,dark-accent variant,Local hardcoded accent button
+running-dd-project2.html,.return-link:hover,Hover state,"linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72)); text #eef4ff",lighter hover equivalent,darker hover equivalent,Shared hover pattern
+spec_template.html,body/page,Paper and canvas,page #ffffff; canvas #f0f1f5,N/A,N/A,Standalone page — not theme-managed
+spec_template.html,toolbar,Toolbar band,#fff7bf + border #000000,N/A,N/A,Standalone palette
+spec_template.html,inputs,Input surfaces,"border #d9d9d9; bg #f7f7f7; text #111827; placeholder #9ca3af",N/A,N/A,Standalone palette
+spec_template.html,progress ring,Progress indicator,"amber #f59e0b; green #22c55e; yellow center #facc15; red center text #dc2626",N/A,N/A,Standalone palette
+spec_template.html,primary action,Primary blue button,#2563eb,N/A,N/A,Standalone palette
+spec_template.html,error states,Error/red family,"#dc2626; #b91c1c; #7f1d1d",N/A,N/A,Standalone palette
+spec_template.html,modal,Modal overlay/card,"backdrop rgba(17,24,39,.45); card #ffffff + border #9ca3af",N/A,N/A,Standalone palette

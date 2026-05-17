@@ -399,11 +399,19 @@
       position: relative;
     }
 
+    .progress-bar-track.is-warn {
+      border-color: rgba(255, 173, 51, 0.58);
+    }
+
+    .progress-bar-track.is-complete {
+      border-color: rgba(142, 240, 177, 0.45);
+    }
+
     .progress-bar-fill {
       height: 100%;
       width: 0%;
       border-radius: 8px;
-      background: var(--warn);
+      background: #ffad33;
       transition: width 0.35s ease, background 0.35s ease;
     }
 
@@ -422,6 +430,11 @@
       color: var(--text);
       text-shadow: 0 0 6px rgba(0, 0, 0, 0.65);
       pointer-events: none;
+    }
+
+    .progress-bar-percent.on-fill {
+      text-shadow: none;
+      color: #132231;
     }
 
     /* ── Two-column workspace ── */
@@ -692,6 +705,12 @@
       white-space: nowrap;
       overflow: hidden;
       text-overflow: ellipsis;
+    }
+
+    #classPreview.is-placeholder {
+      color: rgba(174, 188, 218, 0.4);
+      font-style: italic;
+      font-size: 0.83rem;
     }
 
     .rolodex-drum {
@@ -1310,6 +1329,7 @@
     import { supabase } from './supabaseClient.js';
     import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
     import { loadSavedTheme } from './dockpilotTheme.js';
+    import { getSession } from './dockpilotAuthContract.js';
 
     // Apply saved theme before anything renders
     loadSavedTheme();
@@ -1319,6 +1339,7 @@
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const classOptions = [
+      '',
       'Russian Class - RMRS',
       'Indian Register of Shipping - IRS',
       'Nippon Kaiji Kyokai - NKK',
@@ -2058,8 +2079,19 @@
       monthYearPreview.textContent = `${month} ${year}`;
     }
 
+    function getSelectedClassLabel() {
+      return (classRolodex?.getLabel() || '').trim();
+    }
+
     function updateClassPreview() {
-      classPreview.textContent = classRolodex?.getLabel() || classOptions[0];
+      const selected = getSelectedClassLabel();
+      if (selected) {
+        classPreview.textContent = selected;
+        classPreview.classList.remove('is-placeholder');
+      } else {
+        classPreview.textContent = CLASS_PROMPT;
+        classPreview.classList.add('is-placeholder');
+      }
     }
 
     // ── Rolodex init ──
@@ -2085,6 +2117,7 @@
       monthYearCommitted = false;
       classCommitted = false;
       classPreview.textContent = CLASS_PROMPT;
+      classPreview.classList.add('is-placeholder');
       updateUploadButtonGating();
       computeAndUpdateProgress();
     }
@@ -2097,7 +2130,7 @@
         { dot: dotMonthYear, ok: monthYearCommitted },
         { dot: dotYardBuild, ok: normalizeValueLength(fieldYardBuild.value) >= 5 },
         { dot: dotFlag, ok: normalizeValueLength(fieldFlag.value) >= 2 },
-        { dot: dotClass, ok: classCommitted && normalizeValueLength(classPreview.textContent) > 0 },
+        { dot: dotClass, ok: classCommitted && normalizeValueLength(getSelectedClassLabel()) > 0 },
         { dot: dotLoa, ok: metreEntryLength(fieldLoa) >= 3 },
         { dot: dotLbp, ok: metreEntryLength(fieldLbp) >= 3 },
         { dot: dotBreadth, ok: metreEntryLength(fieldBreadth) >= 2 },
@@ -2200,15 +2233,21 @@
       const pct = total > 0 ? Math.round((completed / total) * 100) : 0;
       progressBarFill.style.width = `${pct}%`;
       progressBarPercent.textContent = `${pct}%`;
-      progressBarFill.classList.toggle('complete', pct === 100);
+      const isComplete = pct === 100;
+      progressBarFill.classList.toggle('complete', isComplete);
+      progressBarPercent.classList.toggle('on-fill', pct >= 50);
       const track = progressBarFill.closest('[role="progressbar"]');
-      if (track) track.setAttribute('aria-valuenow', String(pct));
+      if (track) {
+        track.setAttribute('aria-valuenow', String(pct));
+        track.classList.toggle('is-complete', isComplete);
+        track.classList.toggle('is-warn', !isComplete && pct > 0);
+      }
       saveVpBtn.disabled = pct < 100;
       // Drive status note based on completion state
-      if (pct === 100) {
+      if (isComplete) {
         setStatus('All 18 checkpoints complete — vessel particulars ready to save.', 'success');
       } else if (pct > 0) {
-        setStatus(`${pct}% complete — fill all 14 fields and upload 4 required files to save.`);
+        setStatus(`${pct}% complete — fill all 14 fields and upload 4 required files to save.`, 'success');
       } else {
         setStatus('Vessel particulars ready.');
       }
@@ -2236,7 +2275,7 @@
           yearOfBuild:   yearRolodex?.getLabel()  || '',
           yardBuild:     fieldYardBuild.value.trim(),
           flag:          fieldFlag.value.trim(),
-          class:         (classRolodex?.getLabel() || classPreview.textContent || '').trim(),
+          class:         getSelectedClassLabel(),
           loa:           fieldLoa.value.trim(),
           lbp:           fieldLbp.value.trim(),
           breadth:       fieldBreadth.value.trim(),
@@ -2305,6 +2344,53 @@
       }
     }
 
+    // ── Vessel Registry ──
+    const VESSEL_REGISTRY_KEY_PREFIX = 'DOCKPILOT_VESSEL_REGISTRY_';
+
+    function pushToVesselRegistry(metadata) {
+      const companyId = getSession()?.companyId;
+      if (!companyId) return; // no session context — skip silently
+      const key = VESSEL_REGISTRY_KEY_PREFIX + companyId;
+      let registry = [];
+      try {
+        const raw = localStorage.getItem(key);
+        const parsed = raw ? JSON.parse(raw) : [];
+        registry = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        registry = [];
+      }
+      const p = metadata.particulars;
+      const vesselId = makeVesselToken(p.vesselName) + '_' + makeImoToken(p.imo);
+      const record = {
+        vesselId,
+        vesselName:       p.vesselName,
+        imo:              p.imo,
+        monthYearOfBuild: ((p.monthOfBuild || '') + ' ' + (p.yearOfBuild || '')).trim(),
+        yardOfBuild:      p.yardBuild,
+        flag:             p.flag,
+        class:            p.class,
+        loa:              p.loa,
+        lbp:              p.lbp,
+        breadth:          p.breadth,
+        depth:            p.depths,
+        summerDraught:    p.summerDraught,
+        dwt:              p.dwt,
+        gt:               p.gt,
+        nt:               p.nt,
+      };
+      const idx = registry.findIndex(r => r.imo === record.imo);
+      if (idx >= 0) {
+        registry[idx] = record; // upsert
+      } else {
+        registry.push(record);
+      }
+      try {
+        localStorage.setItem(key, JSON.stringify(registry));
+      } catch (err) {
+        console.warn('[VP Registry] Could not write to localStorage:', err);
+      }
+    }
+
     async function executeVpSave() {
       saveVpBtn.disabled = true;
       setStatus('Saving vessel particulars…', 'warn');
@@ -2312,11 +2398,12 @@
         const metadata = collectParticulars();
         await saveDraftMetadata(metadata);
         await exportVpPackage(metadata);
+        pushToVesselRegistry(metadata);
         setStatus('Vessel particulars saved and package exported successfully.', 'success');
         // Ask user to move files to working folder
         showModal({
           title: 'File Management',
-          message: 'The JSON record and 4 files have been downloaded. Please move them to your project\'s working folder.',
+          message: 'The export package containing the JSON record and uploaded files have been saved in the device\'s download folder. Please move them to your project\'s working folder.',
           confirmText: 'Done',
           onConfirm: () => closeModal(),
         });
@@ -2361,7 +2448,7 @@
       saveVpBtn.addEventListener('click', () => {
         showModal({
           title:       'Save Vessel Particulars',
-          message:     'This will save your vessel particulars to local storage and download an export package — the JSON record plus all 4 required files. Continue?',
+          message:     'This will save your vessel particulars to local storage and create an export package — the JSON record plus 4 required and any optional files uploaded. Continue?',
           confirmText: 'Save & Export',
           cancelText:  'Cancel',
           onConfirm:   () => executeVpSave(),
@@ -2453,7 +2540,7 @@
           updateClassPreview();
           clearTimeout(classCommitTimer);
           classCommitTimer = setTimeout(() => {
-            classCommitted = true;
+            classCommitted = normalizeValueLength(getSelectedClassLabel()) > 0;
             computeAndUpdateProgress();
           }, 500);
         }, 200);

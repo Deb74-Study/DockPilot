@@ -9,7 +9,7 @@ vessel-particulars-input.html
 dry-docking-project.html
 running-dd-project.html
 fleet-analytics.html
-provisional-page.html
+vessel-register.html
 job_index.html
 spec_template.html
 

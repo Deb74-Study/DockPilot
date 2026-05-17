@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vessel Registry | DockPilot</title>
+  <style>
+    :root {
+      --edge-padding: clamp(12px, 1.6vw, 22px);
+      --panel: rgba(11, 24, 45, 0.92);
+      --line: rgba(255, 255, 255, 0.1);
+      --text: #eef4ff;
+      --muted: #aebcda;
+      --accent: #67d6ff;
+      --accent-2: #72f1cb;
+      --ok: #8ef0b1;
+      --warn: #ffd28c;
+      --blue-text: #163b73;
+      --badge-fill: #093046;
+      --badge-line: rgba(107, 215, 255, 0.24);
+      --border: rgba(255, 255, 255, 0.1);
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      min-height: 100dvh;
+      display: grid;
+      place-items: start center;
+      padding: var(--edge-padding);
+      overflow-x: hidden;
+      font-family: Inter, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(circle at top left,     #133977 0%, transparent 32%),
+        radial-gradient(circle at bottom right, #0f8f98 0%, transparent 30%),
+        linear-gradient(135deg, #06111f, #0a1830 40%, #07111e 100%);
+      color: var(--text);
+    }
+
+    .manager-shell {
+      width: min(1280px, 100%);
+      max-width: calc(100vw - (2 * var(--edge-padding)));
+      max-height: calc(100dvh - (2 * var(--edge-padding)));
+      margin: 0 auto;
+      display: grid;
+      grid-template-rows: auto auto minmax(0, 1fr);
+      gap: 10px;
+    }
+
+    .panel {
+      width: 100%;
+      min-width: 0;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .header-panel {
+      display: grid;
+      gap: 8px;
+      position: relative;
+    }
+
+    .table-panel {
+      min-height: 0;
+      display: grid;
+      grid-template-rows: auto minmax(0, 1fr) auto;
+    }
+
+    .toolbar-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      display: inline-flex;
+      width: 158px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      color: var(--accent);
+      background: var(--badge-fill);
+      border: 1px solid var(--badge-line);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.4vw, 1.95rem);
+      line-height: 1.1;
+    }
+
+    p, .muted {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.35;
+      font-size: 0.86rem;
+    }
+
+    .return-link,
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 9px 13px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+    }
+
+    .return-link {
+      width: 168px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+    }
+
+    .secondary-btn {
+      width: 158px;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+    }
+
+    button[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
+    }
+
+    .return-link:focus-visible,
+    button:focus-visible {
+      outline: 2px solid rgba(103, 214, 255, 0.5);
+      outline-offset: 2px;
+    }
+
+    .return-link:hover,
+    .return-link:focus-visible,
+    .secondary-btn:hover,
+    .secondary-btn:focus-visible {
+      transform: translateY(-2px);
+      border-color: rgba(103, 214, 255, 0.6);
+      background: linear-gradient(135deg, rgba(10, 55, 120, 0.80), rgba(8, 110, 130, 0.72));
+    }
+
+    .status-note {
+      margin: 0;
+      padding: 7px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      line-height: 1.3;
+      font-size: 0.8rem;
+    }
+
+    .status-note.success {
+      color: var(--ok);
+      background: rgba(142, 240, 177, 0.08);
+      border-color: rgba(142, 240, 177, 0.18);
+    }
+
+    .status-note.warn {
+      color: var(--warn);
+      background: rgba(255, 210, 140, 0.08);
+      border-color: rgba(255, 210, 140, 0.18);
+    }
+
+    .status-note.error {
+      color: var(--warn);
+      background: rgba(255, 210, 140, 0.08);
+      border-color: rgba(255, 210, 140, 0.18);
+    }
+
+    /* ── More-actions dropdown ── */
+    .more-actions-dropdown {
+      position: absolute;
+      top: calc(36px + 2px + 20px);
+      right: 16px;
+      display: flex;
+      width: 168px;
+      z-index: 10;
+    }
+
+    .more-actions-dropdown.collapsed {
+      flex-direction: row;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px;
+      height: auto;
+      justify-content: center;
+    }
+
+    .more-actions-dropdown.collapsed .more-actions-toggle {
+      width: 100%;
+      height: 32px;
+      padding: 0 13px !important;
+    }
+
+    .more-actions-dropdown:not(.collapsed) {
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(11, 24, 45, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 8px;
+      width: 168px;
+    }
+
+    .more-actions-toggle {
+      padding: 9px 13px !important;
+      border-radius: 12px !important;
+      font-size: 0.86rem !important;
+      font-weight: 700 !important;
+      background: rgba(255, 255, 255, 0.06) !important;
+      border: 1px solid var(--line) !important;
+      color: var(--text) !important;
+      cursor: pointer;
+      flex-shrink: 0;
+    }
+
+    .more-actions-toggle:hover {
+      transform: translateY(-2px);
+      border-color: rgba(103, 214, 255, 0.6) !important;
+      background: linear-gradient(135deg, rgba(10, 55, 120, 0.80), rgba(8, 110, 130, 0.72)) !important;
+    }
+
+    .more-actions-dropdown:not(.collapsed) .more-actions-toggle {
+      align-self: stretch;
+      width: 100%;
+      min-width: 0;
+    }
+
+    .more-actions-buttons {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .more-actions-dropdown:not(.collapsed) .more-actions-buttons {
+      display: flex;
+    }
+
+    .more-actions-dropdown button {
+      width: 100%;
+      height: 32px;
+      padding: 0 13px !important;
+      justify-content: center;
+      text-align: center;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+    }
+
+    .more-actions-dropdown button:not(.more-actions-toggle):hover {
+      transform: translateY(-2px);
+      border-color: rgba(103, 214, 255, 0.6);
+      background: linear-gradient(135deg, rgba(10, 55, 120, 0.80), rgba(8, 110, 130, 0.72));
+      color: var(--text);
+    }
+
+    /* ── Table title band ── */
+    .table-title-band {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 10px 6px 12px;
+      margin-bottom: 8px;
+      border-radius: 16px 16px 0 0;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: var(--badge-fill);
+    }
+
+    #registrySearch {
+      flex: 1;
+      min-width: 0;
+      height: 30px;
+      padding: 4px 10px;
+      border-radius: 8px;
+      border: 1px solid rgba(107, 215, 255, 0.28);
+      background: rgba(9, 48, 70, 0.65);
+      color: var(--text);
+      font-size: 0.84rem;
+      font-family: inherit;
+      outline: none;
+    }
+
+    #registrySearch::placeholder {
+      color: var(--muted);
+      opacity: 0.75;
+    }
+
+    #registrySearch:focus {
+      border-color: rgba(103, 214, 255, 0.65);
+      box-shadow: 0 0 0 2px rgba(103, 214, 255, 0.14);
+    }
+
+    .lens-btn {
+      width: 32px !important;
+      min-width: 32px !important;
+      height: 30px;
+      padding: 0 !important;
+      flex-shrink: 0;
+      font-size: 0.9rem;
+    }
+
+    /* ── Table ── */
+    .table-area {
+      width: 100%;
+      height: 100%;
+      max-width: 100%;
+      min-height: 0;
+      position: relative;
+      overflow-x: auto;
+      overflow-y: auto;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: #ffffff;
+    }
+
+    table {
+      width: max-content;
+      min-width: max(100%, 980px);
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+
+    th, td {
+      padding: 6px 10px;
+      border-right: 1px dashed #1a243a;
+      border-bottom: 1px dashed #1a243a;
+      font-size: 0.9rem;
+      min-width: 130px;
+      height: 32px;
+      vertical-align: middle;
+      white-space: nowrap;
+    }
+
+    thead th {
+      position: sticky;
+      top: 0;
+      z-index: 4;
+      background: var(--badge-fill);
+      color: var(--accent);
+      text-align: center;
+      font-weight: 700;
+      border-bottom: 1px solid #1a243a;
+    }
+
+    tbody td {
+      text-align: center;
+      background: #ffffff;
+      color: var(--blue-text);
+      font-weight: 500;
+    }
+
+    td.is-editable-cell {
+      cursor: text;
+    }
+
+    td.is-editable-cell:focus {
+      outline: 2px solid rgba(107, 215, 255, 0.85);
+      outline-offset: -3px;
+    }
+
+    /* Vessel ID column — sticky left */
+    #registryTable thead > tr > th:first-child,
+    #registryTable tbody > tr > td:first-child {
+      position: sticky;
+      left: 0;
+      background: var(--badge-fill);
+      color: var(--accent);
+      font-weight: 700;
+      text-align: center;
+      border-right: 2px solid #1a243a;
+      min-width: 110px;
+    }
+
+    #registryTable thead > tr > th:first-child { z-index: 9; top: 0; }
+    #registryTable tbody > tr > td:first-child  { z-index: 8; }
+
+    /* Last column — outer right border */
+    #registryTable thead > tr > th:last-child,
+    #registryTable tbody > tr > td:last-child {
+      border-right: 3px solid #1a243a;
+    }
+
+    /* Alternating column gradient — even nth-child (Vessel Name, Month-Year, Flag, LOA…) */
+    #registryTable tbody > tr > td:nth-child(even) {
+      background: linear-gradient(90deg, #E0E8EF 0%, #ffffff 100%);
+    }
+
+    /* Empty state */
+    .empty-row td {
+      text-align: center !important;
+      color: var(--muted) !important;
+      background: #f9fafb !important;
+      font-style: italic;
+      padding: 20px 10px !important;
+      min-width: unset;
+    }
+
+    /* ── Horizontal scroll controls ── */
+    .horizontal-scroll-controls {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin-top: 10px;
+    }
+
+    .scroll-arrow {
+      width: 36px;
+      min-width: 36px;
+      height: 36px;
+      padding: 0 !important;
+      flex-shrink: 0;
+    }
+
+    .horizontal-range {
+      flex: 1;
+      height: 20px;
+      -webkit-appearance: none;
+      appearance: none;
+      background: transparent;
+    }
+
+    .horizontal-range::-webkit-slider-runnable-track {
+      height: 6px;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.18);
+    }
+
+    .horizontal-range::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: var(--thumb-width, 96px);
+      height: 16px;
+      margin-top: -5px;
+      border-radius: 999px;
+      border: 1px solid rgba(7, 17, 31, 0.18);
+      background: linear-gradient(135deg, #67d6ff, #72f1cb);
+      cursor: pointer;
+    }
+
+    /* ── Light Mode overrides ── */
+    :root[data-theme="light"] #registrySearch {
+      background: #f0f4f8;
+      border-color: #bac6d3;
+      color: #1c2733;
+    }
+
+    :root[data-theme="light"] #registrySearch::placeholder {
+      color: #6b7a8d;
+      opacity: 1;
+    }
+
+    :root[data-theme="light"] #registrySearch:focus {
+      border-color: rgba(0, 184, 255, 0.65);
+      box-shadow: 0 0 0 2px rgba(0, 184, 255, 0.18);
+    }
+
+    :root[data-theme="light"] .table-title-band {
+      border-color: #c8d3de;
+    }
+
+    :root[data-theme="light"] .empty-row td {
+      color: #485565 !important;
+      background: #f4f7fa !important;
+    }
+
+    :root[data-theme="light"] #registryTable tbody > tr > td:nth-child(even) {
+      background: linear-gradient(90deg, #E0E8EF 0%, #ffffff 100%) !important;
+    }
+
+    @media (max-width: 900px) {
+      .manager-shell { width: 100%; }
+      .toolbar-row { align-items: flex-start; }
+      .more-actions-dropdown { position: static; margin-left: auto; }
+    }
+
+    .hidden {
+      display: none !important;
+    }
+
+    .modal-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(0, 0, 0, 0.65);
+      backdrop-filter: blur(4px);
+    }
+
+    .modal-card {
+      background: rgba(11, 24, 45, 0.97);
+      border: 1px solid rgba(255, 255, 255, 0.14);
+      border-radius: 18px;
+      box-shadow: 0 32px 80px rgba(0, 0, 0, 0.55);
+      padding: 28px 32px 24px;
+      min-width: 320px;
+      max-width: 480px;
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+    }
+
+    .modal-card h2 {
+      margin: 0;
+      font-size: 1.1rem;
+      color: var(--text);
+    }
+
+    .modal-card p {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.9rem;
+      line-height: 1.5;
+    }
+
+    .modal-actions {
+      display: flex;
+      justify-content: flex-end;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .modal-actions button {
+      flex: 1;
+      min-width: 90px;
+    }
+  </style>
+</head>
+<body>
+  <main class="manager-shell">
+
+    <section class="panel header-panel">
+      <div class="toolbar-row">
+        <span id="todayBadge" class="tag">Date:</span>
+        <div class="toolbar-actions">
+          <a class="return-link" href="./Frontpage.html">Return to Frontpage</a>
+        </div>
+      </div>
+
+      <div id="moreActionsDropdown" class="more-actions-dropdown collapsed">
+        <button id="moreActionsToggle" type="button" class="secondary-btn more-actions-toggle">See More</button>
+        <div class="more-actions-buttons">
+          <button id="vesselParticularsBtn" type="button" class="secondary-btn">Vessel Particulars</button>
+          <button id="registerFleetBtn"     type="button" class="secondary-btn">Register Fleet</button>
+        </div>
+      </div>
+
+      <div>
+        <h1>Vessel Registry</h1>
+        <p class="muted">Vessel particulars saved for this company — all 15 fields per record, searchable by vessel name or IMO number. Editing directly on this page is only available to Company Admin.</p>
+      </div>
+    </section>
+
+    <p id="statusNote" class="status-note">Initialising…</p>
+
+    <section class="panel table-panel">
+      <div class="table-title-band">
+        <input id="registrySearch" type="text" maxlength="30"
+               placeholder="Search vessel name or IMO…"
+               autocomplete="off" spellcheck="false" />
+        <button id="searchBtn" type="button" class="secondary-btn lens-btn" aria-label="Search">🔍</button>
+      </div>
+
+      <div id="tableViewport" class="table-area">
+        <table id="registryTable">
+          <thead id="tableHead"></thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+
+      <div class="horizontal-scroll-controls" aria-label="Horizontal scroll controls">
+        <button id="scrollLeftBtn"  type="button" class="secondary-btn scroll-arrow" aria-label="Scroll left">◀</button>
+        <input  id="horizontalScroll" class="horizontal-range" type="range" min="0" max="0" value="0" step="1" />
+        <button id="scrollRightBtn" type="button" class="secondary-btn scroll-arrow" aria-label="Scroll right">▶</button>
+      </div>
+    </section>
+
+  </main>
+
+  <div id="modalOverlay" class="modal-overlay hidden" role="dialog" aria-modal="true" aria-labelledby="modalTitle">
+    <div class="modal-card">
+      <h2 id="modalTitle">Edit Confirmation</h2>
+      <p id="modalMessage">You are about to edit static data - continue only if you are sure.</p>
+      <div class="modal-actions">
+        <button id="modalConfirmBtn" type="button" class="secondary-btn">Continue</button>
+      </div>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase }               from './supabaseClient.js';
+    import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
+    import { loadSavedTheme }          from './dockpilotTheme.js';
+    import { getSession }              from './dockpilotAuthContract.js';
+
+    // Apply saved theme before anything renders
+    loadSavedTheme();
+
+    // ── Constants ──
+    const REGISTRY_KEY_PREFIX = 'DOCKPILOT_VESSEL_REGISTRY_';
+
+    const COL_HEADERS = [
+      'Vessel ID', 'Vessel Name', 'IMO No.', 'Month-Year of Build',
+      'Yard of Build', 'Flag', 'Class', 'LOA (m)', 'LBP (m)',
+      'Breadth (m)', 'Depth (m)', 'Summer Draught (m)', 'DWT (t)', 'GT', 'NT',
+    ];
+
+    const COL_KEYS = [
+      'vesselId', 'vesselName', 'imo', 'monthYearOfBuild',
+      'yardOfBuild', 'flag', 'class', 'loa', 'lbp',
+      'breadth', 'depth', 'summerDraught', 'dwt', 'gt', 'nt',
+    ];
+    const EDITABLE_COL_START_IDX = 3; // Skip Vessel ID, Vessel Name, IMO
+    const EDITABLE_ROLES = new Set(['frontend developer', 'backend developer', 'company admin']);
+
+    const monthNames = ['Jan','Feb','Mar','Apr','May','Jun',
+                        'Jul','Aug','Sep','Oct','Nov','Dec'];
+
+    // ── DOM refs ──
+    const todayBadge       = document.getElementById('todayBadge');
+    const statusNote       = document.getElementById('statusNote');
+    const tableHead        = document.getElementById('tableHead');
+    const tableBody        = document.getElementById('tableBody');
+    const tableViewport    = document.getElementById('tableViewport');
+    const registrySearch   = document.getElementById('registrySearch');
+    const searchBtn        = document.getElementById('searchBtn');
+    const horizontalScroll = document.getElementById('horizontalScroll');
+    const scrollLeftBtn    = document.getElementById('scrollLeftBtn');
+    const scrollRightBtn   = document.getElementById('scrollRightBtn');
+    const moreActionsDropdown  = document.getElementById('moreActionsDropdown');
+    const moreActionsToggle    = document.getElementById('moreActionsToggle');
+    const vesselParticularsBtn = document.getElementById('vesselParticularsBtn');
+    const registerFleetBtn     = document.getElementById('registerFleetBtn');
+    const modalOverlay         = document.getElementById('modalOverlay');
+    const modalConfirmBtn      = document.getElementById('modalConfirmBtn');
+
+    let allRows      = [];
+    let headRendered = false;
+    let currentCompanyId = null;
+    let canEditStaticData = false;
+    let editConfirmedThisSession = false;
+    let pendingEditCell = null;
+
+    // ── Utilities ──
+    function formatBadgeDate(date) {
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${day}-${monthNames[date.getMonth()]}-${date.getFullYear()}`;
+    }
+
+    function setStatus(text, tone = '') {
+      statusNote.textContent = text;
+      statusNote.className   = `status-note${tone ? ` ${tone}` : ''}`;
+    }
+
+    function escapeHtml(value) {
+      return String(value ?? '').replace(/[&<>"']/g, (c) =>
+        ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+    }
+
+    function normalizeRole(value) {
+      return String(value ?? '').trim().toLowerCase().replace(/\s+/g, ' ');
+    }
+
+    function isAllowedEditorRole(roleValue) {
+      return EDITABLE_ROLES.has(normalizeRole(roleValue));
+    }
+
+    function closeModal() {
+      modalOverlay.classList.add('hidden');
+      pendingEditCell = null;
+    }
+
+    function openEditWarning(cell) {
+      pendingEditCell = cell;
+      modalOverlay.classList.remove('hidden');
+      modalConfirmBtn.focus();
+    }
+
+    function selectCellContents(cell) {
+      const selection = window.getSelection();
+      if (!selection) return;
+      const range = document.createRange();
+      range.selectNodeContents(cell);
+      selection.removeAllRanges();
+      selection.addRange(range);
+    }
+
+    function saveRegistry() {
+      if (!currentCompanyId) return;
+      try {
+        localStorage.setItem(REGISTRY_KEY_PREFIX + currentCompanyId, JSON.stringify(allRows));
+      } catch (err) {
+        console.warn('[Vessel Registry] Could not persist edits:', err);
+        setStatus('Edit applied in view but local save failed.', 'warn');
+      }
+    }
+
+    function commitCellEdit(cell) {
+      const rowIndex = Number(cell.dataset.rowIndex);
+      const colIndex = Number(cell.dataset.colIndex);
+      if (!Number.isFinite(rowIndex) || !Number.isFinite(colIndex)) return;
+      if (!allRows[rowIndex]) return;
+      const key = COL_KEYS[colIndex];
+      if (!key || colIndex < EDITABLE_COL_START_IDX) return;
+      const nextValue = String(cell.textContent ?? '').replace(/[\r\n]+/g, ' ').trim();
+      allRows[rowIndex][key] = nextValue;
+      saveRegistry();
+      setStatus('Static data edited and saved to registry.', 'success');
+    }
+
+    // ── Registry ──
+    function loadRegistry(companyId) {
+      try {
+        const raw    = localStorage.getItem(REGISTRY_KEY_PREFIX + companyId);
+        const parsed = raw ? JSON.parse(raw) : [];
+        return Array.isArray(parsed) ? parsed : [];
+      } catch {
+        return [];
+      }
+    }
+
+    // ── Table rendering ──
+    function renderTable(rows) {
+      if (!headRendered) {
+        tableHead.innerHTML = `<tr>${COL_HEADERS.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr>`;
+        headRendered = true;
+      }
+
+      if (rows.length === 0) {
+        tableBody.innerHTML = `<tr class="empty-row"><td colspan="${COL_HEADERS.length}">No vessels saved yet — save vessel particulars to populate this registry.</td></tr>`;
+        requestAnimationFrame(syncScrollControls);
+        return;
+      }
+
+      tableBody.innerHTML = rows.map((row, rowIndex) =>
+        `<tr>${COL_KEYS.map((k, colIndex) => {
+          const editable = canEditStaticData && colIndex >= EDITABLE_COL_START_IDX;
+          const classes = editable ? 'is-editable-cell' : '';
+          const attrEditable = editable ? 'true' : 'false';
+          return `<td class="${classes}" data-row-index="${rowIndex}" data-col-index="${colIndex}" contenteditable="${attrEditable}" spellcheck="false">${escapeHtml(row[k] ?? '')}</td>`;
+        }).join('')}</tr>`
+      ).join('');
+
+      requestAnimationFrame(syncScrollControls);
+    }
+
+    // ── Filter ──
+    function applyFilter(query) {
+      const q = query.trim().toLowerCase();
+      if (!q) { renderTable(allRows); return; }
+      renderTable(allRows.filter(r =>
+        (r.vesselName ?? '').toLowerCase().includes(q) ||
+        (r.imo        ?? '').toLowerCase().includes(q)
+      ));
+    }
+
+    // ── Scroll controls ──
+    function syncScrollControls() {
+      const maxLeft = Math.max(0, tableViewport.scrollWidth - tableViewport.clientWidth);
+      horizontalScroll.max   = String(maxLeft);
+      horizontalScroll.value = String(Math.min(maxLeft, Math.round(tableViewport.scrollLeft)));
+
+      const atStart = tableViewport.scrollLeft <= 1;
+      const atEnd   = tableViewport.scrollLeft >= maxLeft - 1;
+      scrollLeftBtn.disabled       = atStart;
+      scrollRightBtn.disabled      = atEnd;
+      horizontalScroll.disabled    = maxLeft === 0;
+
+      const ratio  = tableViewport.scrollWidth > 0
+        ? tableViewport.clientWidth / tableViewport.scrollWidth : 1;
+      const thumbPx = Math.max(24, Math.round(ratio * horizontalScroll.offsetWidth));
+      horizontalScroll.style.setProperty('--thumb-width', `${thumbPx}px`);
+    }
+
+    // ── Events ──
+    function wireEvents() {
+      registrySearch.addEventListener('input', () => applyFilter(registrySearch.value));
+      searchBtn.addEventListener('click',      () => applyFilter(registrySearch.value));
+
+      tableViewport.addEventListener('scroll', syncScrollControls, { passive: true });
+      new ResizeObserver(syncScrollControls).observe(tableViewport);
+
+      horizontalScroll.addEventListener('input', () => {
+        tableViewport.scrollLeft = Number(horizontalScroll.value);
+      });
+      scrollLeftBtn.addEventListener('click', () => {
+        tableViewport.scrollLeft = Math.max(0, tableViewport.scrollLeft - 200);
+        syncScrollControls();
+      });
+      scrollRightBtn.addEventListener('click', () => {
+        tableViewport.scrollLeft = Math.min(
+          tableViewport.scrollWidth - tableViewport.clientWidth,
+          tableViewport.scrollLeft + 200
+        );
+        syncScrollControls();
+      });
+
+      moreActionsToggle.addEventListener('click', () => {
+        moreActionsDropdown.classList.toggle('collapsed');
+        moreActionsToggle.textContent = moreActionsDropdown.classList.contains('collapsed')
+          ? 'See More' : 'See Less';
+      });
+      document.addEventListener('click', (e) => {
+        if (!moreActionsDropdown.contains(e.target) &&
+            !moreActionsDropdown.classList.contains('collapsed')) {
+          moreActionsDropdown.classList.add('collapsed');
+          moreActionsToggle.textContent = 'See More';
+        }
+      });
+
+      vesselParticularsBtn.addEventListener('click', () => {
+        window.location.href = './vessel-particulars-input.html';
+      });
+      registerFleetBtn.addEventListener('click', () => {
+        window.location.href = './fleet-registration.html';
+      });
+
+      tableBody.addEventListener('focusin', (event) => {
+        const cell = event.target.closest('td.is-editable-cell');
+        if (!cell || !canEditStaticData) return;
+        if (!editConfirmedThisSession) {
+          event.preventDefault();
+          openEditWarning(cell);
+          cell.blur();
+          return;
+        }
+        requestAnimationFrame(() => selectCellContents(cell));
+      });
+
+      tableBody.addEventListener('blur', (event) => {
+        const cell = event.target.closest('td.is-editable-cell');
+        if (!cell || !canEditStaticData) return;
+        commitCellEdit(cell);
+      }, true);
+
+      tableBody.addEventListener('keydown', (event) => {
+        const cell = event.target.closest('td.is-editable-cell');
+        if (!cell || !canEditStaticData) return;
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          cell.blur();
+        }
+      });
+
+      modalConfirmBtn.addEventListener('click', () => {
+        editConfirmedThisSession = true;
+        const cellToFocus = pendingEditCell;
+        closeModal();
+        if (cellToFocus) {
+          cellToFocus.focus();
+        }
+      });
+
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !modalOverlay.classList.contains('hidden')) {
+          closeModal();
+        }
+      });
+    }
+
+    // ── Boot ──
+    function initRegistry() {
+      todayBadge.textContent = `Date: ${formatBadgeDate(new Date())}`;
+
+      const session   = getSession();
+      const companyId = session?.companyId;
+      currentCompanyId = companyId || null;
+      canEditStaticData = isAllowedEditorRole(session?.role);
+
+      if (!companyId) {
+        setStatus('No company session found — please return to Frontpage and log in.', 'warn');
+        renderTable([]);
+        return;
+      }
+
+      allRows = loadRegistry(companyId);
+      renderTable(allRows);
+
+      const n = allRows.length;
+      if (n === 0) {
+        setStatus('No vessels saved for this company yet.', '');
+      } else if (canEditStaticData) {
+        setStatus(`Loaded ${n} vessel${n === 1 ? '' : 's'} for this company. Static fields are editable for your role.`, 'success');
+      } else {
+        setStatus(`Loaded ${n} vessel${n === 1 ? '' : 's'} for this company. Read-only access for your role.`, 'success');
+      }
+    }
+
+    wireEvents();
+
+    startDockPilotPageGuard({
+      supabase,
+      landingPage: './DockPilot_landing.html'
+    }).then(() => {
+      initRegistry();
+    }).catch((err) => {
+      console.error('DockPilot guard startup failed:', err);
+      window.location.href = './DockPilot_landing.html';
+    });
+
+  </script>
+</body>
+</html>

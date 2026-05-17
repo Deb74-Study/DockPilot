@@ -2,7 +2,8 @@
 set -euo pipefail
 set +o histexpand
 
-ROOT='/Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject'
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+ROOT="$(cd "$SCRIPT_DIR/.." && pwd)"
 cd "$ROOT"
 
 URL=$(grep -E "^export const SUPABASE_URL" supabaseClient.js | sed -E "s/.*'([^']+)'.*/\1/")

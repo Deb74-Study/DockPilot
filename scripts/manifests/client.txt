@@ -10,8 +10,8 @@ dry-docking-project.html
 running-dd-project.html
 fleet-analytics.html
 vessel-register.html
-job_index.html
-spec_template.html
+Job-Index.html
+spec-template.html
 
 dockpilotAuthContract.js
 dockpilotPageGuard.js

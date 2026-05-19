@@ -1690,9 +1690,9 @@
             <h3 class="spec-details-header">Spec. Details</h3>
             <div class="intro-vessel-row">
               <div class="intro-vessel-field field-50">
-                <label for="specDepartment">Department:</label>
+                <label for="specDepartment">Category:</label>
                 <select id="specDepartment">
-                  <option value="">Select Department</option>
+                  <option value="">Select Category</option>
                   <option>Electrical</option>
                   <option>Mechanical</option>
                   <option>Hull &amp; Structure</option>
@@ -1706,16 +1706,16 @@
               </div>
               <div class="intro-vessel-field field-50">
                 <label for="specJobId">Job ID:</label>
-                <input type="text" id="specJobId" placeholder="e.g., EL007" />
+                <input type="text" id="specJobId" placeholder="e.g., EL-007" />
               </div>
             </div>
             <div class="intro-vessel-row">
               <div class="intro-vessel-field field-50">
-                <label for="specDoneBy">To be done by:</label>
-                <input type="text" id="specDoneBy" placeholder="Department/Contractor" />
+                <label for="specDoneBy">Responsibility:</label>
+                <input type="text" id="specDoneBy" placeholder="Yard / Crew / Contractor" />
               </div>
               <div class="intro-vessel-field field-50">
-                <label for="specDoneWhen">Done when:</label>
+                <label for="specDoneWhen">Timing:</label>
                 <input type="text" id="specDoneWhen" placeholder="Condition or timeline" />
               </div>
             </div>
@@ -2110,7 +2110,7 @@
         <h3 class="spec-details-header">Spec. Details</h3>
         <div class="intro-vessel-row">
           <div class="intro-vessel-field field-50">
-            <label>Department:</label>
+            <label>Category:</label>
             <input type="text" data-h2-field="department" tabindex="-1" readonly value="${escapeHtml(department)}" />
           </div>
           <div class="intro-vessel-field field-50">

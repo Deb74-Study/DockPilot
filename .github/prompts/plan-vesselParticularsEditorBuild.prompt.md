@@ -78,7 +78,7 @@ Build vessel-particulars-input into a production-ready editor page by reusing fl
 - /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject/vessel-particulars-input.html - primary implementation target for layout, validation, uploads, progress, and save flow.
 - /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject/fleet-registration.html - source of reusable header, status-note, modal markup, and showModal/closeModal/setStatus conventions.
 - /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject/vessel-selector.html - upstream context writer and naming compatibility reference for DOCKPILOT_VP_CONTEXT fields.
-- /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject/spec_template.html - reusable upload/compression and attachment-size handling patterns.
+- /Users/debdeeptochattopadhyay/Supabase A/DockPilot/spec-template.html - reusable upload/compression and attachment-size handling patterns.
 
 **Verification**
 1. Open vessel-particulars-input via vessel-selector and confirm context vessel auto-fills Vessel Name as read-only.

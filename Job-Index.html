@@ -44,7 +44,7 @@
         <th class="sl-no-col">Sl. No.</th>
         <th class="mandatory-col">Mandatory</th>
         <th class="reqd-col">Reqd.</th>
-        <th class="section-col">Section</th>
+        <th class="section-col">Category</th>
         <th class="section-code-col">Section Code</th>
         <th class="job-id-col">Job ID</th><th class="job-status-col">Job Status</th><th class="description-col">Description</th><th class="timing-col">Timing</th><th class="responsibility-col">Responsibility</th><th>Col 10</th>
         <th class="button-cell-header" id="addColHeader"></th>
@@ -129,6 +129,27 @@
       const headerCellCount = table.rows[0].cells.length;
       const addRowFooter = document.getElementById('addRowFooter');
       addRowFooter.cells[0].colSpan = headerCellCount;
+    }
+
+    function syncMandatoryAndReqdState(mandatoryInput, reqdSel) {
+      if (!mandatoryInput || !reqdSel) return;
+
+      if (!mandatoryInput.dataset.previousReqdValue) {
+        mandatoryInput.dataset.previousReqdValue = reqdSel.value || 'Yes';
+      }
+
+      if (mandatoryInput.checked) {
+        if (reqdSel.value !== 'Yes') {
+          mandatoryInput.dataset.previousReqdValue = reqdSel.value || mandatoryInput.dataset.previousReqdValue || 'Yes';
+        }
+        reqdSel.value = 'Yes';
+        reqdSel.disabled = true;
+      } else {
+        reqdSel.disabled = false;
+        if (mandatoryInput.dataset.previousReqdValue) {
+          reqdSel.value = mandatoryInput.dataset.previousReqdValue;
+        }
+      }
     }
 
     function updateSectionCodeCounter() {
@@ -341,6 +362,8 @@
         r.cells[COL_SECTION_CODE].textContent = rowData.sectionCode || '';
         r.cells[COL_JOB_ID].textContent = rowData.jobId || '';
 
+        syncMandatoryAndReqdState(mandatoryInput, reqdSel);
+
         for (let i = 0; i < (rowData.values || []).length; i++) {
           const cell = r.cells[COL_FIRST_DYNAMIC + i];
           if (cell) {
@@ -521,6 +544,11 @@
       reqdSel.addEventListener('change', () => { pushUndo(reqdSel, 'select', reqdSel._undoVal); reqdSel._undoVal = reqdSel.value; });
       reqdCell.appendChild(reqdSel);
 
+      const mandatoryInput = mandatoryCell.querySelector('input[type="checkbox"]');
+      mandatoryInput.addEventListener('change', () => {
+        syncMandatoryAndReqdState(mandatoryInput, reqdSel);
+      });
+
       const sectionCell = r.insertCell();
   sectionCell.className = 'section-col';
       const sectionSup = document.createElement('sup');
@@ -565,7 +593,7 @@
 
       const colCount = table.rows[0].cells.length - 1; // -1 for add col button
       const timingOptions = ['Before Docking - Sailing', 'Before Docking - Anchor', 'During Docking', 'After Docking - Anchor', 'After Docking - Sailing'];
-      const responsibilityOptions = ['Yard', 'Crew', '3P Serv.', 'Yard / Crew', 'Crew / 3P Serv', 'Yard / Crew / 3P Serv'];
+      const responsibilityOptions = ['Yard', 'Crew', 'Contr.', 'Yard / Crew', 'Crew / Contr.', 'Yard / Crew / Contr.'];
       for (let i = COL_FIRST_DYNAMIC; i < colCount; i++) {
         if (i === COL_TIMING) {
           r.appendChild(makeSelectCell(timingOptions, () => {}));
@@ -591,6 +619,8 @@
       for (let i = 0; i < r.cells.length - 1; i++) { // exclude delete button cell
         setCellId(r.cells[i], r.dataset.rowId, headerRow.cells[i].dataset.colId);
       }
+
+      syncMandatoryAndReqdState(mandatoryInput, reqdSel);
     }
 
     function addColumn() {

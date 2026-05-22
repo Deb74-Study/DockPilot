@@ -9,21 +9,24 @@
     th, td { border: 1px solid #888; padding: 6px 8px; text-align: left; }
     td { font-size: 11px; }
     th { background: #f2f2f2; font-size: 14px; font-weight: bold; text-align: center; }
-    th:nth-child(1), td:nth-child(1) { width: 16px; }
-    th:nth-child(1), td:nth-child(1) { text-align: center; }
-    th:nth-child(2), td:nth-child(2) { width: 50px; }
-    th:nth-child(3), td:nth-child(3) { width: 120px; }
-    th:nth-child(4), td:nth-child(4) { width: 50px; }
-    th:nth-child(6), td:nth-child(6) { width: 75px; }
-    th:nth-child(7), td:nth-child(7) { width: 250px; }
-    th:nth-child(8), td:nth-child(8) { width: 140px; }
-    th:nth-child(9), td:nth-child(9) { width: 130px; }
+    .sl-no-col { width: 16px; text-align: center; }
+    .mandatory-col { width: 70px; text-align: center; }
+    .reqd-col { width: 60px; }
+    .section-col { width: 120px; }
+    .section-code-col { display: none; }
+    .job-id-col { width: 80px; }
+    .job-status-col { width: 75px; }
+    .description-col { width: 250px; }
+    .timing-col { width: 140px; }
+    .responsibility-col { width: 130px; }
     input[type=text] { width: 100%; box-sizing: border-box; font-size: 11px; }
     select { width: 100%; box-sizing: border-box; font-size: 11px; }
+    input[type=checkbox] { width: 16px; height: 16px; }
     .small-btn { padding: 4px 8px; cursor: pointer; }
     .button-cell { border: none; padding: 8px; text-align: left; }
     .button-cell-header { border: none; }
     #addRowCell { text-align: left; }
+    td.mandatory-col { text-align: center; }
   </style>
 </head>
 <body>
@@ -38,11 +41,12 @@
   <table id="jobTable">
     <thead>
       <tr id="headerRow">
-        <th>Sl. No.</th>
-        <th>Reqd.</th>
-        <th>Section</th>
-        <th>Section Code</th>
-        <th>Job ID</th><th>Job Status</th><th>Description</th><th>Timing</th><th>Responsibility</th><th>Col 10</th>
+        <th class="sl-no-col">Sl. No.</th>
+        <th class="mandatory-col">Mandatory</th>
+        <th class="reqd-col">Reqd.</th>
+        <th class="section-col">Section</th>
+        <th class="section-code-col">Section Code</th>
+        <th class="job-id-col">Job ID</th><th class="job-status-col">Job Status</th><th class="description-col">Description</th><th class="timing-col">Timing</th><th class="responsibility-col">Responsibility</th><th>Col 10</th>
         <th class="button-cell-header" id="addColHeader"></th>
       </tr>
     </thead>
@@ -73,8 +77,19 @@
       'Radio/Navigation': 'RN'
     };
 
-    const reqdOptions = ['Yes', 'No', 'Maybe', 'Mandatory'];
+    const reqdOptions = ['Yes', 'No', 'Maybe'];
     const sectionOptions = Object.keys(sectionMap);
+    const COL_SL_NO = 0;
+    const COL_MANDATORY = 1;
+    const COL_REQD = 2;
+    const COL_SECTION = 3;
+    const COL_SECTION_CODE = 4;
+    const COL_JOB_ID = 5;
+    const COL_FIRST_DYNAMIC = 6;
+    const COL_TIMING = 8;
+    const COL_RESPONSIBILITY = 9;
+    const BASE_COLUMN_COUNT = 11;
+    const DEFAULT_DYNAMIC_COLUMN_COUNT = BASE_COLUMN_COUNT - COL_FIRST_DYNAMIC;
 
     const table = document.getElementById('jobTable');
     const tbody = table.querySelector('tbody');
@@ -106,7 +121,7 @@
 
     function refreshSerials() {
       Array.from(tbody.rows).forEach((row, i) => {
-        row.cells[0].textContent = i + 1;
+        row.cells[COL_SL_NO].textContent = i + 1;
       });
     }
 
@@ -120,7 +135,7 @@
       // Reset and recalculate all section code counters
       Object.keys(sectionCodeCounter).forEach(key => sectionCodeCounter[key] = 0);
       Array.from(tbody.rows).forEach(row => {
-        const jobIdCell = row.cells[4];
+        const jobIdCell = row.cells[COL_JOB_ID];
         const jobId = jobIdCell.textContent;
         if (jobId) {
           const match = jobId.match(/([A-Z]+)-(\d+)/);
@@ -152,9 +167,9 @@
       
       // Regenerate all Job IDs sequentially based on section code order
       Array.from(tbody.rows).forEach(row => {
-        const sectionCodeCell = row.cells[3];
+        const sectionCodeCell = row.cells[COL_SECTION_CODE];
         const sectionCode = sectionCodeCell.textContent;
-        const jobIdCell = row.cells[4];
+        const jobIdCell = row.cells[COL_JOB_ID];
         
         if (sectionCode) {
           // Generate next Job ID for this section code
@@ -168,14 +183,16 @@
     function serializeTable() {
       const columns = table.tHead.rows[0].cells.length - 1; // exclude add-column header
       const rows = Array.from(tbody.rows).map(row => {
+        const mandatoryInput = row.cells[COL_MANDATORY].querySelector('input[type="checkbox"]');
         const rowData = {
-          reqd: row.cells[1].querySelector('select')?.value || '',
-          section: row.cells[2].querySelector('select')?.value || '',
-          sectionCode: row.cells[3].textContent || '',
-          jobId: row.cells[4].textContent || '',
+          mandatory: mandatoryInput?.checked === true,
+          reqd: row.cells[COL_REQD].querySelector('select')?.value || '',
+          section: row.cells[COL_SECTION].querySelector('select')?.value || '',
+          sectionCode: row.cells[COL_SECTION_CODE].textContent || '',
+          jobId: row.cells[COL_JOB_ID].textContent || '',
           values: []
         };
-        for (let i = 5; i < row.cells.length - 1; i++) {
+        for (let i = COL_FIRST_DYNAMIC; i < row.cells.length - 1; i++) {
           const input = row.cells[i].querySelector('input');
           const select = row.cells[i].querySelector('select');
           const value = input ? input.value : (select ? select.value : '');
@@ -226,12 +243,19 @@
 
       const headerCells = Array.from(table.tHead.rows[0].cells)
         .slice(0, -1)
+        .filter(cell => !cell.classList.contains('section-code-col'))
         .map(cell => `<th>${cell.textContent || ''}</th>`)
         .join('');
 
       const bodyRows = Array.from(tbody.rows).map(row => {
-        const cells = Array.from(row.cells).slice(0, -1);
-        return `<tr>${cells.map(c => `<td>${c.querySelector('input')?.value || c.querySelector('select')?.value || c.textContent || ''}</td>`).join('')}</tr>`;
+        const cells = Array.from(row.cells)
+          .slice(0, -1)
+          .filter(cell => !cell.classList.contains('section-code-col'));
+        return `<tr>${cells.map((cell) => {
+          const checkbox = cell.querySelector('input[type="checkbox"]');
+          if (checkbox) return `<td>${checkbox.checked ? 'Yes' : ''}</td>`;
+          return `<td>${cell.querySelector('input')?.value || cell.querySelector('select')?.value || cell.textContent || ''}</td>`;
+        }).join('')}</tr>`;
       }).join('');
 
       return `<!DOCTYPE html>
@@ -277,19 +301,24 @@
     function loadTableData(data) {
       if (!data || !Array.isArray(data.rows)) return;
 
-      // Ensure exact column count
       const currentColumns = table.tHead.rows[0].cells.length - 1;
-      if (currentColumns < data.columns) {
-        for (let i = currentColumns; i < data.columns; i++) {
+      const currentExtraColumns = Math.max(0, currentColumns - BASE_COLUMN_COUNT);
+      const targetExtraColumns = Math.max(0, data.rows.reduce((max, row) => {
+        const valueCount = Array.isArray(row?.values) ? row.values.length : 0;
+        return Math.max(max, valueCount - DEFAULT_DYNAMIC_COLUMN_COUNT);
+      }, 0));
+
+      if (currentExtraColumns < targetExtraColumns) {
+        for (let i = currentExtraColumns; i < targetExtraColumns; i++) {
           addColumn();
         }
-      } else if (currentColumns > data.columns) {
+      } else if (currentExtraColumns > targetExtraColumns) {
         const headerRow = table.tHead.rows[0];
-        for (let i = currentColumns; i > data.columns; i--) {
+        for (let i = currentColumns; i > BASE_COLUMN_COUNT + targetExtraColumns; i--) {
           headerRow.deleteCell(i - 1);
         }
         Array.from(tbody.rows).forEach(r => {
-          for (let i = currentColumns; i > data.columns; i--) {
+          for (let i = currentColumns; i > BASE_COLUMN_COUNT + targetExtraColumns; i--) {
             r.deleteCell(i);
           }
         });
@@ -301,17 +330,19 @@
         addRow();
         const r = tbody.rows[tbody.rows.length - 1];
 
-        const reqdSel = r.cells[1].querySelector('select');
-        const sectionSel = r.cells[2].querySelector('select');
+        const mandatoryInput = r.cells[COL_MANDATORY].querySelector('input[type="checkbox"]');
+        const reqdSel = r.cells[COL_REQD].querySelector('select');
+        const sectionSel = r.cells[COL_SECTION].querySelector('select');
 
+        if (mandatoryInput) mandatoryInput.checked = rowData.mandatory === true;
         if (reqdSel) reqdSel.value = rowData.reqd || '';
         if (sectionSel) sectionSel.value = rowData.section || '';
 
-        r.cells[3].textContent = rowData.sectionCode || '';
-        r.cells[4].textContent = rowData.jobId || '';
+        r.cells[COL_SECTION_CODE].textContent = rowData.sectionCode || '';
+        r.cells[COL_JOB_ID].textContent = rowData.jobId || '';
 
         for (let i = 0; i < (rowData.values || []).length; i++) {
-          const cell = r.cells[5 + i];
+          const cell = r.cells[COL_FIRST_DYNAMIC + i];
           if (cell) {
             const input = cell.querySelector('input');
             const select = cell.querySelector('select');
@@ -335,23 +366,41 @@
       if (!htmlTable) throw new Error('No table found in HTML');
 
       const headerCells = Array.from(htmlTable.querySelectorAll('thead tr th')).map(th => th.textContent.trim());
+      const hasMandatoryColumn = headerCells.includes('Mandatory');
+      const hasSectionCodeColumn = headerCells.includes('Section Code');
       const rows = Array.from(htmlTable.querySelectorAll('tbody tr'));
       const rowData = rows.map(row => {
         const cells = Array.from(row.querySelectorAll('td'));
-        const data = { reqd: '', section: '', sectionCode: '', jobId: '', values: [] };
+        const data = { mandatory: false, reqd: '', section: '', sectionCode: '', jobId: '', values: [] };
         if (cells.length >= 5) {
-          data.reqd = cells[1].textContent.trim();
-          data.section = cells[2].textContent.trim();
-          data.sectionCode = cells[3].textContent.trim();
-          data.jobId = cells[4].textContent.trim();
-          for (let i = 5; i < cells.length; i++) {
+          let cursor = 1;
+          if (hasMandatoryColumn) {
+            const mandatoryText = cells[cursor]?.textContent.trim().toLowerCase() || '';
+            data.mandatory = ['yes', 'true', 'checked', 'x'].includes(mandatoryText);
+            cursor += 1;
+          }
+
+          data.reqd = cells[cursor]?.textContent.trim() || '';
+          cursor += 1;
+          data.section = cells[cursor]?.textContent.trim() || '';
+          cursor += 1;
+
+          if (hasSectionCodeColumn) {
+            data.sectionCode = cells[cursor]?.textContent.trim() || '';
+            cursor += 1;
+          }
+
+          data.jobId = cells[cursor]?.textContent.trim() || '';
+          cursor += 1;
+
+          for (let i = cursor; i < cells.length; i++) {
             data.values.push(cells[i].textContent.trim());
           }
         }
         return data;
       });
 
-      return { columns: Math.max(headerCells.length, 5), rows: rowData };
+      return { columns: Math.max(headerCells.length, BASE_COLUMN_COUNT), rows: rowData };
     }
 
     function loadTableFromFile(file) {
@@ -404,6 +453,24 @@
       return td;
     }
 
+    function makeCheckboxCell(defaultChecked = false) {
+      const td = document.createElement('td');
+      td.className = 'mandatory-col';
+      const sup = document.createElement('sup');
+      sup.style.color = 'pink';
+      td.appendChild(sup);
+      const input = document.createElement('input');
+      input.type = 'checkbox';
+      input.checked = defaultChecked;
+      input.addEventListener('focus', () => { input._undoChecked = input.checked; });
+      input.addEventListener('change', () => {
+        pushUndo(input, 'checkbox', input._undoChecked === true);
+        input._undoChecked = input.checked;
+      });
+      td.appendChild(input);
+      return td;
+    }
+
     function makeSelectCell(options, onChange) {
       const td = document.createElement('td');
       const sup = document.createElement('sup');
@@ -436,8 +503,13 @@
       slNo.appendChild(slNoSup);
       slNo.textContent = tbody.rows.length;
       slNo.style.fontWeight = 'bold';
+      slNo.className = 'sl-no-col';
+
+      const mandatoryCell = makeCheckboxCell(false);
+      r.appendChild(mandatoryCell);
 
       const reqdCell = r.insertCell();
+      reqdCell.className = 'reqd-col';
       const reqdSup = document.createElement('sup');
       reqdSup.style.color = 'pink';
       reqdCell.appendChild(reqdSup);
@@ -450,6 +522,7 @@
       reqdCell.appendChild(reqdSel);
 
       const sectionCell = r.insertCell();
+  sectionCell.className = 'section-col';
       const sectionSup = document.createElement('sup');
       sectionSup.style.color = 'pink';
       sectionCell.appendChild(sectionSup);
@@ -464,12 +537,14 @@
       sectionCell.appendChild(sectionSel);
 
       const sectionCodeCell = r.insertCell();
+  sectionCodeCell.className = 'section-code-col';
       const sectionCodeSup = document.createElement('sup');
       sectionCodeSup.style.color = 'pink';
       sectionCodeCell.appendChild(sectionCodeSup);
       sectionCodeCell.textContent = '';
 
       const jobIdCell = r.insertCell();
+  jobIdCell.className = 'job-id-col';
       const jobIdSup = document.createElement('sup');
       jobIdSup.style.color = 'pink';
       jobIdCell.appendChild(jobIdSup);
@@ -480,7 +555,7 @@
         const oldSectionVal = sectionSel._undoVal;
         const oldSectionCode = sectionCodeCell.textContent;
         // Capture all old job IDs before update
-        const oldJobIds = Array.from(tbody.rows).map(row => row.cells[4].textContent);
+        const oldJobIds = Array.from(tbody.rows).map(row => row.cells[COL_JOB_ID].textContent);
         pushUndo({ sectionSel, sectionCodeCell, oldSectionCode, oldJobIds, tbody }, 'section', oldSectionVal);
         sectionSel._undoVal = sectionSel.value;
         const code = sectionMap[sectionSel.value] || '';
@@ -491,10 +566,10 @@
       const colCount = table.rows[0].cells.length - 1; // -1 for add col button
       const timingOptions = ['Before Docking - Sailing', 'Before Docking - Anchor', 'During Docking', 'After Docking - Anchor', 'After Docking - Sailing'];
       const responsibilityOptions = ['Yard', 'Crew', '3P Serv.', 'Yard / Crew', 'Crew / 3P Serv', 'Yard / Crew / 3P Serv'];
-      for (let i = 5; i < colCount; i++) {
-        if (i === 7) { // Column 8 (Timing)
+      for (let i = COL_FIRST_DYNAMIC; i < colCount; i++) {
+        if (i === COL_TIMING) {
           r.appendChild(makeSelectCell(timingOptions, () => {}));
-        } else if (i === 8) { // Column 9 (Responsibility)
+        } else if (i === COL_RESPONSIBILITY) {
           r.appendChild(makeSelectCell(responsibilityOptions, () => {}));
         } else {
           r.appendChild(makeTextCell(''));
@@ -565,7 +640,7 @@
       if (entry.type === 'select') return { ...entry, oldValue: entry.element.value };
       if (entry.type === 'section') {
         const { sectionSel, sectionCodeCell } = entry.element;
-        const currentJobIds = Array.from(tbody.rows).map(row => row.cells[4].textContent);
+        const currentJobIds = Array.from(tbody.rows).map(row => row.cells[COL_JOB_ID].textContent);
         return { ...entry, element: { ...entry.element, oldSectionCode: sectionCodeCell.textContent, oldJobIds: currentJobIds }, oldValue: sectionSel.value };
       }
     }
@@ -580,6 +655,9 @@
       if (last.type === 'input') {
         last.element.value = last.oldValue;
         last.element.dispatchEvent(new Event('change'));
+      } else if (last.type === 'checkbox') {
+        last.element.checked = last.oldValue === true;
+        last.element.dispatchEvent(new Event('change'));
       } else if (last.type === 'select') {
         last.element.value = last.oldValue;
         last.element.dispatchEvent(new Event('change'));
@@ -589,7 +667,7 @@
         sectionSel._undoVal = last.oldValue;
         sectionCodeCell.textContent = oldSectionCode;
         Array.from(tbody.rows).forEach((row, i) => {
-          row.cells[4].textContent = oldJobIds[i] || '';
+          row.cells[COL_JOB_ID].textContent = oldJobIds[i] || '';
         });
       }
       undoEnabled = true;
@@ -605,6 +683,9 @@
       if (entry.type === 'input') {
         entry.element.value = entry.oldValue;
         entry.element.dispatchEvent(new Event('change'));
+      } else if (entry.type === 'checkbox') {
+        entry.element.checked = entry.oldValue === true;
+        entry.element.dispatchEvent(new Event('change'));
       } else if (entry.type === 'select') {
         entry.element.value = entry.oldValue;
         entry.element.dispatchEvent(new Event('change'));
@@ -614,7 +695,7 @@
         sectionSel._undoVal = entry.oldValue;
         sectionCodeCell.textContent = oldSectionCode;
         Array.from(tbody.rows).forEach((row, i) => {
-          row.cells[4].textContent = oldJobIds[i] || '';
+          row.cells[COL_JOB_ID].textContent = oldJobIds[i] || '';
         });
       }
       undoEnabled = true;

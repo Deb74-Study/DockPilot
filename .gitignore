@@ -4,3 +4,4 @@ supabase/.branches/
 dist/
 .dockpilot-local.log
 .dockpilot-local.pid
+.docker/postgres-data/

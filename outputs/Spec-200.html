@@ -485,40 +485,6 @@
       min-width: 0;
     }
 
-    .spec-job-id-wrap {
-      position: relative;
-      width: 100%;
-    }
-
-    .spec-job-id-input {
-      padding-right: 86px !important;
-    }
-
-    .spec-mandatory-badge {
-      position: absolute;
-      right: 14px;
-      top: 50%;
-      transform: translateY(-50%);
-      min-height: 14px;
-      padding: 1px 6px;
-      border: 1px solid #000000;
-      border-radius: 10px;
-      background: transparent;
-      color: #000000;
-      font-size: 8px;
-      font-weight: 700;
-      line-height: 1;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      pointer-events: none;
-      white-space: nowrap;
-    }
-
-    .spec-mandatory-badge[hidden] {
-      display: none;
-    }
-
     .flow-box.equip-details-section {
       padding: 0;
       border: 1px solid var(--section-box-border);
@@ -1753,27 +1719,23 @@
               </div>
               <div class="intro-vessel-field field-50">
                 <label for="specJobId">Job ID:</label>
-                <div class="spec-job-id-wrap">
-                  <input type="hidden" id="specMandatoryFlag" value="No" />
-                  <input type="text" id="specJobId" class="spec-job-id-input" placeholder="e.g., EL-007" />
-                  <span class="spec-mandatory-badge" data-mandatory-badge="primary" hidden>MANDATORY</span>
-                </div>
+                <input type="text" id="specJobId" placeholder="e.g., EL-007" value="200" />
               </div>
             </div>
             <div class="intro-vessel-row">
               <div class="intro-vessel-field field-50">
                 <label for="specDoneBy">Responsibility:</label>
-                <input type="text" id="specDoneBy" placeholder="Yard / Crew / Contractor" />
+                <input type="text" id="specDoneBy" placeholder="Yard / Crew / Contractor" value="SHIP-YARD" />
               </div>
               <div class="intro-vessel-field field-50">
                 <label for="specDoneWhen">Timing:</label>
-                <input type="text" id="specDoneWhen" placeholder="Condition or timeline" />
+                <input type="text" id="specDoneWhen" placeholder="Condition or timeline" value="During Docking" />
               </div>
             </div>
             <div class="intro-vessel-row">
               <div class="intro-vessel-field field-full">
                 <label for="specJobDesc">Job Description:</label>
-                <input type="text" id="specJobDesc" placeholder="Brief description" />
+                <input type="text" id="specJobDesc" placeholder="Brief description" value="DOCKING GENERAL" />
               </div>
             </div>
           </section>
@@ -1796,11 +1758,11 @@
             <div class="intro-vessel-row">
               <div class="intro-vessel-field field-50">
                 <label for="equipMaker">Maker:</label>
-                <input type="text" id="equipMaker" placeholder="e.g., MITSUBISHI" />
+                <input type="text" id="equipMaker" placeholder="e.g., MITSUBISHI" value="NA" />
               </div>
               <div class="intro-vessel-field field-50">
                 <label for="equipModel">Model:</label>
-                <input type="text" id="equipModel" placeholder="e.g., AE 1250-SS" />
+                <input type="text" id="equipModel" placeholder="e.g., AE 1250-SS" value="NA" />
               </div>
             </div>
             <div class="intro-vessel-row">
@@ -1833,7 +1795,26 @@
                 </div>
               </div>
               <div class="job-details-note job-details-note-from" hidden>(Contd. from previous page)</div>
-              <textarea id="jobFullDesc" class="job-details-textarea" rows="10" placeholder="Detailed job scope, requirements, and special notes..."></textarea>
+              <textarea id="jobFullDesc" class="job-details-textarea" rows="10" placeholder="Detailed job scope, requirements, and special notes...">1&gt; The vessel shall enter the dry-dock directly upon arrival to the yard and shall remain in the dock sufficient time for the paint to dry as directed by Owners representative. 
+2&gt; The vessel is to be safely docked in a suitable dry-dock with a breadth minimum 3 metres wider than vessels breadth and the keel blocks laid as per the docking plan. 
+3&gt; The ballast and trim conditions of the vessel are to be the repairer&#x27;s requirements. 
+4&gt; These conditions shall be specified in your quotation, along with the breath of the dry-dock intended. 
+5&gt; All tanks containing Fuel Oil, Fresh water or Ballast water are to be suitably shored to avoid damage to the vessel or to the dock. 
+6&gt; All docking block preparation and situation costs to be clearly specified, in addition to normal dry-dock costs.
+7&gt; Keel and Sideblocks should be arranged in a way that Double Bottom Frames rest on them.
+8&gt; Any observed damage to flat bottom due to incorrect positioning of the docking blocks shall be repaired by shipyard at their own time and expense &amp; shall be considered &quot;Delay Period&quot;.
+
+IN PRINCIPLE &quot;DOUBLE BANKING&quot; IS NOT PERMITTED WITHOUT OWNER&#x27;S WRITTEN APPROVAL.
+&quot;Double Banking &quot; is considered to mean any condition in which the vessel is not moored directly alongside to the quay.
+&quot;Double Banking&quot; is also considered to include the act of OTHER vessel being double banked to own vessel.
+In case of proposing Double Banking, following  points (a) through (g) must be complied and agreed by the yard:
+(a) Yard to provide written plans for Emergency Unberthing, Fire Fighting and Crew Evacuation in Emergency - before owner&#x27;s approval may be requested
+(b) Yard to make sure that ALL General Services (including &quot;Cranage&quot; across the entire length and breadth of the vessel) - that are supposed to be available at a lay-berth in the yard - are accessible to the vessel at all times during stay at lay-berth without any delays
+(c) Yard to appoint Gangway Security Watchman at own or other ship access point to restrict unauthorsed access to our vessel accommodation and deck // Owner&#x27;s will pay for Security Watch one time only as if vessel was directly alongside without any Double Banking
+(d) Double Banking, or maintenance activity on board other vessel shall not be allowed to affect the transaction of maintenance on own vessel or be used as a reason for delay to vessel schedule
+(e) Any cost and time for shifting of own vessel around layberths or double banking is considered to be on Yard&#x27;s account and owners shall net be asked to pay for same
+(f) Safety and Insurance of the vessel during stay at the Shipyard is the Yard&#x27;s responsibility
+(g) Any damage to the vessel or objects placed on board, or injury to crew or contractor as a result of double banking is Yard&#x27;s responsibility</textarea>
               <div class="job-details-note job-details-note-to" hidden>(contd. to the next page)</div>
             </div>
           </section>
@@ -1869,28 +1850,43 @@
               <tbody>
                 <tr>
                   <td><input class="yd-sl-input" type="text" value="A" data-yd-sl="1" /></td>
-                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="1"></textarea></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="1">Cost for dock preparation / block arrangement:</textarea></td>
                   <td><input class="yd-quote-input" type="text" data-yd-quote="1" maxlength="15" /></td>
                 </tr>
                 <tr>
-                  <td><input class="yd-sl-input" type="text" value="" data-yd-sl="2" /></td>
-                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="2"></textarea></td>
+                  <td><input class="yd-sl-input" type="text" value="B" data-yd-sl="2" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="2">Cost for Main Engine crank shaft deflection (1 x prior docking in and 1 x after un-docking):</textarea></td>
                   <td><input class="yd-quote-input" type="text" data-yd-quote="2" maxlength="15" /></td>
                 </tr>
                 <tr>
-                  <td><input class="yd-sl-input" type="text" value="" data-yd-sl="3" /></td>
-                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="3"></textarea></td>
+                  <td><input class="yd-sl-input" type="text" value="C" data-yd-sl="3" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="3">Cost for docking/un-docking including first and last day in dock:</textarea></td>
                   <td><input class="yd-quote-input" type="text" data-yd-quote="3" maxlength="15" /></td>
                 </tr>
                 <tr>
-                  <td><input class="yd-sl-input" type="text" value="" data-yd-sl="4" /></td>
-                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="4"></textarea></td>
+                  <td><input class="yd-sl-input" type="text" value="D" data-yd-sl="4" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="4">Dock hire for the subsequent ____ days in dry dock as quoted:</textarea></td>
                   <td><input class="yd-quote-input" type="text" data-yd-quote="4" maxlength="15" /></td>
                 </tr>
                 <tr>
-                  <td><input class="yd-sl-input" type="text" value="" data-yd-sl="5" /></td>
-                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="5"></textarea></td>
+                  <td><input class="yd-sl-input" type="text" value="E" data-yd-sl="5" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="5">Cost for Linesmen/riggers for mooring/unmooring in connection with docking/un-docking (if not included in C):</textarea></td>
                   <td><input class="yd-quote-input" type="text" data-yd-quote="5" maxlength="15" /></td>
+                </tr>
+                <tr>
+                  <td><input class="yd-sl-input" type="text" value="F" data-yd-sl="6" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="6">Cost for Tugs for docking/un-docking:</textarea></td>
+                  <td><input class="yd-quote-input" type="text" data-yd-quote="6" maxlength="15" /></td>
+                </tr>
+                <tr>
+                  <td><input class="yd-sl-input" type="text" value="G" data-yd-sl="7" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="7">Cost for Dock Pilotage for docking/un-docking:</textarea></td>
+                  <td><input class="yd-quote-input" type="text" data-yd-quote="7" maxlength="15" /></td>
+                </tr>
+                <tr>
+                  <td><input class="yd-sl-input" type="text" value="H" data-yd-sl="8" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="8">Cost of Lay-berth per day:</textarea></td>
+                  <td><input class="yd-quote-input" type="text" data-yd-quote="8" maxlength="15" /></td>
                 </tr>
               </tbody>
             </table>
@@ -1915,27 +1911,27 @@
                   <td><span class="sp-scope-label">Spares</span></td>
                   <td>
                     <select class="sp-status-select" data-sp-status="spares">
-                      <option value="" selected>Select Status</option>
+                      <option value="">Select Status</option>
                       <option>Pending</option>
                       <option>In Progress</option>
                       <option>Completed</option>
-                      <option>N/A</option>
+                      <option selected>N/A</option>
                     </select>
                   </td>
-                  <td><input class="sp-po-input" type="text" placeholder="Insert PO Numbers if Applicable" data-sp-po="spares" /></td>
+                  <td><input class="sp-po-input" type="text" placeholder="Insert PO Numbers if Applicable" data-sp-po="spares" value="N/A" /></td>
                 </tr>
                 <tr>
                   <td><span class="sp-scope-label">Services</span></td>
                   <td>
                     <select class="sp-status-select" data-sp-status="services">
-                      <option value="" selected>Select Status</option>
+                      <option value="">Select Status</option>
                       <option>Pending</option>
                       <option>In Progress</option>
                       <option>Completed</option>
-                      <option>N/A</option>
+                      <option selected>N/A</option>
                     </select>
                   </td>
-                  <td><input class="sp-po-input" type="text" placeholder="Insert PO Numbers if Applicable" data-sp-po="services" /></td>
+                  <td><input class="sp-po-input" type="text" placeholder="Insert PO Numbers if Applicable" data-sp-po="services" value="N/A" /></td>
                 </tr>
               </tbody>
             </table>
@@ -1946,7 +1942,7 @@
               <label class="job-status-label" for="jobStatusField">Job Status:</label>
               <select id="jobStatusField" class="job-status-select">
                 <option value="">Select Status</option>
-                <option>Pending</option>
+                <optionNone selected>Pending</option>
                 <option>In Progress</option>
                 <option>Completed</option>
                 <option>N/A</option>
@@ -2166,10 +2162,7 @@
           </div>
           <div class="intro-vessel-field field-50">
             <label>Job ID:</label>
-            <div class="spec-job-id-wrap">
-              <input type="text" class="spec-job-id-input" data-h2-field="jobId" tabindex="-1" readonly value="${escapeHtml(jobId)}" />
-              <span class="spec-mandatory-badge" data-mandatory-badge="repeat"${specMandatoryState ? '' : ' hidden'}>MANDATORY</span>
-            </div>
+            <input type="text" data-h2-field="jobId" tabindex="-1" readonly value="${escapeHtml(jobId)}" />
           </div>
         </div>
         <div class="intro-vessel-row">
@@ -2985,98 +2978,6 @@
       }
     }
 
-    const SPEC_CONTEXT_SESSION_KEY = 'DOCKPILOT_SPEC_CONTEXT';
-    let specMandatoryState = false;
-
-    function parseMandatoryValue(value) {
-      if (typeof value === 'boolean') return value;
-      const normalized = String(value ?? '').trim().toLowerCase();
-      return normalized === 'yes' || normalized === 'true' || normalized === '1' || normalized === 'y';
-    }
-
-    function coerceHookContext(raw = {}) {
-      if (!raw || typeof raw !== 'object') {
-        return { hasHook: false, jobId: '', mandatory: false };
-      }
-
-      const jobIdRaw = raw.jobId ?? raw.job_id ?? raw.jobID ?? raw.specJobId ?? raw.spec_job_id;
-      const mandatoryRaw = raw.mandatory ?? raw.isMandatory ?? raw.specMandatory ?? raw.spec_mandatory;
-      const jobId = String(jobIdRaw ?? '').trim();
-      const hasMandatoryKey = mandatoryRaw !== undefined && mandatoryRaw !== null && String(mandatoryRaw).trim() !== '';
-
-      return {
-        hasHook: jobId.length > 0 || hasMandatoryKey,
-        jobId,
-        mandatory: parseMandatoryValue(mandatoryRaw)
-      };
-    }
-
-    function getHookContextFromUrl() {
-      const params = new URLSearchParams(window.location.search || '');
-      if (!params.toString()) return { hasHook: false, jobId: '', mandatory: false };
-
-      const contextParam = params.get('specContext') || params.get('spec_context');
-      if (contextParam) {
-        try {
-          const decoded = JSON.parse(contextParam);
-          const normalized = coerceHookContext(decoded);
-          if (normalized.hasHook) return normalized;
-        } catch (error) {
-          // Ignore malformed context payload and continue with flat params.
-        }
-      }
-
-      return coerceHookContext({
-        jobId: params.get('jobId') || params.get('job_id') || params.get('specJobId') || params.get('spec_job_id'),
-        mandatory: params.get('mandatory') || params.get('isMandatory') || params.get('specMandatory') || params.get('spec_mandatory')
-      });
-    }
-
-    function getHookContextFromSessionStorage() {
-      try {
-        const raw = sessionStorage.getItem(SPEC_CONTEXT_SESSION_KEY);
-        if (!raw) return { hasHook: false, jobId: '', mandatory: false };
-        return coerceHookContext(JSON.parse(raw));
-      } catch (error) {
-        return { hasHook: false, jobId: '', mandatory: false };
-      }
-    }
-
-    function updateMandatoryBadgeVisibility() {
-      const visible = specMandatoryState === true;
-      document.querySelectorAll('[data-mandatory-badge]').forEach((badge) => {
-        badge.hidden = !visible;
-      });
-    }
-
-    function setMandatoryFlag(value) {
-      specMandatoryState = value === true;
-      const hiddenField = document.getElementById('specMandatoryFlag');
-      if (hiddenField) {
-        hiddenField.value = specMandatoryState ? 'Yes' : 'No';
-      }
-      updateMandatoryBadgeVisibility();
-    }
-
-    function applySpecHookContext() {
-      const fromUrl = getHookContextFromUrl();
-      const context = fromUrl.hasHook ? fromUrl : getHookContextFromSessionStorage();
-      const jobIdField = document.getElementById('specJobId');
-
-      setMandatoryFlag(context.mandatory === true);
-
-      if (!jobIdField || !context.hasHook) {
-        return;
-      }
-
-      if (context.jobId) {
-        jobIdField.value = context.jobId;
-      }
-
-      jobIdField.readOnly = true;
-      jobIdField.setAttribute('aria-readonly', 'true');
-    }
-
     function updateSectionFieldStatusDot(field) {
       if (!field) return;
       const initialValue = field.dataset.initialValue ?? '';
@@ -3164,8 +3065,6 @@
           if (input) input.value = value;
         });
       });
-
-      updateMandatoryBadgeVisibility();
     }
 
     function createEmptyPage(pageNumber) {
@@ -4272,8 +4171,6 @@
     });
 
     renderAttachedSpecFiles();
-    applySpecHookContext();
-    syncH1Repeats();
     applyTC();
     initializeSectionFieldStatusDots();
     setupPrintButtonFallback();

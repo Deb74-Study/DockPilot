@@ -1,0 +1,11 @@
+.git
+.github
+.dockpilot-local.log
+.dockpilot-local.pid
+_Test Folder 1
+_Test Folder 2
+dist/dev
+docs
+supabase/.branches
+supabase/.temp
+supabase/snippets

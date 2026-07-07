@@ -4280,21 +4280,5 @@
     schedulePagination();
   </script>
 
-  <script type="module">
-    import { supabase } from './supabaseClient.js';
-    import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
-    import { loadSavedTheme } from './dockpilotTheme.js';
-
-    // Apply saved theme before anything renders
-    loadSavedTheme();
-
-    startDockPilotPageGuard({
-      supabase,
-      landingPage: './DockPilot_landing.html'
-    }).catch((error) => {
-      console.error('DockPilot guard startup failed:', error);
-      window.location.href = './DockPilot_landing.html';
-    });
-  </script>
 </body>
 </html>

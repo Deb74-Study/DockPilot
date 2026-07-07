@@ -1015,7 +1015,8 @@
     @media print {
       .page-actions,
       .inclusions-check-section,
-      .job-details-complete {
+      .job-details-complete,
+      .rhs-auto-header-column {
         display: none !important;
       }
     }
@@ -1033,6 +1034,54 @@
       gap: 5px;
       min-width: 0;
       box-sizing: border-box;
+    }
+
+    .rhs-auto-header-column {
+      position: relative;
+      justify-content: center;
+      align-items: flex-start;
+      align-self: flex-start;
+      height: auto;
+      min-height: 0;
+      overflow: hidden;
+    }
+
+    .rhs-auto-header-column::before {
+      content: "";
+      position: absolute;
+      top: 0;
+      bottom: 0;
+      left: 5px;
+      width: 4px;
+      background: #9ca3af;
+      border-radius: 2px;
+      pointer-events: none;
+    }
+
+    .rhs-auto-header-marker {
+      position: absolute;
+      top: 50%;
+      left: 0;
+      transform: translateY(-50%);
+      width: 14px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1px 0;
+      background: #ffffff;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    .rhs-auto-header-text {
+      font-size: 9px;
+      font-weight: 700;
+      line-height: 1;
+      letter-spacing: 0.4px;
+      color: #6b7280;
+      writing-mode: vertical-rl;
+      text-orientation: upright;
+      white-space: nowrap;
     }
 
     .flow-box.inclusions-section,
@@ -1106,6 +1155,14 @@
       width: 100%;
     }
 
+    .rhs-file-meta {
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      min-width: 0;
+      gap: 1px;
+    }
+
     .rhs-file-index {
       flex: 0 0 auto;
       min-width: 12px;
@@ -1117,7 +1174,6 @@
 
     .rhs-file-link {
       display: inline-block;
-      flex: 1 1 auto;
       min-width: 0;
       max-width: 100%;
       font-size: 9px;
@@ -1129,6 +1185,18 @@
       text-overflow: ellipsis;
       vertical-align: top;
       cursor: pointer;
+    }
+
+    .rhs-file-size-note {
+      display: inline-block;
+      min-width: 0;
+      max-width: 100%;
+      font-size: 8px;
+      line-height: 1.1;
+      color: #4b5563;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .rhs-file-delete-btn {
@@ -1585,7 +1653,7 @@
               <button class="toolbar-btn" type="button" id="btnAttachFiles">Upload files</button>
               <span id="specAttachmentCount" class="intro-attachments-count">No files selected</span>
             </div>
-            <div class="intro-attachments-note">Upload up to 10 `.doc`, `.docx`, `.pdf`, `.pptx`, `.ppt`, `.xpf`, `.jpg`, `.jpeg`, `.png`, or `.gif` files. Their clickable names will appear in the `Files Attached to Spec.` box.</div>
+            <div class="intro-attachments-note">Upload up to 10 `.doc`, `.docx`, `.pdf`, `.pptx`, `.ppt`, `.xpf`, `.jpg`, `.jpeg`, `.png`, or `.gif` files. Photograph files are auto-compressed to a maximum of 500 kB before they are attached. Their clickable names will appear in the `Files Attached to Spec.` box.</div>
           </div>
           <div class="intro-attachments-extra-box" aria-label="Attachment summary box">
             <p class="intro-attachments-summary-line">This Spec. has <strong id="specAttachmentSummaryCount">0</strong> attachments.</p>
@@ -1622,9 +1690,9 @@
             <h3 class="spec-details-header">Spec. Details</h3>
             <div class="intro-vessel-row">
               <div class="intro-vessel-field field-50">
-                <label for="specDepartment">Department:</label>
+                <label for="specDepartment">Category:</label>
                 <select id="specDepartment">
-                  <option value="">Select Department</option>
+                  <option value="">Select Category</option>
                   <option>Electrical</option>
                   <option>Mechanical</option>
                   <option>Hull &amp; Structure</option>
@@ -1638,16 +1706,16 @@
               </div>
               <div class="intro-vessel-field field-50">
                 <label for="specJobId">Job ID:</label>
-                <input type="text" id="specJobId" placeholder="e.g., EL007" />
+                <input type="text" id="specJobId" placeholder="e.g., EL-007" />
               </div>
             </div>
             <div class="intro-vessel-row">
               <div class="intro-vessel-field field-50">
-                <label for="specDoneBy">To be done by:</label>
-                <input type="text" id="specDoneBy" placeholder="Department/Contractor" />
+                <label for="specDoneBy">Responsibility:</label>
+                <input type="text" id="specDoneBy" placeholder="Yard / Crew / Contractor" value="DECK" />
               </div>
               <div class="intro-vessel-field field-50">
-                <label for="specDoneWhen">Done when:</label>
+                <label for="specDoneWhen">Timing:</label>
                 <input type="text" id="specDoneWhen" placeholder="Condition or timeline" />
               </div>
             </div>
@@ -1681,7 +1749,7 @@
               </div>
               <div class="intro-vessel-field field-50">
                 <label for="equipModel">Model:</label>
-                <input type="text" id="equipModel" placeholder="e.g., AE 1250-SS" />
+                <input type="text" id="equipModel" placeholder="e.g., AE 1250-SS" value="REQD." />
               </div>
             </div>
             <div class="intro-vessel-row">
@@ -1749,7 +1817,7 @@
               </thead>
               <tbody>
                 <tr>
-                  <td><input class="yd-sl-input" type="text" value="A" data-yd-sl="1" /></td>
+                  <td><input class="yd-sl-input" type="text" value="" data-yd-sl="1" /></td>
                   <td><textarea class="yd-job-textarea" rows="1" data-yd-row="1"></textarea></td>
                   <td><input class="yd-quote-input" type="text" data-yd-quote="1" maxlength="15" /></td>
                 </tr>
@@ -1816,7 +1884,7 @@
                       <option>N/A</option>
                     </select>
                   </td>
-                  <td><input class="sp-po-input" type="text" placeholder="Insert PO Numbers if Applicable" data-sp-po="services" /></td>
+                  <td><input class="sp-po-input" type="text" placeholder="Insert PO Numbers if Applicable" data-sp-po="services" value="660" /></td>
                 </tr>
               </tbody>
             </table>
@@ -1839,7 +1907,7 @@
 
           <div class="page-actions" data-page-actions="true" aria-label="Page action buttons">
             <div class="page-actions-controls">
-              <button class="page-action-btn page-action-btn-print" type="button" id="btnPrintAction">Print</button>
+              <button class="page-action-btn page-action-btn-print" type="button" id="btnPrintAction" onclick="window.print(); event.stopPropagation();">Print</button>
               <button class="page-action-btn page-action-btn-top" type="button" id="btnGoTopAction">Go to the top</button>
             </div>
           </div>
@@ -2042,7 +2110,7 @@
         <h3 class="spec-details-header">Spec. Details</h3>
         <div class="intro-vessel-row">
           <div class="intro-vessel-field field-50">
-            <label>Department:</label>
+            <label>Category:</label>
             <input type="text" data-h2-field="department" tabindex="-1" readonly value="${escapeHtml(department)}" />
           </div>
           <div class="intro-vessel-field field-50">
@@ -2067,6 +2135,63 @@
           </div>
         </div>`;
       return section;
+    }
+
+    function buildOverflowAutoHeaderColumn() {
+      const rhs = document.createElement('div');
+      rhs.className = 'rhs-column rhs-auto-header-column';
+      rhs.dataset.autoHeaderOnly = 'true';
+      rhs.setAttribute('aria-hidden', 'true');
+
+      const marker = document.createElement('div');
+      marker.className = 'rhs-auto-header-marker';
+
+      const text = document.createElement('span');
+      text.className = 'rhs-auto-header-text';
+      text.textContent = 'AUTO HEADER';
+
+      marker.appendChild(text);
+      rhs.appendChild(marker);
+      return rhs;
+    }
+
+    function ensureOverflowAutoHeader(page) {
+      const flow = getPageFlow(page);
+      if (!flow) return;
+
+      const pageNumber = Number(page.dataset.pageNumber || '0');
+      let existing = flow.querySelector(':scope > .rhs-auto-header-column');
+
+      if (pageNumber < 3) {
+        if (existing) existing.remove();
+        return;
+      }
+
+      if (!existing) {
+        existing = buildOverflowAutoHeaderColumn();
+        flow.appendChild(existing);
+      }
+
+      const lhs = flow.querySelector(':scope > .lhs-column');
+      const repeatedSections = lhs
+        ? Array.from(lhs.children).filter(
+            (child) => child.dataset.h1Repeat === 'true' || child.dataset.h2Repeat === 'true'
+          )
+        : [];
+
+      if (!repeatedSections.length) {
+        existing.style.height = '0px';
+        return;
+      }
+
+      const firstSection = repeatedSections[0];
+      const lastSection = repeatedSections[repeatedSections.length - 1];
+      const firstTop = firstSection.offsetTop || 0;
+      const lastBottom = (lastSection.offsetTop || 0) + lastSection.offsetHeight;
+      const markerHeight = Math.max(0, Math.ceil(lastBottom - firstTop));
+
+      existing.style.marginTop = `${firstTop}px`;
+      existing.style.height = `${markerHeight}px`;
     }
 
     function getTrackedSectionFields() {
@@ -2114,8 +2239,10 @@
     let nextAttachedSpecFileId = 1;
     const MAX_ATTACHED_SPEC_FILES = 10;
     const MAX_SINGLE_ATTACHMENT_BYTES = 2 * 1024 * 1024;
+    const MAX_IMAGE_ATTACHMENT_BYTES = 500 * 1024;
     const MAX_TOTAL_ATTACHMENT_BYTES = 10 * 1024 * 1024;
     const ALLOWED_ATTACHMENT_EXTENSIONS = new Set(['.doc', '.docx', '.pdf', '.pptx', '.ppt', '.xpf', '.jpg', '.jpeg', '.png', '.gif']);
+    const IMAGE_ATTACHMENT_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp']);
     const ALLOWED_ATTACHMENT_EXTENSIONS_LABEL = Array.from(ALLOWED_ATTACHMENT_EXTENSIONS).join(', ');
     let attachmentLimitPrimaryAction = null;
     let attachmentLimitSecondaryAction = null;
@@ -2136,11 +2263,135 @@
       return ALLOWED_ATTACHMENT_EXTENSIONS.has(getAttachmentFileExtension(file?.name || ''));
     }
 
+    function isImageAttachmentFile(file) {
+      if (!file) return false;
+      const extension = getAttachmentFileExtension(file.name || '');
+      return file.type.startsWith('image/') || IMAGE_ATTACHMENT_EXTENSIONS.has(extension);
+    }
+
+    function replaceFileExtension(fileName, nextExtension) {
+      const normalizedName = String(fileName || '').trim() || 'attachment';
+      const dotIndex = normalizedName.lastIndexOf('.');
+      const base = dotIndex > 0 ? normalizedName.slice(0, dotIndex) : normalizedName;
+      return `${base}${nextExtension}`;
+    }
+
+    function blobToFile(blob, originalFile, overrideName = '') {
+      return new File([blob], overrideName || originalFile.name, {
+        type: blob.type || originalFile.type,
+        lastModified: originalFile.lastModified || Date.now()
+      });
+    }
+
+    function canvasToBlob(canvas, mimeType, quality) {
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => resolve(blob), mimeType, quality);
+      });
+    }
+
+    async function loadImageSource(file) {
+      if ('createImageBitmap' in window) {
+        const bitmap = await createImageBitmap(file);
+        return {
+          width: bitmap.width,
+          height: bitmap.height,
+          draw(ctx, width, height) {
+            ctx.drawImage(bitmap, 0, 0, width, height);
+          },
+          cleanup() {
+            bitmap.close();
+          }
+        };
+      }
+
+      const objectUrl = URL.createObjectURL(file);
+      const image = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error(`Unable to decode image file ${file.name}.`));
+        img.src = objectUrl;
+      });
+
+      return {
+        width: image.naturalWidth || image.width,
+        height: image.naturalHeight || image.height,
+        draw(ctx, width, height) {
+          ctx.drawImage(image, 0, 0, width, height);
+        },
+        cleanup() {
+          URL.revokeObjectURL(objectUrl);
+        }
+      };
+    }
+
+    async function compressImageAttachment(file, targetBytes = MAX_IMAGE_ATTACHMENT_BYTES) {
+      if (!isImageAttachmentFile(file) || file.size <= targetBytes) {
+        return file;
+      }
+
+      const source = await loadImageSource(file);
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      if (!context) {
+        source.cleanup();
+        return file;
+      }
+
+      const qualitySteps = [0.9, 0.82, 0.74, 0.66, 0.58, 0.5, 0.42];
+      const outputMimeType = file.type === 'image/webp' ? 'image/webp' : 'image/jpeg';
+      let width = Math.max(1, source.width);
+      let height = Math.max(1, source.height);
+      let bestBlob = null;
+
+      for (let pass = 0; pass < 10; pass += 1) {
+        canvas.width = Math.max(1, Math.round(width));
+        canvas.height = Math.max(1, Math.round(height));
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        source.draw(context, canvas.width, canvas.height);
+
+        for (const quality of qualitySteps) {
+          const blob = await canvasToBlob(canvas, outputMimeType, quality);
+          if (!blob) continue;
+          if (!bestBlob || blob.size < bestBlob.size) {
+            bestBlob = blob;
+          }
+          if (blob.size <= targetBytes) {
+            source.cleanup();
+            const extension = outputMimeType === 'image/webp' ? '.webp' : '.jpg';
+            const nextName = replaceFileExtension(file.name, extension);
+            return blobToFile(blob, file, nextName);
+          }
+        }
+
+        if (Math.max(width, height) <= 800) {
+          break;
+        }
+        width *= 0.85;
+        height *= 0.85;
+      }
+
+      source.cleanup();
+
+      if (bestBlob && bestBlob.size < file.size) {
+        const extension = outputMimeType === 'image/webp' ? '.webp' : '.jpg';
+        const nextName = replaceFileExtension(file.name, extension);
+        return blobToFile(bestBlob, file, nextName);
+      }
+
+      return file;
+    }
+
     function buildUnsupportedAttachmentMessage(fileNames = [], extraMessage = '') {
       const uniqueNames = Array.from(new Set(fileNames.map((name) => String(name || 'Unnamed file').trim() || 'Unnamed file')));
       const rejectedList = uniqueNames.map((name) => `• ${name}`).join('\n');
       const baseMessage = `These files were prevented from being uploaded because their type is not permitted:\n${rejectedList}\n\nAllowed file types: ${ALLOWED_ATTACHMENT_EXTENSIONS_LABEL}`;
       return extraMessage ? `${baseMessage}\n\n${extraMessage}` : baseMessage;
+    }
+
+    function buildImageSizeLimitMessage(fileNames = []) {
+      const uniqueNames = Array.from(new Set(fileNames.map((name) => String(name || 'Unnamed file').trim() || 'Unnamed file')));
+      const rejectedList = uniqueNames.map((name) => `• ${name}`).join('\n');
+      return `These photograph files could not be reduced to the maximum size of 500 kB:\n${rejectedList}\n\nPlease upload smaller photographs or reduce resolution before attaching.`;
     }
 
     function updateAttachmentUploadState() {
@@ -2249,7 +2500,7 @@
       renderAttachedSpecFiles();
     }
 
-    function appendAttachedSpecFiles(files) {
+    async function appendAttachedSpecFiles(files) {
       const incomingFiles = Array.from(files || []);
       if (!incomingFiles.length) {
         renderAttachedSpecFiles();
@@ -2262,17 +2513,36 @@
         unsupportedTypeNames.push(file?.name || 'Unnamed file');
         return false;
       });
+      const oversizedImageNames = [];
 
       const acceptedFiles = [];
       let runningTotalBytes = getTotalAttachedSpecFileBytes();
       let popupMessage = '';
 
-      for (const file of supportedFiles) {
+      for (const sourceFile of supportedFiles) {
+        let file = sourceFile;
+        const sourceSize = Math.max(0, Number(sourceFile.size) || 0);
+        const isImageSource = isImageAttachmentFile(sourceFile);
+
+        if (isImageSource) {
+          try {
+            file = await compressImageAttachment(file, MAX_IMAGE_ATTACHMENT_BYTES);
+          } catch (error) {
+            oversizedImageNames.push(file?.name || 'Unnamed file');
+            continue;
+          }
+        }
+
         if (attachedSpecFiles.length + acceptedFiles.length >= MAX_ATTACHED_SPEC_FILES) {
           break;
         }
 
         const fileSize = Math.max(0, Number(file.size) || 0);
+
+        if (isImageAttachmentFile(file) && fileSize > MAX_IMAGE_ATTACHMENT_BYTES) {
+          oversizedImageNames.push(file?.name || 'Unnamed file');
+          continue;
+        }
 
         if (fileSize > MAX_SINGLE_ATTACHMENT_BYTES) {
           popupMessage = 'The file being uploaded exceed 2 MB (maximum size). Try to reduce file size or use other methods to send file to recipient.';
@@ -2288,6 +2558,8 @@
           id: nextAttachedSpecFileId++,
           name: file.name,
           type: file.type || '',
+          isImage: isImageSource,
+          originalSize: sourceSize,
           size: fileSize,
           url: URL.createObjectURL(file)
         });
@@ -2299,6 +2571,18 @@
       }
 
       renderAttachedSpecFiles();
+
+      if (oversizedImageNames.length) {
+        const extraMessage = popupMessage
+          ? `${buildImageSizeLimitMessage(oversizedImageNames)}\n\n${popupMessage}`
+          : buildImageSizeLimitMessage(oversizedImageNames);
+        showAttachmentLimitPopup(extraMessage, {
+          title: 'Upload Criteria Not Met',
+          primaryLabel: 'Continue',
+          showSecondary: false
+        });
+        return;
+      }
 
       if (unsupportedTypeNames.length) {
         showAttachmentLimitPopup(buildUnsupportedAttachmentMessage(unsupportedTypeNames, popupMessage), {
@@ -2393,6 +2677,20 @@
         link.textContent = formatAttachedSpecFileName(file.name);
         link.title = file.name;
 
+        const fileMeta = document.createElement('div');
+        fileMeta.className = 'rhs-file-meta';
+        fileMeta.appendChild(link);
+
+        if (file.isImage) {
+          const sizeNote = document.createElement('span');
+          sizeNote.className = 'rhs-file-size-note';
+          const originalSize = formatAttachedSpecFileSize(file.originalSize || file.size || 0);
+          const attachedSize = formatAttachedSpecFileSize(file.size || 0);
+          sizeNote.textContent = `Original ${originalSize} -> Attached ${attachedSize}`;
+          sizeNote.title = sizeNote.textContent;
+          fileMeta.appendChild(sizeNote);
+        }
+
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
         deleteBtn.className = 'rhs-file-delete-btn';
@@ -2401,7 +2699,7 @@
         deleteBtn.textContent = 'Del';
 
         entry.appendChild(indexLabel);
-        entry.appendChild(link);
+        entry.appendChild(fileMeta);
         entry.appendChild(deleteBtn);
         item.appendChild(entry);
         list.appendChild(item);
@@ -2708,6 +3006,7 @@
       lhs.appendChild(buildH2Repeat());
       flow.appendChild(lhs);
       page.appendChild(writingArea);
+      ensureOverflowAutoHeader(page);
       observePage(page);
       return page;
     }
@@ -2741,6 +3040,7 @@
         pageStack.appendChild(nextPage);
       }
 
+      ensureOverflowAutoHeader(nextPage);
       return nextPage;
     }
 
@@ -2752,7 +3052,9 @@
         if (!flow) break;
 
         const lhs = flow.querySelector(':scope > .lhs-column');
-        const rhsBoxes = Array.from(flow.children).filter((child) => !child.classList.contains('lhs-column'));
+        const rhsBoxes = Array.from(flow.children).filter(
+          (child) => !child.classList.contains('lhs-column') && child.dataset.autoHeaderOnly !== 'true'
+        );
         const hasMeaningfulLhs = lhs
           ? Array.from(lhs.children).some(
               (child) => child.dataset.h1Repeat !== 'true' && child.dataset.h2Repeat !== 'true'
@@ -3359,6 +3661,7 @@
       layoutYdSection();
       layoutSpSection();
       layoutJobStatusSection();
+      getPages().forEach((page) => ensureOverflowAutoHeader(page));
       const pages = getPages();
 
       for (let pageIndex = 0; pageIndex < pages.length; pageIndex += 1) {
@@ -3517,9 +3820,9 @@
 
     });
 
-    document.addEventListener('change', (event) => {
+    document.addEventListener('change', async (event) => {
       if (event.target.matches('#specAttachmentInput')) {
-        appendAttachedSpecFiles(event.target.files || []);
+        await appendAttachedSpecFiles(event.target.files || []);
         event.target.value = '';
         return;
       }
@@ -3769,6 +4072,23 @@
     applyTC();
     initializeSectionFieldStatusDots();
     schedulePagination();
+  </script>
+
+  <script type="module">
+    import { supabase } from './supabaseClient.js';
+    import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
+    import { loadSavedTheme } from './dockpilotTheme.js';
+
+    // Apply saved theme before anything renders
+    loadSavedTheme();
+
+    startDockPilotPageGuard({
+      supabase,
+      landingPage: './DockPilot_landing.html'
+    }).catch((error) => {
+      console.error('DockPilot guard startup failed:', error);
+      window.location.href = './DockPilot_landing.html';
+    });
   </script>
 </body>
 </html>

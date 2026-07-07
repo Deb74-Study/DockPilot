@@ -46,7 +46,7 @@ Replace the 3 static Berth cards on Frontpage with 6 navigable action buttons/ti
    provisional-page.html
 2. For each page, create a blank functional scaffold with:
    requested page title text
-   one Return to Frontpage control linking to Frontpage.html
+   one Return to Frontpage control linking to frontpage.html
    minimal content wrapper only (no extra business logic yet)
 3. Add identical protected access behavior by including the same startDockPilotPageGuard initialization pattern used in existing guarded pages.
 4. Ensure each page redirects to DockPilot_landing.html if guard startup fails, matching existing behavior.
@@ -54,7 +54,7 @@ Replace the 3 static Berth cards on Frontpage with 6 navigable action buttons/ti
 **Step 3 Implementation Status**
 - Status: Completed on 2026-04-23.
 - Created pages: `fleet-registration.html`, `fleet-composition.html`, `dry-docking-project.html`, `running-dd-project.html`, `fleet-analytics.html`, `provisional-page.html`.
-- Scaffold coverage: each page has the requested title text, a minimal blank-content wrapper, and a `Return to Frontpage` anchor linking to `./Frontpage.html`.
+- Scaffold coverage: each page has the requested title text, a minimal blank-content wrapper, and a `Return to Frontpage` anchor linking to `./frontpage.html`.
 - Access parity: each page imports `supabase` and runs `startDockPilotPageGuard` with `landingPage: './DockPilot_landing.html'`.
 - Failure behavior: each page catch block redirects to `./DockPilot_landing.html` if guard startup fails.
 
@@ -101,12 +101,12 @@ Replace the 3 static Berth cards on Frontpage with 6 navigable action buttons/ti
 - Navigation wiring: verified all 6 action tiles use anchor hrefs to the intended pages.
 - Right-click/new-tab behavior basis: verified no click interception (`onclick`, click listeners, `preventDefault`) on action tiles; native anchor behavior remains intact.
 - Guard enforcement parity: verified each new page initializes `startDockPilotPageGuard` and uses landing redirect fallback.
-- Return navigation: verified each new page contains `Return to Frontpage` anchor (`./Frontpage.html`).
+- Return navigation: verified each new page contains `Return to Frontpage` anchor (`./frontpage.html`).
 - Live deployment reachability: verified HTTP 200 on GitHub Pages for Frontpage and all 6 new pages.
 - Idle-timeout behavior: covered by shared guard path reused from existing protected pages; no guard logic changes were introduced in this feature.
 
 **Relevant files**
-- /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject/Frontpage.html — replace Berth cards with 6 action links and descriptions.
+- /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject/frontpage.html — replace Berth cards with 6 action links and descriptions.
 - /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject/dockpilotPageGuard.js — reused pattern reference only (no intended logic change unless unexpected issue appears).
 - /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject/scripts/manifests/client.txt — include 6 new pages in client rollout bundle.
 - /Users/debdeeptochattopadhyay/my-new-supabase-app/supabase/DockingProject/fleet-registration.html — new page.
@@ -118,7 +118,7 @@ Replace the 3 static Berth cards on Frontpage with 6 navigable action buttons/ti
 
 **Verification**
 1. Run scripts/build_bundle.sh client and verify all 6 new pages exist under dist/client.
-2. Run diagnostics on Frontpage.html and all 6 new pages to ensure no parser/lint errors.
+2. Run diagnostics on frontpage.html and all 6 new pages to ensure no parser/lint errors.
 3. Validate native link behavior for right-click/open-in-new-tab on all 6 actions.
 4. Validate guard enforcement and idle reauth behavior on at least one of the newly created pages.
 5. Confirm GitHub Actions Deploy GitHub Pages run is successful and live URLs return 200.

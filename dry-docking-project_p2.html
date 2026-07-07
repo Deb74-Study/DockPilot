@@ -274,9 +274,9 @@
       </div>
     </section>
 
-    <p id="statusNote" class="status-note">Dry-docking project shell initialized.</p>
+    <p id="statusNote" class="status-note">Vessel particulars will be populated once the page is ready.</p>
 
-    <section class="panel placeholder-panel">
+    <section id="placeholderPanel" class="panel placeholder-panel">
       <p>This area is reserved for project modules.</p>
     </section>
   </main>
@@ -288,8 +288,11 @@
 
     loadSavedTheme();
 
+    const DDP_NAV_SELECTION_KEY = 'DOCKPILOT_DDP_NAV_SELECTION';
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const todayBadge = document.getElementById('todayBadge');
+    const statusNote = document.getElementById('statusNote');
+    const placeholderPanel = document.getElementById('placeholderPanel');
     const moreActionsDropdown = document.getElementById('moreActionsDropdown');
     const moreActionsToggle = document.getElementById('moreActionsToggle');
     const registerFleetBtn = document.getElementById('registerFleetBtn');
@@ -333,6 +336,35 @@
       }, MORE_ACTIONS_IDLE_MS);
     }
 
+    function initPlaceholderContext() {
+      let nav = null;
+      try {
+        const raw = localStorage.getItem(DDP_NAV_SELECTION_KEY);
+        nav = raw ? JSON.parse(raw) : null;
+      } catch {
+        nav = null;
+      }
+
+      if (!nav || typeof nav !== 'object') {
+        statusNote.textContent = 'Vessel particulars will be populated once the page is ready.';
+        return;
+      }
+
+      const vesselId = String(nav.vesselId ?? '').trim();
+      const vesselName = String(nav.vesselName ?? '').trim();
+      const imo = String(nav.imo ?? '').trim();
+      const summary = [
+        vesselId ? `Vessel ID: ${vesselId}` : '',
+        vesselName ? `Vessel Name: ${vesselName}` : '',
+        imo ? `IMO: ${imo}` : ''
+      ].filter(Boolean).join(' | ');
+
+      if (summary) {
+        placeholderPanel.textContent = summary;
+      }
+      statusNote.textContent = 'Vessel particulars will be populated once the page is ready.';
+    }
+
     function wireEvents() {
       moreActionsToggle.addEventListener('click', () => {
         setMoreActionsExpanded(moreActionsDropdown.classList.contains('collapsed'));
@@ -373,6 +405,7 @@
     function initPage() {
       todayBadge.textContent = `Date: ${formatBadgeDate(new Date())}`;
       wireEvents();
+      initPlaceholderContext();
     }
 
     startDockPilotPageGuard({

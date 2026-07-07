@@ -1155,6 +1155,14 @@
       width: 100%;
     }
 
+    .rhs-file-meta {
+      display: flex;
+      flex: 1 1 auto;
+      flex-direction: column;
+      min-width: 0;
+      gap: 1px;
+    }
+
     .rhs-file-index {
       flex: 0 0 auto;
       min-width: 12px;
@@ -1166,7 +1174,6 @@
 
     .rhs-file-link {
       display: inline-block;
-      flex: 1 1 auto;
       min-width: 0;
       max-width: 100%;
       font-size: 9px;
@@ -1178,6 +1185,18 @@
       text-overflow: ellipsis;
       vertical-align: top;
       cursor: pointer;
+    }
+
+    .rhs-file-size-note {
+      display: inline-block;
+      min-width: 0;
+      max-width: 100%;
+      font-size: 8px;
+      line-height: 1.1;
+      color: #4b5563;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
     }
 
     .rhs-file-delete-btn {
@@ -1634,7 +1653,7 @@
               <button class="toolbar-btn" type="button" id="btnAttachFiles">Upload files</button>
               <span id="specAttachmentCount" class="intro-attachments-count">No files selected</span>
             </div>
-            <div class="intro-attachments-note">Upload up to 10 `.doc`, `.docx`, `.pdf`, `.pptx`, `.ppt`, `.xpf`, `.jpg`, `.jpeg`, `.png`, or `.gif` files. Their clickable names will appear in the `Files Attached to Spec.` box.</div>
+            <div class="intro-attachments-note">Upload up to 10 `.doc`, `.docx`, `.pdf`, `.pptx`, `.ppt`, `.xpf`, `.jpg`, `.jpeg`, `.png`, or `.gif` files. Photograph files are auto-compressed to a maximum of 500 kB before they are attached. Their clickable names will appear in the `Files Attached to Spec.` box.</div>
           </div>
           <div class="intro-attachments-extra-box" aria-label="Attachment summary box">
             <p class="intro-attachments-summary-line">This Spec. has <strong id="specAttachmentSummaryCount">0</strong> attachments.</p>
@@ -1671,9 +1690,9 @@
             <h3 class="spec-details-header">Spec. Details</h3>
             <div class="intro-vessel-row">
               <div class="intro-vessel-field field-50">
-                <label for="specDepartment">Department:</label>
+                <label for="specDepartment">Category:</label>
                 <select id="specDepartment">
-                  <option value="">Select Department</option>
+                  <option value="">Select Category</option>
                   <option>Electrical</option>
                   <option>Mechanical</option>
                   <option>Hull &amp; Structure</option>
@@ -1687,23 +1706,23 @@
               </div>
               <div class="intro-vessel-field field-50">
                 <label for="specJobId">Job ID:</label>
-                <input type="text" id="specJobId" placeholder="e.g., EL007" />
+                <input type="text" id="specJobId" placeholder="e.g., EL-007" value="200" />
               </div>
             </div>
             <div class="intro-vessel-row">
               <div class="intro-vessel-field field-50">
-                <label for="specDoneBy">To be done by:</label>
-                <input type="text" id="specDoneBy" placeholder="Department/Contractor" />
+                <label for="specDoneBy">Responsibility:</label>
+                <input type="text" id="specDoneBy" placeholder="Yard / Crew / Contractor" value="SHIP-YARD" />
               </div>
               <div class="intro-vessel-field field-50">
-                <label for="specDoneWhen">Done when:</label>
-                <input type="text" id="specDoneWhen" placeholder="Condition or timeline" />
+                <label for="specDoneWhen">Timing:</label>
+                <input type="text" id="specDoneWhen" placeholder="Condition or timeline" value="During Docking" />
               </div>
             </div>
             <div class="intro-vessel-row">
               <div class="intro-vessel-field field-full">
                 <label for="specJobDesc">Job Description:</label>
-                <input type="text" id="specJobDesc" placeholder="Brief description" />
+                <input type="text" id="specJobDesc" placeholder="Brief description" value="DOCKING GENERAL" />
               </div>
             </div>
           </section>
@@ -1726,11 +1745,11 @@
             <div class="intro-vessel-row">
               <div class="intro-vessel-field field-50">
                 <label for="equipMaker">Maker:</label>
-                <input type="text" id="equipMaker" placeholder="e.g., MITSUBISHI" />
+                <input type="text" id="equipMaker" placeholder="e.g., MITSUBISHI" value="NA" />
               </div>
               <div class="intro-vessel-field field-50">
                 <label for="equipModel">Model:</label>
-                <input type="text" id="equipModel" placeholder="e.g., AE 1250-SS" />
+                <input type="text" id="equipModel" placeholder="e.g., AE 1250-SS" value="NA" />
               </div>
             </div>
             <div class="intro-vessel-row">
@@ -1763,7 +1782,26 @@
                 </div>
               </div>
               <div class="job-details-note job-details-note-from" hidden>(Contd. from previous page)</div>
-              <textarea id="jobFullDesc" class="job-details-textarea" rows="10" placeholder="Detailed job scope, requirements, and special notes..."></textarea>
+              <textarea id="jobFullDesc" class="job-details-textarea" rows="10" placeholder="Detailed job scope, requirements, and special notes...">1&gt; The vessel shall enter the dry-dock directly upon arrival to the yard and shall remain in the dock sufficient time for the paint to dry as directed by Owners representative. 
+2&gt; The vessel is to be safely docked in a suitable dry-dock with a breadth minimum 3 metres wider than vessels breadth and the keel blocks laid as per the docking plan. 
+3&gt; The ballast and trim conditions of the vessel are to be the repairer&#x27;s requirements. 
+4&gt; These conditions shall be specified in your quotation, along with the breath of the dry-dock intended. 
+5&gt; All tanks containing Fuel Oil, Fresh water or Ballast water are to be suitably shored to avoid damage to the vessel or to the dock. 
+6&gt; All docking block preparation and situation costs to be clearly specified, in addition to normal dry-dock costs.
+7&gt; Keel and Sideblocks should be arranged in a way that Double Bottom Frames rest on them.
+8&gt; Any observed damage to flat bottom due to incorrect positioning of the docking blocks shall be repaired by shipyard at their own time and expense &amp; shall be considered &quot;Delay Period&quot;.
+
+IN PRINCIPLE &quot;DOUBLE BANKING&quot; IS NOT PERMITTED WITHOUT OWNER&#x27;S WRITTEN APPROVAL.
+&quot;Double Banking &quot; is considered to mean any condition in which the vessel is not moored directly alongside to the quay.
+&quot;Double Banking&quot; is also considered to include the act of OTHER vessel being double banked to own vessel.
+In case of proposing Double Banking, following  points (a) through (g) must be complied and agreed by the yard:
+(a) Yard to provide written plans for Emergency Unberthing, Fire Fighting and Crew Evacuation in Emergency - before owner&#x27;s approval may be requested
+(b) Yard to make sure that ALL General Services (including &quot;Cranage&quot; across the entire length and breadth of the vessel) - that are supposed to be available at a lay-berth in the yard - are accessible to the vessel at all times during stay at lay-berth without any delays
+(c) Yard to appoint Gangway Security Watchman at own or other ship access point to restrict unauthorsed access to our vessel accommodation and deck // Owner&#x27;s will pay for Security Watch one time only as if vessel was directly alongside without any Double Banking
+(d) Double Banking, or maintenance activity on board other vessel shall not be allowed to affect the transaction of maintenance on own vessel or be used as a reason for delay to vessel schedule
+(e) Any cost and time for shifting of own vessel around layberths or double banking is considered to be on Yard&#x27;s account and owners shall net be asked to pay for same
+(f) Safety and Insurance of the vessel during stay at the Shipyard is the Yard&#x27;s responsibility
+(g) Any damage to the vessel or objects placed on board, or injury to crew or contractor as a result of double banking is Yard&#x27;s responsibility</textarea>
               <div class="job-details-note job-details-note-to" hidden>(contd. to the next page)</div>
             </div>
           </section>
@@ -1799,28 +1837,43 @@
               <tbody>
                 <tr>
                   <td><input class="yd-sl-input" type="text" value="A" data-yd-sl="1" /></td>
-                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="1"></textarea></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="1">Cost for dock preparation / block arrangement:</textarea></td>
                   <td><input class="yd-quote-input" type="text" data-yd-quote="1" maxlength="15" /></td>
                 </tr>
                 <tr>
-                  <td><input class="yd-sl-input" type="text" value="" data-yd-sl="2" /></td>
-                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="2"></textarea></td>
+                  <td><input class="yd-sl-input" type="text" value="B" data-yd-sl="2" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="2">Cost for Main Engine crank shaft deflection (1 x prior docking in and 1 x after un-docking):</textarea></td>
                   <td><input class="yd-quote-input" type="text" data-yd-quote="2" maxlength="15" /></td>
                 </tr>
                 <tr>
-                  <td><input class="yd-sl-input" type="text" value="" data-yd-sl="3" /></td>
-                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="3"></textarea></td>
+                  <td><input class="yd-sl-input" type="text" value="C" data-yd-sl="3" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="3">Cost for docking/un-docking including first and last day in dock:</textarea></td>
                   <td><input class="yd-quote-input" type="text" data-yd-quote="3" maxlength="15" /></td>
                 </tr>
                 <tr>
-                  <td><input class="yd-sl-input" type="text" value="" data-yd-sl="4" /></td>
-                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="4"></textarea></td>
+                  <td><input class="yd-sl-input" type="text" value="D" data-yd-sl="4" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="4">Dock hire for the subsequent ____ days in dry dock as quoted:</textarea></td>
                   <td><input class="yd-quote-input" type="text" data-yd-quote="4" maxlength="15" /></td>
                 </tr>
                 <tr>
-                  <td><input class="yd-sl-input" type="text" value="" data-yd-sl="5" /></td>
-                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="5"></textarea></td>
+                  <td><input class="yd-sl-input" type="text" value="E" data-yd-sl="5" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="5">Cost for Linesmen/riggers for mooring/unmooring in connection with docking/un-docking (if not included in C):</textarea></td>
                   <td><input class="yd-quote-input" type="text" data-yd-quote="5" maxlength="15" /></td>
+                </tr>
+                <tr>
+                  <td><input class="yd-sl-input" type="text" value="F" data-yd-sl="6" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="6">Cost for Tugs for docking/un-docking:</textarea></td>
+                  <td><input class="yd-quote-input" type="text" data-yd-quote="6" maxlength="15" /></td>
+                </tr>
+                <tr>
+                  <td><input class="yd-sl-input" type="text" value="G" data-yd-sl="7" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="7">Cost for Dock Pilotage for docking/un-docking:</textarea></td>
+                  <td><input class="yd-quote-input" type="text" data-yd-quote="7" maxlength="15" /></td>
+                </tr>
+                <tr>
+                  <td><input class="yd-sl-input" type="text" value="H" data-yd-sl="8" /></td>
+                  <td><textarea class="yd-job-textarea" rows="1" data-yd-row="8">Cost of Lay-berth per day:</textarea></td>
+                  <td><input class="yd-quote-input" type="text" data-yd-quote="8" maxlength="15" /></td>
                 </tr>
               </tbody>
             </table>
@@ -1849,10 +1902,10 @@
                       <option>Pending</option>
                       <option>In Progress</option>
                       <option>Completed</option>
-                      <option>N/A</option>
+                      <option selected>N/A</option>
                     </select>
                   </td>
-                  <td><input class="sp-po-input" type="text" placeholder="Insert PO Numbers if Applicable" data-sp-po="spares" /></td>
+                  <td><input class="sp-po-input" type="text" placeholder="Insert PO Numbers if Applicable" data-sp-po="spares" value="N/A" /></td>
                 </tr>
                 <tr>
                   <td><span class="sp-scope-label">Services</span></td>
@@ -1862,10 +1915,10 @@
                       <option>Pending</option>
                       <option>In Progress</option>
                       <option>Completed</option>
-                      <option>N/A</option>
+                      <option selected>N/A</option>
                     </select>
                   </td>
-                  <td><input class="sp-po-input" type="text" placeholder="Insert PO Numbers if Applicable" data-sp-po="services" /></td>
+                  <td><input class="sp-po-input" type="text" placeholder="Insert PO Numbers if Applicable" data-sp-po="services" value="N/A" /></td>
                 </tr>
               </tbody>
             </table>
@@ -1876,7 +1929,7 @@
               <label class="job-status-label" for="jobStatusField">Job Status:</label>
               <select id="jobStatusField" class="job-status-select">
                 <option value="">Select Status</option>
-                <option>Pending</option>
+                <optionNone selected>Pending</option>
                 <option>In Progress</option>
                 <option>Completed</option>
                 <option>N/A</option>
@@ -2091,7 +2144,7 @@
         <h3 class="spec-details-header">Spec. Details</h3>
         <div class="intro-vessel-row">
           <div class="intro-vessel-field field-50">
-            <label>Department:</label>
+            <label>Category:</label>
             <input type="text" data-h2-field="department" tabindex="-1" readonly value="${escapeHtml(department)}" />
           </div>
           <div class="intro-vessel-field field-50">
@@ -2220,8 +2273,10 @@
     let nextAttachedSpecFileId = 1;
     const MAX_ATTACHED_SPEC_FILES = 10;
     const MAX_SINGLE_ATTACHMENT_BYTES = 2 * 1024 * 1024;
+    const MAX_IMAGE_ATTACHMENT_BYTES = 500 * 1024;
     const MAX_TOTAL_ATTACHMENT_BYTES = 10 * 1024 * 1024;
     const ALLOWED_ATTACHMENT_EXTENSIONS = new Set(['.doc', '.docx', '.pdf', '.pptx', '.ppt', '.xpf', '.jpg', '.jpeg', '.png', '.gif']);
+    const IMAGE_ATTACHMENT_EXTENSIONS = new Set(['.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp']);
     const ALLOWED_ATTACHMENT_EXTENSIONS_LABEL = Array.from(ALLOWED_ATTACHMENT_EXTENSIONS).join(', ');
     let attachmentLimitPrimaryAction = null;
     let attachmentLimitSecondaryAction = null;
@@ -2242,11 +2297,135 @@
       return ALLOWED_ATTACHMENT_EXTENSIONS.has(getAttachmentFileExtension(file?.name || ''));
     }
 
+    function isImageAttachmentFile(file) {
+      if (!file) return false;
+      const extension = getAttachmentFileExtension(file.name || '');
+      return file.type.startsWith('image/') || IMAGE_ATTACHMENT_EXTENSIONS.has(extension);
+    }
+
+    function replaceFileExtension(fileName, nextExtension) {
+      const normalizedName = String(fileName || '').trim() || 'attachment';
+      const dotIndex = normalizedName.lastIndexOf('.');
+      const base = dotIndex > 0 ? normalizedName.slice(0, dotIndex) : normalizedName;
+      return `${base}${nextExtension}`;
+    }
+
+    function blobToFile(blob, originalFile, overrideName = '') {
+      return new File([blob], overrideName || originalFile.name, {
+        type: blob.type || originalFile.type,
+        lastModified: originalFile.lastModified || Date.now()
+      });
+    }
+
+    function canvasToBlob(canvas, mimeType, quality) {
+      return new Promise((resolve) => {
+        canvas.toBlob((blob) => resolve(blob), mimeType, quality);
+      });
+    }
+
+    async function loadImageSource(file) {
+      if ('createImageBitmap' in window) {
+        const bitmap = await createImageBitmap(file);
+        return {
+          width: bitmap.width,
+          height: bitmap.height,
+          draw(ctx, width, height) {
+            ctx.drawImage(bitmap, 0, 0, width, height);
+          },
+          cleanup() {
+            bitmap.close();
+          }
+        };
+      }
+
+      const objectUrl = URL.createObjectURL(file);
+      const image = await new Promise((resolve, reject) => {
+        const img = new Image();
+        img.onload = () => resolve(img);
+        img.onerror = () => reject(new Error(`Unable to decode image file ${file.name}.`));
+        img.src = objectUrl;
+      });
+
+      return {
+        width: image.naturalWidth || image.width,
+        height: image.naturalHeight || image.height,
+        draw(ctx, width, height) {
+          ctx.drawImage(image, 0, 0, width, height);
+        },
+        cleanup() {
+          URL.revokeObjectURL(objectUrl);
+        }
+      };
+    }
+
+    async function compressImageAttachment(file, targetBytes = MAX_IMAGE_ATTACHMENT_BYTES) {
+      if (!isImageAttachmentFile(file) || file.size <= targetBytes) {
+        return file;
+      }
+
+      const source = await loadImageSource(file);
+      const canvas = document.createElement('canvas');
+      const context = canvas.getContext('2d');
+      if (!context) {
+        source.cleanup();
+        return file;
+      }
+
+      const qualitySteps = [0.9, 0.82, 0.74, 0.66, 0.58, 0.5, 0.42];
+      const outputMimeType = file.type === 'image/webp' ? 'image/webp' : 'image/jpeg';
+      let width = Math.max(1, source.width);
+      let height = Math.max(1, source.height);
+      let bestBlob = null;
+
+      for (let pass = 0; pass < 10; pass += 1) {
+        canvas.width = Math.max(1, Math.round(width));
+        canvas.height = Math.max(1, Math.round(height));
+        context.clearRect(0, 0, canvas.width, canvas.height);
+        source.draw(context, canvas.width, canvas.height);
+
+        for (const quality of qualitySteps) {
+          const blob = await canvasToBlob(canvas, outputMimeType, quality);
+          if (!blob) continue;
+          if (!bestBlob || blob.size < bestBlob.size) {
+            bestBlob = blob;
+          }
+          if (blob.size <= targetBytes) {
+            source.cleanup();
+            const extension = outputMimeType === 'image/webp' ? '.webp' : '.jpg';
+            const nextName = replaceFileExtension(file.name, extension);
+            return blobToFile(blob, file, nextName);
+          }
+        }
+
+        if (Math.max(width, height) <= 800) {
+          break;
+        }
+        width *= 0.85;
+        height *= 0.85;
+      }
+
+      source.cleanup();
+
+      if (bestBlob && bestBlob.size < file.size) {
+        const extension = outputMimeType === 'image/webp' ? '.webp' : '.jpg';
+        const nextName = replaceFileExtension(file.name, extension);
+        return blobToFile(bestBlob, file, nextName);
+      }
+
+      return file;
+    }
+
     function buildUnsupportedAttachmentMessage(fileNames = [], extraMessage = '') {
       const uniqueNames = Array.from(new Set(fileNames.map((name) => String(name || 'Unnamed file').trim() || 'Unnamed file')));
       const rejectedList = uniqueNames.map((name) => `• ${name}`).join('\n');
       const baseMessage = `These files were prevented from being uploaded because their type is not permitted:\n${rejectedList}\n\nAllowed file types: ${ALLOWED_ATTACHMENT_EXTENSIONS_LABEL}`;
       return extraMessage ? `${baseMessage}\n\n${extraMessage}` : baseMessage;
+    }
+
+    function buildImageSizeLimitMessage(fileNames = []) {
+      const uniqueNames = Array.from(new Set(fileNames.map((name) => String(name || 'Unnamed file').trim() || 'Unnamed file')));
+      const rejectedList = uniqueNames.map((name) => `• ${name}`).join('\n');
+      return `These photograph files could not be reduced to the maximum size of 500 kB:\n${rejectedList}\n\nPlease upload smaller photographs or reduce resolution before attaching.`;
     }
 
     function updateAttachmentUploadState() {
@@ -2355,7 +2534,7 @@
       renderAttachedSpecFiles();
     }
 
-    function appendAttachedSpecFiles(files) {
+    async function appendAttachedSpecFiles(files) {
       const incomingFiles = Array.from(files || []);
       if (!incomingFiles.length) {
         renderAttachedSpecFiles();
@@ -2368,17 +2547,36 @@
         unsupportedTypeNames.push(file?.name || 'Unnamed file');
         return false;
       });
+      const oversizedImageNames = [];
 
       const acceptedFiles = [];
       let runningTotalBytes = getTotalAttachedSpecFileBytes();
       let popupMessage = '';
 
-      for (const file of supportedFiles) {
+      for (const sourceFile of supportedFiles) {
+        let file = sourceFile;
+        const sourceSize = Math.max(0, Number(sourceFile.size) || 0);
+        const isImageSource = isImageAttachmentFile(sourceFile);
+
+        if (isImageSource) {
+          try {
+            file = await compressImageAttachment(file, MAX_IMAGE_ATTACHMENT_BYTES);
+          } catch (error) {
+            oversizedImageNames.push(file?.name || 'Unnamed file');
+            continue;
+          }
+        }
+
         if (attachedSpecFiles.length + acceptedFiles.length >= MAX_ATTACHED_SPEC_FILES) {
           break;
         }
 
         const fileSize = Math.max(0, Number(file.size) || 0);
+
+        if (isImageAttachmentFile(file) && fileSize > MAX_IMAGE_ATTACHMENT_BYTES) {
+          oversizedImageNames.push(file?.name || 'Unnamed file');
+          continue;
+        }
 
         if (fileSize > MAX_SINGLE_ATTACHMENT_BYTES) {
           popupMessage = 'The file being uploaded exceed 2 MB (maximum size). Try to reduce file size or use other methods to send file to recipient.';
@@ -2394,6 +2592,8 @@
           id: nextAttachedSpecFileId++,
           name: file.name,
           type: file.type || '',
+          isImage: isImageSource,
+          originalSize: sourceSize,
           size: fileSize,
           url: URL.createObjectURL(file)
         });
@@ -2405,6 +2605,18 @@
       }
 
       renderAttachedSpecFiles();
+
+      if (oversizedImageNames.length) {
+        const extraMessage = popupMessage
+          ? `${buildImageSizeLimitMessage(oversizedImageNames)}\n\n${popupMessage}`
+          : buildImageSizeLimitMessage(oversizedImageNames);
+        showAttachmentLimitPopup(extraMessage, {
+          title: 'Upload Criteria Not Met',
+          primaryLabel: 'Continue',
+          showSecondary: false
+        });
+        return;
+      }
 
       if (unsupportedTypeNames.length) {
         showAttachmentLimitPopup(buildUnsupportedAttachmentMessage(unsupportedTypeNames, popupMessage), {
@@ -2499,6 +2711,20 @@
         link.textContent = formatAttachedSpecFileName(file.name);
         link.title = file.name;
 
+        const fileMeta = document.createElement('div');
+        fileMeta.className = 'rhs-file-meta';
+        fileMeta.appendChild(link);
+
+        if (file.isImage) {
+          const sizeNote = document.createElement('span');
+          sizeNote.className = 'rhs-file-size-note';
+          const originalSize = formatAttachedSpecFileSize(file.originalSize || file.size || 0);
+          const attachedSize = formatAttachedSpecFileSize(file.size || 0);
+          sizeNote.textContent = `Original ${originalSize} -> Attached ${attachedSize}`;
+          sizeNote.title = sizeNote.textContent;
+          fileMeta.appendChild(sizeNote);
+        }
+
         const deleteBtn = document.createElement('button');
         deleteBtn.type = 'button';
         deleteBtn.className = 'rhs-file-delete-btn';
@@ -2507,7 +2733,7 @@
         deleteBtn.textContent = 'Del';
 
         entry.appendChild(indexLabel);
-        entry.appendChild(link);
+        entry.appendChild(fileMeta);
         entry.appendChild(deleteBtn);
         item.appendChild(entry);
         list.appendChild(item);
@@ -2733,6 +2959,12 @@
     function updateSectionFieldStatusDot(field) {
       if (!field) return;
       const initialValue = field.dataset.initialValue ?? '';
+
+      if (field.matches('.sp-status-select')) {
+        // Keep the prompt state orange and mark any explicit status choice green.
+        field.classList.toggle('status-dot-dirty', (field.value || '').trim() !== '');
+        return;
+      }
 
       if (field.matches('.equip-details-section input[type="text"]') && isEquipmentMarkedNotRelevant()) {
         field.classList.add('status-dot-dirty');
@@ -3628,9 +3860,9 @@
 
     });
 
-    document.addEventListener('change', (event) => {
+    document.addEventListener('change', async (event) => {
       if (event.target.matches('#specAttachmentInput')) {
-        appendAttachedSpecFiles(event.target.files || []);
+        await appendAttachedSpecFiles(event.target.files || []);
         event.target.value = '';
         return;
       }
@@ -3759,6 +3991,25 @@
       }
     });
 
+    let delegatedPrintHandled = false;
+
+    function setupPrintButtonFallback() {
+      const printButton = document.getElementById('btnPrintAction');
+      if (!printButton || printButton.dataset.printFallbackBound === 'true') return;
+
+      printButton.dataset.printFallbackBound = 'true';
+      // Capture-phase fallback: if delegated click handling never runs for this
+      // click (due to third-party/event interference), invoke print once.
+      printButton.addEventListener('click', () => {
+        delegatedPrintHandled = false;
+        queueMicrotask(() => {
+          if (!delegatedPrintHandled) {
+            window.print();
+          }
+        });
+      }, { capture: true });
+    }
+
     document.addEventListener('click', (event) => {
       const retryBtn = event.target.closest('#attachmentLimitRetry');
       if (retryBtn) {
@@ -3814,6 +4065,7 @@
 
       const printBtn = event.target.closest('#btnPrintAction');
       if (printBtn) {
+        delegatedPrintHandled = true;
         window.print();
         return;
       }
@@ -3879,7 +4131,25 @@
     renderAttachedSpecFiles();
     applyTC();
     initializeSectionFieldStatusDots();
+    setupPrintButtonFallback();
     schedulePagination();
+  </script>
+
+  <script type="module">
+    import { supabase } from './supabaseClient.js';
+    import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
+    import { loadSavedTheme } from './dockpilotTheme.js';
+
+    // Apply saved theme before anything renders
+    loadSavedTheme();
+
+    startDockPilotPageGuard({
+      supabase,
+      landingPage: './DockPilot_landing.html'
+    }).catch((error) => {
+      console.error('DockPilot guard startup failed:', error);
+      window.location.href = './DockPilot_landing.html';
+    });
   </script>
 </body>
 </html>

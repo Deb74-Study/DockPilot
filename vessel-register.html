@@ -194,6 +194,17 @@
       border-color: rgba(255, 210, 140, 0.18);
     }
 
+    .autofill-sink {
+      position: absolute;
+      left: -10000px;
+      top: auto;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      opacity: 0;
+      pointer-events: none;
+    }
+
     /* ── More-actions dropdown ── */
     .more-actions-dropdown {
       position: absolute;
@@ -387,6 +398,27 @@
       outline-offset: -3px;
     }
 
+    td.vessel-launch-cell {
+      cursor: pointer;
+      text-decoration: none;
+    }
+
+    td.vessel-launch-cell.launch-highlight {
+      background: transparent !important;
+      color: var(--blue-text) !important;
+      box-shadow: none !important;
+      font-weight: 700;
+      text-decoration: underline;
+      text-decoration-thickness: 2px;
+      text-underline-offset: 3px;
+      text-decoration-color: currentColor;
+    }
+
+    td.vessel-launch-cell:focus-visible {
+      outline: 2px solid rgba(103, 214, 255, 0.95);
+      outline-offset: -3px;
+    }
+
     /* Vessel ID column — sticky left */
     #registryTable thead > tr > th:first-child,
     #registryTable tbody > tr > td:first-child {
@@ -560,19 +592,25 @@
 <body>
   <main class="manager-shell">
 
+    <div class="autofill-sink" aria-hidden="true">
+      <input type="text" name="dockpilot_user_sink" autocomplete="username" tabindex="-1" />
+      <input type="password" name="dockpilot_password_sink" autocomplete="current-password" tabindex="-1" />
+    </div>
+
     <section class="panel header-panel">
       <div class="toolbar-row">
         <span id="todayBadge" class="tag">Date:</span>
         <div class="toolbar-actions">
-          <a class="return-link" href="./Frontpage.html">Return to Frontpage</a>
+          <a class="return-link" href="./frontpage.html">Return to Frontpage</a>
         </div>
       </div>
 
       <div id="moreActionsDropdown" class="more-actions-dropdown collapsed">
         <button id="moreActionsToggle" type="button" class="secondary-btn more-actions-toggle">See More</button>
         <div class="more-actions-buttons">
-          <button id="vesselParticularsBtn" type="button" class="secondary-btn">Vessel Particulars</button>
-          <button id="registerFleetBtn"     type="button" class="secondary-btn">Register Fleet</button>
+          <button id="vesselParticularsBtn" type="button" class="secondary-btn">Register Fleet</button>
+          <button id="registerFleetBtn"     type="button" class="secondary-btn">Modify Fleet</button>
+          <button id="launchProjectBtn"     type="button" class="secondary-btn">Launch Project</button>
         </div>
       </div>
 
@@ -586,9 +624,10 @@
 
     <section class="panel table-panel">
       <div class="table-title-band">
-        <input id="registrySearch" type="text" maxlength="30"
-               placeholder="Search vessel name or IMO…"
-               autocomplete="off" spellcheck="false" />
+         <input id="registrySearch" name="registrySearch" type="text" maxlength="30"
+           placeholder="Search vessel name or IMO…"
+           autocomplete="new-password" autocapitalize="off" autocorrect="off"
+           data-form-type="other" spellcheck="false" />
         <button id="searchBtn" type="button" class="secondary-btn lens-btn" aria-label="Search">🔍</button>
       </div>
 
@@ -629,18 +668,33 @@
 
     // ── Constants ──
     const REGISTRY_KEY_PREFIX = 'DOCKPILOT_VESSEL_REGISTRY_';
+    const DDP_NAV_SELECTION_KEY = 'DOCKPILOT_DDP_NAV_SELECTION';
+    const LAUNCH_HINT_TEXT = 'Click to Launch project for this vessel.';
 
     const COL_HEADERS = [
       'Vessel ID', 'Vessel Name', 'IMO No.', 'Month-Year of Build',
       'Yard of Build', 'Flag', 'Class', 'LOA (m)', 'LBP (m)',
       'Breadth (m)', 'Depth (m)', 'Summer Draught (m)', 'DWT (t)', 'GT', 'NT',
+      'GA Plan', 'Midship Plan', 'Shell Exp. Plan', 'Docking Plan',
+      'P/d UTM', 'P/d Blr. Boro.', 'P/d M/E LDM',
     ];
 
     const COL_KEYS = [
       'vesselId', 'vesselName', 'imo', 'monthYearOfBuild',
       'yardOfBuild', 'flag', 'class', 'loa', 'lbp',
       'breadth', 'depth', 'summerDraught', 'dwt', 'gt', 'nt',
+      'gaPlanStatus', 'midshipPlanStatus', 'shellExpPlanStatus', 'dockingPlanStatus',
+      'pdUtmStatus', 'pdBlrBoroStatus', 'pdLdmStatus',
     ];
+    const DOC_STATUS_KEYS = new Set([
+      'gaPlanStatus',
+      'midshipPlanStatus',
+      'shellExpPlanStatus',
+      'dockingPlanStatus',
+      'pdUtmStatus',
+      'pdBlrBoroStatus',
+      'pdLdmStatus',
+    ]);
     const EDITABLE_COL_START_IDX = 3; // Skip Vessel ID, Vessel Name, IMO
     const EDITABLE_ROLES = new Set(['frontend developer', 'backend developer', 'company admin']);
 
@@ -662,15 +716,22 @@
     const moreActionsToggle    = document.getElementById('moreActionsToggle');
     const vesselParticularsBtn = document.getElementById('vesselParticularsBtn');
     const registerFleetBtn     = document.getElementById('registerFleetBtn');
+    const launchProjectBtn     = document.getElementById('launchProjectBtn');
     const modalOverlay         = document.getElementById('modalOverlay');
     const modalConfirmBtn      = document.getElementById('modalConfirmBtn');
 
     let allRows      = [];
+    let displayedRows = [];
     let headRendered = false;
     let currentCompanyId = null;
     let canEditStaticData = false;
     let editConfirmedThisSession = false;
     let pendingEditCell = null;
+    const MORE_ACTIONS_IDLE_MS = 2000;
+    let moreActionsCollapseTimer = null;
+    let moreActionsKeyboardFocus = false;
+    let hoverLaunchRowIndex = null;
+    let launchHintSnapshot = null;
 
     // ── Utilities ──
     function formatBadgeDate(date) {
@@ -726,6 +787,51 @@
       }
     }
 
+    function applyLaunchHighlightState() {
+      const activeRowIndex = hoverLaunchRowIndex;
+      const hasActiveRow = Number.isFinite(activeRowIndex);
+
+      for (const cell of tableBody.querySelectorAll('td.vessel-launch-cell')) {
+        const rowIndex = Number(cell.dataset.rowIndex);
+        const isActive = hasActiveRow && rowIndex === activeRowIndex;
+        cell.classList.toggle('launch-highlight', isActive);
+      }
+
+      if (hasActiveRow) {
+        if (!launchHintSnapshot) {
+          launchHintSnapshot = {
+            text: statusNote.textContent,
+            className: statusNote.className,
+          };
+        }
+        setStatus(LAUNCH_HINT_TEXT, 'warn');
+      } else if (launchHintSnapshot) {
+        statusNote.textContent = launchHintSnapshot.text;
+        statusNote.className = launchHintSnapshot.className;
+        launchHintSnapshot = null;
+      }
+    }
+
+    function launchProjectForRow(rowIndex) {
+      if (!Number.isFinite(rowIndex)) return;
+      const row = displayedRows[rowIndex];
+      if (!row || typeof row !== 'object') return;
+      const payload = {
+        vesselId: String(row.vesselId ?? '').trim(),
+        vesselName: String(row.vesselName ?? '').trim(),
+        imo: String(row.imo ?? '').trim(),
+        record: row,
+        source: 'vessel-register',
+        timestamp: new Date().toISOString(),
+      };
+      try {
+        localStorage.setItem(DDP_NAV_SELECTION_KEY, JSON.stringify(payload));
+      } catch (err) {
+        console.warn('[Vessel Registry] Could not write launch navigation payload:', err);
+      }
+      window.location.href = './dry-docking-project_p2.html';
+    }
+
     function commitCellEdit(cell) {
       const rowIndex = Number(cell.dataset.rowIndex);
       const colIndex = Number(cell.dataset.colIndex);
@@ -733,10 +839,31 @@
       if (!allRows[rowIndex]) return;
       const key = COL_KEYS[colIndex];
       if (!key || colIndex < EDITABLE_COL_START_IDX) return;
+      if (DOC_STATUS_KEYS.has(key)) return;
       const nextValue = String(cell.textContent ?? '').replace(/[\r\n]+/g, ' ').trim();
       allRows[rowIndex][key] = nextValue;
       saveRegistry();
       setStatus('Static data edited and saved to registry.', 'success');
+    }
+
+    function normalizeDocStatus(value) {
+      const raw = String(value ?? '').trim();
+      if (!raw) return 'Pending';
+      if (/^pending$/i.test(raw)) return 'Pending';
+      const dateMatch = raw.match(/^(\d{2})-([A-Za-z]{3})-(\d{4})$/);
+      if (!dateMatch) return 'Pending';
+      const monthIdx = monthNames.findIndex((m) => m.toLowerCase() === dateMatch[2].toLowerCase());
+      if (monthIdx < 0) return 'Pending';
+      return `${dateMatch[1]}-${monthNames[monthIdx]}-${dateMatch[3]}`;
+    }
+
+    function normalizeRegistryRow(row) {
+      const source = row && typeof row === 'object' ? row : {};
+      const normalized = { ...source };
+      for (const key of DOC_STATUS_KEYS) {
+        normalized[key] = normalizeDocStatus(source[key]);
+      }
+      return normalized;
     }
 
     // ── Registry ──
@@ -744,7 +871,7 @@
       try {
         const raw    = localStorage.getItem(REGISTRY_KEY_PREFIX + companyId);
         const parsed = raw ? JSON.parse(raw) : [];
-        return Array.isArray(parsed) ? parsed : [];
+        return Array.isArray(parsed) ? parsed.map(normalizeRegistryRow) : [];
       } catch {
         return [];
       }
@@ -752,6 +879,9 @@
 
     // ── Table rendering ──
     function renderTable(rows) {
+      displayedRows = Array.isArray(rows) ? rows : [];
+      hoverLaunchRowIndex = null;
+
       if (!headRendered) {
         tableHead.innerHTML = `<tr>${COL_HEADERS.map(h => `<th>${escapeHtml(h)}</th>`).join('')}</tr>`;
         headRendered = true;
@@ -765,12 +895,24 @@
 
       tableBody.innerHTML = rows.map((row, rowIndex) =>
         `<tr>${COL_KEYS.map((k, colIndex) => {
-          const editable = canEditStaticData && colIndex >= EDITABLE_COL_START_IDX;
-          const classes = editable ? 'is-editable-cell' : '';
+          const editable = canEditStaticData
+            && colIndex >= EDITABLE_COL_START_IDX
+            && !DOC_STATUS_KEYS.has(k);
+          const launchCell = colIndex === 1 || colIndex === 2;
+          const classes = [editable ? 'is-editable-cell' : '', launchCell ? 'vessel-launch-cell' : '']
+            .filter(Boolean)
+            .join(' ');
           const attrEditable = editable ? 'true' : 'false';
-          return `<td class="${classes}" data-row-index="${rowIndex}" data-col-index="${colIndex}" contenteditable="${attrEditable}" spellcheck="false">${escapeHtml(row[k] ?? '')}</td>`;
+          const attrTabIndex = launchCell ? '0' : '-1';
+          const ariaLabel = launchCell ? `Launch project for vessel ${escapeHtml(row.vesselName ?? row.vesselId ?? '')}` : '';
+          const value = DOC_STATUS_KEYS.has(k)
+            ? normalizeDocStatus(row[k])
+            : String(row[k] ?? '');
+          return `<td class="${classes}" data-row-index="${rowIndex}" data-col-index="${colIndex}" contenteditable="${attrEditable}" spellcheck="false" tabindex="${attrTabIndex}" role="${launchCell ? 'button' : 'gridcell'}" aria-label="${ariaLabel}">${escapeHtml(value)}</td>`;
         }).join('')}</tr>`
       ).join('');
+
+      applyLaunchHighlightState();
 
       requestAnimationFrame(syncScrollControls);
     }
@@ -803,6 +945,34 @@
       horizontalScroll.style.setProperty('--thumb-width', `${thumbPx}px`);
     }
 
+    function clearMoreActionsCollapseTimer() {
+      if (moreActionsCollapseTimer) {
+        window.clearTimeout(moreActionsCollapseTimer);
+        moreActionsCollapseTimer = null;
+      }
+    }
+
+    function setMoreActionsExpanded(isExpanded) {
+      moreActionsDropdown.classList.toggle('collapsed', !isExpanded);
+      moreActionsToggle.textContent = isExpanded ? 'See Less' : 'See More';
+      if (!isExpanded) {
+        clearMoreActionsCollapseTimer();
+        return;
+      }
+      scheduleMoreActionsAutoCollapse();
+    }
+
+    function scheduleMoreActionsAutoCollapse() {
+      clearMoreActionsCollapseTimer();
+      if (moreActionsDropdown.classList.contains('collapsed')) return;
+      moreActionsCollapseTimer = window.setTimeout(() => {
+        if (moreActionsDropdown.classList.contains('collapsed')) return;
+        if (moreActionsDropdown.matches(':hover')) return;
+        if (moreActionsKeyboardFocus && moreActionsDropdown.contains(document.activeElement)) return;
+        setMoreActionsExpanded(false);
+      }, MORE_ACTIONS_IDLE_MS);
+    }
+
     // ── Events ──
     function wireEvents() {
       registrySearch.addEventListener('input', () => applyFilter(registrySearch.value));
@@ -827,23 +997,61 @@
       });
 
       moreActionsToggle.addEventListener('click', () => {
-        moreActionsDropdown.classList.toggle('collapsed');
-        moreActionsToggle.textContent = moreActionsDropdown.classList.contains('collapsed')
-          ? 'See More' : 'See Less';
+        setMoreActionsExpanded(moreActionsDropdown.classList.contains('collapsed'));
+      });
+      moreActionsDropdown.addEventListener('mouseenter', clearMoreActionsCollapseTimer);
+      moreActionsDropdown.addEventListener('mouseleave', scheduleMoreActionsAutoCollapse);
+      moreActionsDropdown.addEventListener('focusin', clearMoreActionsCollapseTimer);
+      moreActionsDropdown.addEventListener('pointerdown', () => {
+        moreActionsKeyboardFocus = false;
+      });
+      moreActionsDropdown.addEventListener('keydown', () => {
+        moreActionsKeyboardFocus = true;
+      });
+      moreActionsDropdown.addEventListener('focusout', () => {
+        window.setTimeout(() => {
+          if (!moreActionsDropdown.contains(document.activeElement)) {
+            scheduleMoreActionsAutoCollapse();
+          }
+        }, 0);
       });
       document.addEventListener('click', (e) => {
         if (!moreActionsDropdown.contains(e.target) &&
             !moreActionsDropdown.classList.contains('collapsed')) {
-          moreActionsDropdown.classList.add('collapsed');
-          moreActionsToggle.textContent = 'See More';
+          setMoreActionsExpanded(false);
         }
       });
 
       vesselParticularsBtn.addEventListener('click', () => {
-        window.location.href = './vessel-particulars-input.html';
+        window.location.href = './fleet-registration.html';
       });
       registerFleetBtn.addEventListener('click', () => {
-        window.location.href = './fleet-registration.html';
+        window.location.href = './vessel-selector.html';
+      });
+      launchProjectBtn.addEventListener('click', () => {
+        window.location.href = './dry-docking-project.html';
+      });
+
+      tableBody.addEventListener('mouseover', (event) => {
+        const cell = event.target.closest('td.vessel-launch-cell');
+        if (!cell || !tableBody.contains(cell)) return;
+        hoverLaunchRowIndex = Number(cell.dataset.rowIndex);
+        applyLaunchHighlightState();
+      });
+
+      tableBody.addEventListener('mouseout', (event) => {
+        const cell = event.target.closest('td.vessel-launch-cell');
+        if (!cell || !tableBody.contains(cell)) return;
+        const nextCell = event.relatedTarget?.closest?.('td.vessel-launch-cell');
+        if (nextCell && tableBody.contains(nextCell) && nextCell.dataset.rowIndex === cell.dataset.rowIndex) return;
+        hoverLaunchRowIndex = null;
+        applyLaunchHighlightState();
+      });
+
+      tableBody.addEventListener('click', (event) => {
+        const cell = event.target.closest('td.vessel-launch-cell');
+        if (!cell || !tableBody.contains(cell)) return;
+        launchProjectForRow(Number(cell.dataset.rowIndex));
       });
 
       tableBody.addEventListener('focusin', (event) => {
@@ -865,6 +1073,13 @@
       }, true);
 
       tableBody.addEventListener('keydown', (event) => {
+        const launchCell = event.target.closest('td.vessel-launch-cell');
+        if (launchCell && (event.key === 'Enter' || event.key === ' ')) {
+          event.preventDefault();
+          launchProjectForRow(Number(launchCell.dataset.rowIndex));
+          return;
+        }
+
         const cell = event.target.closest('td.is-editable-cell');
         if (!cell || !canEditStaticData) return;
         if (event.key === 'Enter') {
@@ -892,6 +1107,8 @@
     // ── Boot ──
     function initRegistry() {
       todayBadge.textContent = `Date: ${formatBadgeDate(new Date())}`;
+
+      registrySearch.value = '';
 
       const session   = getSession();
       const companyId = session?.companyId;

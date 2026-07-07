@@ -1,0 +1,53 @@
+{
+  "savedAt": "2026-05-01T22:12:44.059Z",
+  "validationStamp": "VP_COMPLETE_18_18",
+  "context": {
+    "fleetGroup": "Dubai Fleet C",
+    "managerName": "Deb",
+    "vesselName": "Ocean Embrace",
+    "tsiName": "Rohit"
+  },
+  "particulars": {
+    "vesselName": "Ocean Embrace",
+    "imo": "9072323",
+    "monthOfBuild": "Jun",
+    "yearOfBuild": "2025",
+    "yardBuild": "QQWQ",
+    "flag": "ASD",
+    "class": "SDF",
+    "loa": "230.00 m",
+    "lbp": "245.00 m",
+    "breadth": "42.00 m",
+    "depths": "16.00 m",
+    "summerDraught": "678.90 m",
+    "dwt": "115",
+    "gt": "234556",
+    "nt": "1233445"
+  },
+  "files": [
+    {
+      "prefix": "GAP",
+      "fileName": "GAP_OCCE_9023.jpg",
+      "sizeBytes": 132893
+    },
+    {
+      "prefix": "MSP",
+      "fileName": "MSP_OCCE_9023.pdf",
+      "sizeBytes": 145062
+    },
+    {
+      "prefix": "SEP",
+      "fileName": "SEP_OCCE_9023.pdf",
+      "sizeBytes": 1248875
+    },
+    {
+      "prefix": "DP",
+      "fileName": "DP_OCCE_9023.jpeg",
+      "sizeBytes": 254775
+    }
+  ],
+  "tokens": {
+    "vesselToken": "OCCE",
+    "imoToken": "9023"
+  }
+}

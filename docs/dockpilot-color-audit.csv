@@ -26,14 +26,14 @@ light-override-success-border,Success notification border,N/A,"rgba(31, 107, 58,
 ,,,,,,
 SECTION,Per-Page UI Color Audit,,,,,
 Page,Location,Purpose,Theme Colour,Light Mode,Dark Mode,Notes
-Frontpage.html,.writing-area,Main application shell,"linear-gradient(180deg, rgba(9,16,32,.92), rgba(8,12,25,.95)) + border rgba(255,255,255,.08)","linear-gradient(180deg, #ffffff 0%, #f4f5f7 100%) + border #b5bcc8",dark panel family from theme,Light mode explicitly overridden in dockpilotTheme.js
-Frontpage.html,.logo-container,Logo group background,#020d19,#020d19,#020d19,Fixed local color not theme-tokenized
-Frontpage.html,.logo,Logo fill and text,"linear-gradient(135deg, #67d6ff, #72f1cb); text #06111f","linear-gradient(135deg, #3a6fb0, #6f8db6); text #06111f","linear-gradient(135deg, #8ea4c2, #b8c4d6); text #06111f",Accent pair follows theme
-Frontpage.html,.berth,Navigation cards,"linear-gradient(135deg, rgba(10,38,90,.68), rgba(8,78,98,.58)); border rgba(103,214,255,.14)","#ffffff; border #c2c9d4",dark grey/cool panel look,Light mode explicitly forced white
-Frontpage.html,.berth:hover,Navigation hover highlight,"linear-gradient(135deg, rgba(20,88,190,.92), rgba(16,150,176,.86)); shadow rgba(10,98,152,.52)","#f3f5f8; border #9ea8b8; shadow rgba(120,132,150,.24)",dark hover with muted accent,Light mode explicitly overridden
-Frontpage.html,.colour-pref-wrap,Theme picker container,"rgba(9,16,32,.55)",#ffffff,dark panel family,Light mode explicitly forced white
-Frontpage.html,.cp-btn,Theme picker button,transparent + border/text #67d6ff,#ffffff + dark text #151922,dark panel + off-white text,Border/text track theme accent outside light override
-Frontpage.html,.dev-note,Development chip,"text #67d6ff; bg rgba(103,214,255,.10); border rgba(103,214,255,.42)",same unless further overridden,same unless further overridden,Local hardcoded chip
+frontpage.html,.writing-area,Main application shell,"linear-gradient(180deg, rgba(9,16,32,.92), rgba(8,12,25,.95)) + border rgba(255,255,255,.08)","linear-gradient(180deg, #ffffff 0%, #f4f5f7 100%) + border #b5bcc8",dark panel family from theme,Light mode explicitly overridden in dockpilotTheme.js
+frontpage.html,.logo-container,Logo group background,#020d19,#020d19,#020d19,Fixed local color not theme-tokenized
+frontpage.html,.logo,Logo fill and text,"linear-gradient(135deg, #67d6ff, #72f1cb); text #06111f","linear-gradient(135deg, #3a6fb0, #6f8db6); text #06111f","linear-gradient(135deg, #8ea4c2, #b8c4d6); text #06111f",Accent pair follows theme
+frontpage.html,.berth,Navigation cards,"linear-gradient(135deg, rgba(10,38,90,.68), rgba(8,78,98,.58)); border rgba(103,214,255,.14)","#ffffff; border #c2c9d4",dark grey/cool panel look,Light mode explicitly forced white
+frontpage.html,.berth:hover,Navigation hover highlight,"linear-gradient(135deg, rgba(20,88,190,.92), rgba(16,150,176,.86)); shadow rgba(10,98,152,.52)","#f3f5f8; border #9ea8b8; shadow rgba(120,132,150,.24)",dark hover with muted accent,Light mode explicitly overridden
+frontpage.html,.colour-pref-wrap,Theme picker container,"rgba(9,16,32,.55)",#ffffff,dark panel family,Light mode explicitly forced white
+frontpage.html,.cp-btn,Theme picker button,transparent + border/text #67d6ff,#ffffff + dark text #151922,dark panel + off-white text,Border/text track theme accent outside light override
+frontpage.html,.dev-note,Development chip,"text #67d6ff; bg rgba(103,214,255,.10); border rgba(103,214,255,.42)",same unless further overridden,same unless further overridden,Local hardcoded chip
 fleet-registration.html,.panel,Main panels,"rgba(11,24,45,.92)","rgba(255,255,255,.95)","rgba(17,19,23,.96)",Token-driven
 fleet-registration.html,.return-link,Return to Frontpage button,"bg rgba(255,255,255,.06); border rgba(255,255,255,.10); text #eef4ff","light panel bg; line rgba(0,0,0,.10); text #151922",dark neutral bg; off-white text,Token-driven
 fleet-registration.html,.return-link:hover,Neutral button hover,"linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72)); border rgba(103,214,255,.60)",lighter hover surface from theme context,dark hover surface from theme context,Same hover pattern reused across pages
@@ -88,9 +88,9 @@ fleet-analytics.html,.return-link:hover,Hover state,"linear-gradient(135deg, rgb
 provisional-page.html,main,Main shell,"linear-gradient(180deg, rgba(9,16,32,.92), rgba(8,12,25,.95))",light shell via theme,dark shell via theme,Same scaffold family
 provisional-page.html,.return-link,Return button,"bg #67d6ff; text #06263a",light-accent variant,dark-accent variant,Local hardcoded accent button
 provisional-page.html,.return-link:hover,Hover state,"linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72)); text #eef4ff",lighter hover equivalent,darker hover equivalent,Shared hover pattern
-Job-Index.html,table th,Table header,#f2f2f2 + text #111827,N/A,N/A,Standalone page — not theme-managed
-Job-Index.html,table borders,Table borders,#888,N/A,N/A,Standalone page — not theme-managed
-Job-Index.html,body text,Main text,#111827,N/A,N/A,Standalone page — not theme-managed
+job-index.html,table th,Table header,#f2f2f2 + text #111827,N/A,N/A,Standalone page — not theme-managed
+job-index.html,table borders,Table borders,#888,N/A,N/A,Standalone page — not theme-managed
+job-index.html,body text,Main text,#111827,N/A,N/A,Standalone page — not theme-managed
 running-dd-project2.html,main,Main shell,"linear-gradient(180deg, rgba(9,16,32,.92), rgba(8,12,25,.95))",light shell via theme,dark shell via theme,Same scaffold family
 running-dd-project2.html,.return-link,Return button,"bg #67d6ff; text #06263a",light-accent variant,dark-accent variant,Local hardcoded accent button
 running-dd-project2.html,.return-link:hover,Hover state,"linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72)); text #eef4ff",lighter hover equivalent,darker hover equivalent,Shared hover pattern

@@ -2393,15 +2393,7 @@
       }
     }
 
-    startDockPilotPageGuard({
-      supabase,
-      landingPage: './DockPilot_landing.html'
-    }).then(() => {
-      initFleetRegistration();
-    }).catch((error) => {
-      console.error('DockPilot guard startup failed:', error);
-      window.location.href = './DockPilot_landing.html';
-    });
+    initFleetRegistration();
   </script>
 </body>
 </html>

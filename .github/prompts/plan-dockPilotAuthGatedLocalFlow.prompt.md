@@ -53,8 +53,8 @@ Implement a shared client-side guard plus backend token validation so every loca
 - /Users/debdeeptochattopadhyay/Supabase A/DockPilot/DockPilot_landing.html - reuse existing login/session functions and update launcher button labels/targets and post-login routing.
 - /Users/debdeeptochattopadhyay/Supabase A/DockPilot/fpadevDockPilot.html - keep developer-only issuance/admin flow; add explicit scope cues.
 - /Users/debdeeptochattopadhyay/Supabase A/DockPilot/supabaseClient.js - shared Supabase initialization used by landing and protected pages.
-- /Users/debdeeptochattopadhyay/Supabase A/DockPilot/Frontpage.html - add auth guard bootstrap and idle lock integration.
-- /Users/debdeeptochattopadhyay/Supabase A/DockPilot/Job-Index.html - add auth guard bootstrap and idle lock integration preserving current in-memory edits.
+- /Users/debdeeptochattopadhyay/Supabase A/DockPilot/frontpage.html - add auth guard bootstrap and idle lock integration.
+- /Users/debdeeptochattopadhyay/Supabase A/DockPilot/job-index.html - add auth guard bootstrap and idle lock integration preserving current in-memory edits.
 - /Users/debdeeptochattopadhyay/Supabase A/DockPilot/spec-template.html - add auth guard bootstrap and idle lock integration preserving current in-memory edits.
 - /Users/debdeeptochattopadhyay/Supabase A/DockPilot/2nd Page.html - add auth guard bootstrap and future-page template alignment.
 - /Users/debdeeptochattopadhyay/Supabase B/newprojectProject/CertMan_landing.html - reference only for layout/interaction parity for DockPilot landing.

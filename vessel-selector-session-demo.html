@@ -1796,15 +1796,7 @@
       }
     }
 
-    startDockPilotPageGuard({
-      supabase,
-      landingPage: './DockPilot_landing.html'
-    }).then(() => {
-      initFleetComposition();
-    }).catch((error) => {
-      console.error('DockPilot guard startup failed:', error);
-      window.location.href = './DockPilot_landing.html';
-    });
+    initFleetComposition();
   </script>
 </body>
 </html>

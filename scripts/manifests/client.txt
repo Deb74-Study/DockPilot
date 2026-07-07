@@ -1,7 +1,7 @@
 # Client rollout bundle (no developer page)
 index.html
 DockPilot_landing.html
-Frontpage.html
+frontpage.html
 2nd Page.html
 fleet-registration.html
 vessel-selector.html
@@ -10,7 +10,7 @@ dry-docking-project.html
 running-dd-project.html
 fleet-analytics.html
 vessel-register.html
-Job-Index.html
+job-index.html
 spec-template.html
 
 dockpilotAuthContract.js

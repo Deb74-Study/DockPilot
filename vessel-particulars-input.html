@@ -626,6 +626,7 @@
     .rolodex-preview {
       width: 100%;
       min-height: 34px;
+      position: relative;
       background: rgba(255, 255, 255, 0.05);
       border: 1px solid var(--line);
       border-radius: 8px;
@@ -633,8 +634,25 @@
       font-size: 0.83rem;
       font-family: inherit;
       text-align: left;
-      padding: 7px 10px;
+      padding: 7px 24px 7px 10px;
       cursor: pointer;
+    }
+
+    .rolodex-preview::after {
+      content: '▾';
+      position: absolute;
+      right: 8px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: 0.83rem;
+      line-height: 1;
+      color: var(--muted);
+      opacity: 0.9;
+      pointer-events: none;
+    }
+
+    .rolodex-cell.open .rolodex-preview::after {
+      opacity: 0;
     }
 
     .rolodex-preview:hover,
@@ -995,7 +1013,7 @@
         <div class="toolbar-actions">
           <button id="saveVpBtn" type="button" class="primary-btn" disabled>Save Vessel Particulars</button>
           <a class="return-link" href="./vessel-selector.html">Return to Vessel Selector</a>
-          <a class="return-link return-frontpage-link" href="./Frontpage.html">Return to Frontpage</a>
+          <a class="return-link return-frontpage-link" href="./frontpage.html">Return to Frontpage</a>
         </div>
       </div>
 
@@ -1336,8 +1354,10 @@
 
     // ── Constants ──
     const VP_CONTEXT_KEY = 'DOCKPILOT_VP_CONTEXT';
+    const VP_NAV_SELECTION_KEY = 'DOCKPILOT_VP_NAV_SELECTION';
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const YEAR_OPTIONS = Array.from({ length: 71 }, (_, index) => String(1980 + index));
     const classOptions = [
       '',
       'Russian Class - RMRS',
@@ -1401,6 +1421,17 @@
       { prefix: 'LDM', btnId: 'uploadBtnLdm', inputId: 'fileInputLdm', statusId: 'uploadStatusLdm' },
     ];
     const UPLOAD_DEFS = [...REQUIRED_UPLOAD_DEFS, ...OPTIONAL_UPLOAD_DEFS];
+    const DOC_STATUS_BY_PREFIX = {
+      GAP: 'gaPlanStatus',
+      MSP: 'midshipPlanStatus',
+      SEP: 'shellExpPlanStatus',
+      DP: 'dockingPlanStatus',
+      PDU: 'pdUtmStatus',
+      PBB: 'pdBlrBoroStatus',
+      LDM: 'pdLdmStatus',
+    };
+    const PERSISTED_INFO_PREFIXES = new Set(['GAP', 'MSP', 'SEP', 'DP']);
+    const ALWAYS_ENABLED_ON_REVISIT_PREFIXES = new Set(['PDU', 'PBB', 'LDM']);
 
     // ── DOM refs ──
     const todayBadge          = document.getElementById('todayBadge');
@@ -1468,6 +1499,9 @@
     let monthYearCommitTimer = null;
     let classCommitTimer     = null;
     const uploadState    = { GAP: null, MSP: null, SEP: null, DP: null, PDU: null, PBB: null, LDM: null };
+    const MORE_ACTIONS_IDLE_MS = 2000;
+    let moreActionsCollapseTimer = null;
+    let moreActionsKeyboardFocus = false;
 
     // ── Utility helpers ──
     function formatBadgeDate(date) {
@@ -1488,6 +1522,35 @@
 
     function normalizeValueLength(value) {
       return String(value ?? '').trim().length;
+    }
+
+    function normalizeDocStatus(value) {
+      const raw = String(value ?? '').trim();
+      if (!raw) return 'Pending';
+      if (/^pending$/i.test(raw)) return 'Pending';
+      const dateMatch = raw.match(/^(\d{2})-([A-Za-z]{3})-(\d{4})$/);
+      if (!dateMatch) return 'Pending';
+      const monthIdx = monthNames.findIndex((m) => m.toLowerCase() === dateMatch[2].toLowerCase());
+      if (monthIdx < 0) return 'Pending';
+      return `${dateMatch[1]}-${monthNames[monthIdx]}-${dateMatch[3]}`;
+    }
+
+    function isUploadedDocStatus(value) {
+      return normalizeDocStatus(value) !== 'Pending';
+    }
+
+    function formatUploadDateNumeric(date) {
+      const dd = String(date.getDate()).padStart(2, '0');
+      const mm = String(date.getMonth() + 1).padStart(2, '0');
+      const yyyy = String(date.getFullYear());
+      return `${dd}${mm}${yyyy}`;
+    }
+
+    function formatUploadDateDisplay(date) {
+      const dd = String(date.getDate()).padStart(2, '0');
+      const mon = monthNames[date.getMonth()] || 'Jan';
+      const yyyy = String(date.getFullYear());
+      return `${dd}-${mon}-${yyyy}`;
     }
 
     function metreEntryLength(el) {
@@ -1747,16 +1810,23 @@
     // ── Upload helpers ──
 
     function makeVesselToken(name) {
-      const words = name.trim().replace(/\s+/g, ' ').split(' ').filter(Boolean);
-      const first  = words[0] || '';
-      const last   = words[words.length - 1] || first;
-      const token  = (first.slice(0, 2) + last.slice(-2)).toUpperCase();
-      return token.replace(/[^A-Z0-9]/g, '-') || 'XX';
+      const cleaned = String(name ?? '').toUpperCase().replace(/[^A-Z0-9 ]/g, '');
+      const padded = cleaned.padEnd(2, ' ');
+      const first2 = padded.slice(0, 2);
+      const last2 = padded.length >= 2 ? padded.slice(-2) : padded.padStart(2, ' ');
+      return `${first2}${last2}`.replace(/ /g, '_') || '____';
     }
 
     function makeImoToken(imo) {
       const d = imo.replace(/\D/g, '');
-      return d.slice(0, 2) + d.slice(-2);
+      if (!d) return '0000';
+      const first2 = d.slice(0, 2).padEnd(2, '0');
+      const last2 = d.slice(-2).padStart(2, '0');
+      return `${first2}${last2}`;
+    }
+
+    function makeVesselId(name, imo) {
+      return `${makeVesselToken(name)}_${makeImoToken(imo)}`;
     }
 
     function getFileExt(fileName) {
@@ -1866,14 +1936,87 @@
       for (const def of UPLOAD_DEFS) {
         const btn = document.getElementById(def.btnId);
         if (!btn) continue;
-        // Allow delete action even when upload gating is otherwise disabled.
-        btn.disabled = uploadState[def.prefix] ? false : !enabled;
+        const slot = uploadState[def.prefix];
+        if (slot) {
+          // In-session uploaded files keep Delete File enabled.
+          btn.disabled = false;
+        } else {
+          btn.disabled = !enabled;
+        }
       }
+    }
+
+    function getCurrentVesselId() {
+      return makeVesselId(fieldVesselName.value, fieldImo.value);
+    }
+
+    function loadRegistryRecordForCurrentVessel() {
+      const companyId = getSession()?.companyId;
+      if (!companyId) return null;
+
+      let registry = [];
+      try {
+        const raw = localStorage.getItem(VESSEL_REGISTRY_KEY_PREFIX + companyId);
+        const parsed = raw ? JSON.parse(raw) : [];
+        registry = Array.isArray(parsed) ? parsed : [];
+      } catch {
+        registry = [];
+      }
+
+      const imo = String(fieldImo.value ?? '').replace(/\D/g, '').slice(0, 7);
+      if (/^\d{7}$/.test(imo)) {
+        const byImo = registry.find((row) => String(row?.imo ?? '').replace(/\D/g, '').slice(0, 7) === imo);
+        if (byImo) return byImo;
+      }
+
+      const vesselName = String(fieldVesselName.value ?? '').trim().toLowerCase();
+      if (!vesselName) return null;
+      return registry.find((row) => String(row?.vesselName ?? '').trim().toLowerCase() === vesselName) || null;
+    }
+
+    function applyRegistryUploadStatuses(record) {
+      if (!record || typeof record !== 'object') return;
+
+      const vesselIdForMessage = String(record.vesselId || getCurrentVesselId() || '').trim();
+
+      for (const def of UPLOAD_DEFS) {
+        const btn = document.getElementById(def.btnId);
+        const statusEl = document.getElementById(def.statusId);
+        if (!btn || !statusEl) continue;
+
+        const statusKey = DOC_STATUS_BY_PREFIX[def.prefix];
+        const status = normalizeDocStatus(record[statusKey]);
+        if (isUploadedDocStatus(status)) {
+          uploadState[def.prefix] = ALWAYS_ENABLED_ON_REVISIT_PREFIXES.has(def.prefix)
+            ? null
+            : { persisted: true, uploadedOn: status };
+          btn.classList.add('upload-done');
+          btn.textContent = ALWAYS_ENABLED_ON_REVISIT_PREFIXES.has(def.prefix) ? 'Upload File' : 'Re-upload?';
+          btn.disabled = false;
+          if (PERSISTED_INFO_PREFIXES.has(def.prefix)) {
+            statusEl.textContent = `Previously uploaded on ${status}. Search data base for file name starting with ${def.prefix}_${vesselIdForMessage}.`;
+          } else if (ALWAYS_ENABLED_ON_REVISIT_PREFIXES.has(def.prefix)) {
+            statusEl.textContent = `Last uploaded on ${status}.`;
+          } else {
+            statusEl.textContent = '';
+          }
+        } else {
+          uploadState[def.prefix] = null;
+          btn.classList.remove('upload-done');
+          btn.textContent = 'Upload File';
+          statusEl.textContent = '';
+        }
+      }
+
+      uploadsCompleted = countUploads();
+      updateUploadButtonGating();
+      computeAndUpdateProgress();
     }
 
     async function clearUploadedFile(prefix, btnEl, statusEl) {
       const slot = uploadState[prefix];
       if (!slot) return;
+      if (slot.persisted && !slot.blob) return;
 
       if (slot.objectUrl) {
         URL.revokeObjectURL(slot.objectUrl);
@@ -1917,11 +2060,13 @@
 
       const vesselToken = makeVesselToken(fieldVesselName.value);
       const imoToken    = makeImoToken(fieldImo.value);
+      const vesselId = `${vesselToken}_${imoToken}`;
+      const uploadDateToken = formatUploadDateNumeric(new Date());
       let   ext         = getFileExt(file.name);
       // Canvas always outputs JPEG when compressing; update extension accordingly
       if (wasResized) ext = '.jpg';
-      const fileName = `${prefix}_${vesselToken}_${imoToken}${ext}`;
-      const dbKey = `${prefix}_${vesselToken}_${imoToken}`;
+      const fileName = `${prefix}_${vesselId}_${uploadDateToken}${ext}`;
+      const dbKey = `${prefix}_${vesselId}`;
 
       // Revoke any previous object URL for this slot
       if (uploadState[prefix]?.objectUrl) {
@@ -1938,6 +2083,7 @@
       // Update upload row UI
       btnEl.classList.add('upload-done');
       btnEl.textContent = 'Delete File';
+      btnEl.disabled = false;
       statusEl.innerHTML =
         `File uploaded: <a href="${escapeHtml(objectUrl)}" target="_blank" rel="noopener noreferrer">${escapeHtml(fileName)}</a>`;
 
@@ -1965,7 +2111,8 @@
         const input    = document.getElementById(def.inputId);
         const statusEl = document.getElementById(def.statusId);
         btn.addEventListener('click', async () => {
-          if (uploadState[def.prefix]) {
+          const slot = uploadState[def.prefix];
+          if (slot?.blob) {
             showModal({
               title: 'Alert',
               message: 'Are you sure you want to delete the uploaded file?',
@@ -2096,13 +2243,11 @@
 
     // ── Rolodex init ──
     function initRolodex() {
-      const years = [];
-      for (let y = 1980; y <= 2050; y++) years.push(String(y));
       const defaultMonthIdx = 0;
       const defaultYearIdx  = 0;
 
       monthRolodex = buildRolodex(monthDrumEl, monthNames, defaultMonthIdx, updateMonthYearPreview);
-      yearRolodex  = buildRolodex(yearDrumEl, years, defaultYearIdx, updateMonthYearPreview);
+      yearRolodex  = buildRolodex(yearDrumEl, YEAR_OPTIONS, defaultYearIdx, updateMonthYearPreview);
       classRolodex = buildRolodex(classDrumEl, classOptions, 0, updateClassPreview);
       updateMonthYearPreview();
       updateClassPreview();
@@ -2180,6 +2325,105 @@
       cancelAction   = null;
       if (runCancel && typeof pendingCancel === 'function') {
         pendingCancel();
+      }
+    }
+
+    function normalizeLookupValue(value) {
+      return String(value ?? '').trim().toLowerCase();
+    }
+
+    function setRolodexValue(drumEl, options, label) {
+      const target = normalizeLookupValue(label);
+      if (!target) return false;
+      const index = options.findIndex((item) => normalizeLookupValue(item) === target);
+      if (index < 0) return false;
+      drumEl.scrollTop = index * ROLODEX_ITEM_H;
+      drumEl.dispatchEvent(new Event('scroll'));
+      return true;
+    }
+
+    function parseMonthYearOfBuild(value) {
+      const text = String(value ?? '').trim();
+      if (!text) return { monthLabel: '', yearLabel: '' };
+      const monthLabel = monthNames.find((month) => new RegExp(`\\b${month}\\b`, 'i').test(text)) || '';
+      const yearMatch = text.match(/\b(19\d{2}|20[0-4]\d|2050)\b/);
+      const yearLabel = yearMatch ? yearMatch[1] : '';
+      return { monthLabel, yearLabel };
+    }
+
+    function applyRegistryPrefill(record) {
+      if (!record || typeof record !== 'object') return;
+
+      if (record.vesselName) {
+        fieldVesselName.value = String(record.vesselName).trim();
+        fieldVesselName.classList.add('is-valid');
+      }
+
+      if (record.imo) {
+        fieldImo.value = String(record.imo).replace(/\D/g, '').slice(0, 7);
+      }
+      fieldImo.classList.toggle('is-valid', /^\d{7}$/.test(fieldImo.value));
+
+      fieldYardBuild.value = String(record.yardOfBuild ?? '').trim();
+      fieldFlag.value = String(record.flag ?? '').trim();
+      fieldLoa.value = String(record.loa ?? '').trim();
+      fieldLbp.value = String(record.lbp ?? '').trim();
+      fieldBreadth.value = String(record.breadth ?? '').trim();
+      fieldDepths.value = String(record.depth ?? '').trim();
+      fieldSummerDraught.value = String(record.summerDraught ?? '').trim();
+      fieldDwt.value = String(record.dwt ?? '').trim();
+      fieldGt.value = String(record.gt ?? '').trim();
+      fieldNt.value = String(record.nt ?? '').trim();
+
+      fieldYardBuild.classList.toggle('is-valid', normalizeValueLength(fieldYardBuild.value) >= 5);
+      fieldFlag.classList.toggle('is-valid', normalizeValueLength(fieldFlag.value) >= 2);
+      fieldDwt.classList.toggle('is-valid', normalizeValueLength(fieldDwt.value) >= 4);
+      fieldGt.classList.toggle('is-valid', normalizeValueLength(fieldGt.value) >= 3);
+      fieldNt.classList.toggle('is-valid', normalizeValueLength(fieldNt.value) >= 3);
+
+      const { monthLabel, yearLabel } = parseMonthYearOfBuild(record.monthYearOfBuild);
+      const hasMonth = setRolodexValue(monthDrumEl, monthNames, monthLabel);
+      const hasYear = setRolodexValue(yearDrumEl, YEAR_OPTIONS, yearLabel);
+      monthYearCommitted = hasMonth && hasYear;
+      updateMonthYearPreview();
+
+      const hasClass = setRolodexValue(classDrumEl, classOptions, String(record.class ?? '').trim());
+      classCommitted = hasClass;
+      updateClassPreview();
+
+      updateUploadButtonGating();
+      computeAndUpdateProgress();
+      setStatus('Existing vessel particulars loaded from vessel registry.', 'success');
+    }
+
+    function applyNavigationSelectionPrefill() {
+      let navSelection = null;
+      try {
+        const raw = localStorage.getItem(VP_NAV_SELECTION_KEY);
+        navSelection = raw ? JSON.parse(raw) : null;
+      } catch {
+        navSelection = null;
+      }
+
+      localStorage.removeItem(VP_NAV_SELECTION_KEY);
+
+      if (!navSelection || typeof navSelection !== 'object') return;
+
+      if (!fieldVesselName.value.trim() && navSelection.vesselName) {
+        fieldVesselName.value = String(navSelection.vesselName).trim();
+        fieldVesselName.classList.add('is-valid');
+      }
+
+      if (navSelection.imo && !fieldImo.value.trim()) {
+        fieldImo.value = String(navSelection.imo).replace(/\D/g, '').slice(0, 7);
+        fieldImo.classList.toggle('is-valid', /^\d{7}$/.test(fieldImo.value));
+      }
+
+      if (navSelection.record && typeof navSelection.record === 'object') {
+        applyRegistryPrefill(navSelection.record);
+      } else {
+        updateUploadButtonGating();
+        computeAndUpdateProgress();
       }
     }
     
@@ -2324,6 +2568,10 @@
       setTimeout(() => URL.revokeObjectURL(url), 30000);
     }
 
+    function goToVesselRegister() {
+      window.location.href = './vessel-selector.html';
+    }
+
     async function exportVpPackage(metadata) {
       const { vesselToken, imoToken } = metadata.tokens;
       // 1. JSON metadata file
@@ -2360,7 +2608,16 @@
         registry = [];
       }
       const p = metadata.particulars;
-      const vesselId = makeVesselToken(p.vesselName) + '_' + makeImoToken(p.imo);
+      const vesselId = makeVesselId(p.vesselName, p.imo);
+      const existingIndex = registry.findIndex(r => r.imo === p.imo);
+      const existingRecord = existingIndex >= 0 ? registry[existingIndex] : null;
+      const docStatusForPrefix = (prefix) => {
+        if (uploadState[prefix]?.blob) {
+          return formatUploadDateDisplay(new Date());
+        }
+        const statusKey = DOC_STATUS_BY_PREFIX[prefix];
+        return normalizeDocStatus(existingRecord?.[statusKey]);
+      };
       const record = {
         vesselId,
         vesselName:       p.vesselName,
@@ -2377,6 +2634,13 @@
         dwt:              p.dwt,
         gt:               p.gt,
         nt:               p.nt,
+        gaPlanStatus:       docStatusForPrefix('GAP'),
+        midshipPlanStatus:  docStatusForPrefix('MSP'),
+        shellExpPlanStatus: docStatusForPrefix('SEP'),
+        dockingPlanStatus:  docStatusForPrefix('DP'),
+        pdUtmStatus:        docStatusForPrefix('PDU'),
+        pdBlrBoroStatus:    docStatusForPrefix('PBB'),
+        pdLdmStatus:        docStatusForPrefix('LDM'),
       };
       const idx = registry.findIndex(r => r.imo === record.imo);
       if (idx >= 0) {
@@ -2405,7 +2669,13 @@
           title: 'File Management',
           message: 'The export package containing the JSON record and uploaded files have been saved in the device\'s download folder. Please move them to your project\'s working folder.',
           confirmText: 'Done',
-          onConfirm: () => closeModal(),
+          onConfirm: () => {
+            closeModal();
+            goToVesselRegister();
+          },
+          onCancel: () => {
+            goToVesselRegister();
+          },
         });
       } catch (err) {
         console.error('[VP Save] Save failed:', err);
@@ -2414,16 +2684,58 @@
       }
     }
 
+    function clearMoreActionsCollapseTimer() {
+      if (moreActionsCollapseTimer) {
+        window.clearTimeout(moreActionsCollapseTimer);
+        moreActionsCollapseTimer = null;
+      }
+    }
+
+    function setMoreActionsExpanded(isExpanded) {
+      moreActionsDropdown.classList.toggle('collapsed', !isExpanded);
+      moreActionsToggle.textContent = isExpanded ? 'See Less' : 'See More';
+      if (!isExpanded) {
+        clearMoreActionsCollapseTimer();
+        return;
+      }
+      scheduleMoreActionsAutoCollapse();
+    }
+
+    function scheduleMoreActionsAutoCollapse() {
+      clearMoreActionsCollapseTimer();
+      if (moreActionsDropdown.classList.contains('collapsed')) return;
+      moreActionsCollapseTimer = window.setTimeout(() => {
+        if (moreActionsDropdown.classList.contains('collapsed')) return;
+        if (moreActionsDropdown.matches(':hover')) return;
+        if (moreActionsKeyboardFocus && moreActionsDropdown.contains(document.activeElement)) return;
+        setMoreActionsExpanded(false);
+      }, MORE_ACTIONS_IDLE_MS);
+    }
+
     // ── More-actions dropdown ──
     function toggleMoreActions() {
-      moreActionsDropdown.classList.toggle('collapsed');
-      moreActionsToggle.textContent = moreActionsDropdown.classList.contains('collapsed')
-        ? 'See More' : 'See Less';
+      setMoreActionsExpanded(moreActionsDropdown.classList.contains('collapsed'));
     }
 
     // ── Event wiring ──
     function wireEvents() {
       moreActionsToggle.addEventListener('click', toggleMoreActions);
+      moreActionsDropdown.addEventListener('mouseenter', clearMoreActionsCollapseTimer);
+      moreActionsDropdown.addEventListener('mouseleave', scheduleMoreActionsAutoCollapse);
+      moreActionsDropdown.addEventListener('focusin', clearMoreActionsCollapseTimer);
+      moreActionsDropdown.addEventListener('pointerdown', () => {
+        moreActionsKeyboardFocus = false;
+      });
+      moreActionsDropdown.addEventListener('keydown', () => {
+        moreActionsKeyboardFocus = true;
+      });
+      moreActionsDropdown.addEventListener('focusout', () => {
+        window.setTimeout(() => {
+          if (!moreActionsDropdown.contains(document.activeElement)) {
+            scheduleMoreActionsAutoCollapse();
+          }
+        }, 0);
+      });
 
       registerFleetBtn.addEventListener('click', () => {
         window.location.href = './fleet-registration.html';
@@ -2439,8 +2751,7 @@
       document.addEventListener('click', (event) => {
         if (!moreActionsDropdown.contains(event.target) &&
             !moreActionsDropdown.classList.contains('collapsed')) {
-          moreActionsDropdown.classList.add('collapsed');
-          moreActionsToggle.textContent = 'See More';
+          setMoreActionsExpanded(false);
         }
       });
 
@@ -2615,6 +2926,11 @@
       renderContextBanner();
       initRolodex();
       initFormFields();
+      applyNavigationSelectionPrefill();
+      const existingRecord = loadRegistryRecordForCurrentVessel();
+      if (existingRecord) {
+        applyRegistryUploadStatuses(existingRecord);
+      }
       wireEvents();
       computeAndUpdateProgress();
     }

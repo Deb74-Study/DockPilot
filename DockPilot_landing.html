@@ -294,7 +294,7 @@
       <p id="message" class="message">Use credentials provided by Developer. First-time sign-ins will be asked to set a new password.</p>
 
       <div class="action-row" style="margin-top:14px;justify-content:flex-start;flex-wrap:wrap;">
-        <a id="launchDockPilotBtn" href="./Frontpage.html" class="link-btn primary-btn hidden">Launch Dock Pilot</a>
+        <a id="launchDockPilotBtn" href="./frontpage.html" class="link-btn primary-btn hidden">Launch Dock Pilot</a>
         <button id="tbd1Btn" type="button" class="secondary-btn hidden" disabled>TBD1</button>
         <button id="tbd2Btn" type="button" class="secondary-btn hidden" disabled>TBD2</button>
         <button id="tbd3Btn" type="button" class="secondary-btn hidden" disabled>TBD3</button>
@@ -475,7 +475,24 @@
         return null;
       }
 
-      return target;
+      const queryIndex = target.indexOf('?');
+      const hashIndex = target.indexOf('#');
+      let suffixStart = -1;
+      if (queryIndex >= 0 && hashIndex >= 0) {
+        suffixStart = Math.min(queryIndex, hashIndex);
+      } else {
+        suffixStart = Math.max(queryIndex, hashIndex);
+      }
+
+      const pathOnly = suffixStart >= 0 ? target.slice(0, suffixStart) : target;
+      const suffix = suffixStart >= 0 ? target.slice(suffixStart) : '';
+
+      // Canonicalize legacy-cased file targets saved before filename normalization.
+      const canonicalPath = pathOnly
+        .replace(/\.\/Frontpage\.html$/i, './frontpage.html')
+        .replace(/\.\/Job-Index\.html$/i, './job-index.html');
+
+      return `${canonicalPath}${suffix}`;
     }
 
     function redirectToSavedTargetIfAvailable() {

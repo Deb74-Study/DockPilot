@@ -1,9 +1,9 @@
 ## Plan: Global Colour Preference System
 
-Recommended approach is executable and low-risk: add the control UI only on [Frontpage.html](Frontpage.html), centralize theme logic in one shared module, then apply saved mode on every page during startup so child/grandchild pages inherit consistently through navigation.
+Recommended approach is executable and low-risk: add the control UI only on [frontpage.html](frontpage.html), centralize theme logic in one shared module, then apply saved mode on every page during startup so child/grandchild pages inherit consistently through navigation.
 
 **Execution readiness**
-1. Fully executable without breaking current flows if we keep layout untouched and only add an absolute top-right control layer in [Frontpage.html](Frontpage.html).
+1. Fully executable without breaking current flows if we keep layout untouched and only add an absolute top-right control layer in [frontpage.html](frontpage.html).
 2. Main regression risk is hardcoded per-page colors not bound to variables; mitigated by first-pass token overrides and targeted patching only where needed.
 3. Your requested requirement to include revert point + sync before execution is included as a hard gate.
 
@@ -38,7 +38,7 @@ Recommended approach is executable and low-risk: add the control UI only on [Fro
 2. Implement three modes with CSS variable maps and persistence key.
 3. Apply theme immediately on load before page guard bootstraps to avoid flash.
 3. Phase 2: Frontpage UI
-1. Add a top-right semi-transparent container in [Frontpage.html](Frontpage.html) with default 4px padding around the button.
+1. Add a top-right semi-transparent container in [frontpage.html](frontpage.html) with default 4px padding around the button.
 2. Add Colour Preference button with transparent fill, 1px rounded border, centered single-line text, color bound to active scheme.
 3. Expand state shows Theme Colour, Light Mode, Dark Mode buttons with identical size/style.
 4. Expanded behavior: primary button disabled/dimmed; option clicks do not collapse; outside click collapses and re-enables primary.
@@ -53,7 +53,7 @@ Recommended approach is executable and low-risk: add the control UI only on [Fro
 4. Re-run local + bundle checks, finalize commit, then GitHub and Supabase checks.
 
 **Relevant files**
-1. [Frontpage.html](Frontpage.html): control container, buttons, behavior wiring.
+1. [frontpage.html](frontpage.html): control container, buttons, behavior wiring.
 2. [dockpilotPageGuard.js](dockpilotPageGuard.js): best hook for early theme apply across pages.
 3. [vessel-particulars-input.html](vessel-particulars-input.html): representative indicator page for traffic-light validation.
 4. [scripts/build_bundle.sh](scripts/build_bundle.sh): pre/post implementation verification.

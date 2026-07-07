@@ -1,0 +1,75 @@
+{
+  "savedAt": "2026-05-02T13:48:08.326Z",
+  "validationStamp": "VP_COMPLETE_18_18",
+  "context": {
+    "fleetGroup": "Dubai Fleet C",
+    "managerName": "Deb",
+    "vesselName": "Walrus",
+    "tsiName": "Satish D"
+  },
+  "particulars": {
+    "vesselName": "Walrus",
+    "imo": "9834141",
+    "monthOfBuild": "Aug",
+    "yearOfBuild": "2026",
+    "yardBuild": "HMD, KOREA",
+    "flag": "CAMEROON",
+    "class": "RMRS",
+    "loa": "280.00 m",
+    "lbp": "275.00 m",
+    "breadth": "48.00 m",
+    "depths": "21.00 m",
+    "summerDraught": "18.00 m",
+    "dwt": "156000",
+    "gt": "77636",
+    "nt": "69523"
+  },
+  "files": [
+    {
+      "prefix": "GAP",
+      "required": true,
+      "fileName": "GAP_WAUS_9841.jpg",
+      "sizeBytes": 132893
+    },
+    {
+      "prefix": "MSP",
+      "required": true,
+      "fileName": "MSP_WAUS_9841.pdf",
+      "sizeBytes": 585600
+    },
+    {
+      "prefix": "SEP",
+      "required": true,
+      "fileName": "SEP_WAUS_9841.zip",
+      "sizeBytes": 518044
+    },
+    {
+      "prefix": "DP",
+      "required": true,
+      "fileName": "DP_WAUS_9841.pdf",
+      "sizeBytes": 192489
+    },
+    {
+      "prefix": "PDU",
+      "required": false,
+      "fileName": "PDU_WAUS_9841.jpg",
+      "sizeBytes": 371636
+    },
+    {
+      "prefix": "PBB",
+      "required": false,
+      "fileName": "PBB_WAUS_9841.pdf",
+      "sizeBytes": 585600
+    },
+    {
+      "prefix": "LDM",
+      "required": false,
+      "fileName": "LDM_WAUS_9841.pdf",
+      "sizeBytes": 275790
+    }
+  ],
+  "tokens": {
+    "vesselToken": "WAUS",
+    "imoToken": "9841"
+  }
+}

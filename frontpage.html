@@ -242,6 +242,15 @@
       justify-items: center;
     }
 
+    .berth-list.show-all {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      column-gap: 12px;
+      max-height: min(54vh, 470px);
+      overflow-y: auto;
+      padding-right: 6px;
+      align-content: start;
+    }
+
     .berth {
       display: grid;
       grid-template-columns: 1fr;
@@ -255,6 +264,25 @@
       border-radius: 12px;
       background: linear-gradient(135deg, rgba(10,38,90,.68), rgba(8,78,98,.58));
       border: 1px solid rgba(103,214,255,.14);
+    }
+
+    .berth.hidden-extra {
+      display: none;
+    }
+
+    .berth-list.show-all .berth.hidden-extra {
+      display: grid;
+    }
+
+    .berth-list.show-all .berth {
+      padding: 10px;
+      gap: 6px;
+    }
+
+    .berth small {
+      display: block;
+      color: var(--muted);
+      margin-top: 4px;
     }
 
     .berth-link {
@@ -280,21 +308,81 @@
       box-shadow: 0 0 0 2px rgba(103,214,255,.32);
     }
 
-    .berth small {
-      display: block;
-      color: var(--muted);
-      margin-top: 4px;
+    .view-all-toggle-row {
+      margin-top: 15px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 12px;
+      width: 100%;
+      max-width: 100%;
     }
 
-    .dev-note {
-      display: inline-block;
-      margin-top: 6px;
-      font-size: .74rem;
-      color: #67d6ff;
-      background: rgba(103,214,255,.10);
-      border: 1px solid rgba(103,214,255,.42);
+    .view-all-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: .82rem;
+      min-width: 0;
+      opacity: 0;
+      visibility: hidden;
+      transition: opacity .18s ease;
+    }
+
+    .view-all-toggle-row.show-note .view-all-note {
+      opacity: 1;
+      visibility: visible;
+    }
+
+    .view-all-toggle {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      color: var(--muted);
+      font-size: .82rem;
+      cursor: pointer;
+      user-select: none;
+      flex-shrink: 0;
+    }
+
+    .view-all-toggle input {
+      position: absolute;
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    .view-all-switch {
+      width: 44px;
+      height: 24px;
       border-radius: 999px;
-      padding: 2px 10px;
+      background: rgba(255, 255, 255, 0.18);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      position: relative;
+      transition: background .18s ease, border-color .18s ease;
+    }
+
+    .view-all-switch::after {
+      content: "";
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 18px;
+      height: 18px;
+      border-radius: 50%;
+      background: #d9e3f5;
+      transition: transform .18s ease;
+    }
+
+    .view-all-toggle input:checked + .view-all-switch {
+      background: rgba(66, 192, 109, 0.86);
+      border-color: rgba(109, 226, 147, 0.9);
+    }
+
+    .view-all-toggle input:checked + .view-all-switch::after {
+      transform: translateX(20px);
+    }
+
+    .view-all-toggle input:checked ~ .view-all-label {
+      color: #b9f5cd;
     }
 
     footer {
@@ -450,7 +538,6 @@
               <div>
                 <strong>Analyse Project</strong>
                 <small>Review analytics and project performance indicators.</small>
-                <span class="dev-note">Under Development</span>
               </div>
             </a>
 
@@ -460,7 +547,52 @@
                 <small>Details of vessels previously registered. This is a read only data base.</small>
               </div>
             </a>
+
+            <a class="berth berth-link hidden-extra" href="./dp-prov-page-1.html">
+              <div>
+                <strong>DP Prov Page 1</strong>
+              </div>
+            </a>
+
+            <a class="berth berth-link hidden-extra" href="./dp-prov-page-2.html">
+              <div>
+                <strong>DP Prov Page 2</strong>
+              </div>
+            </a>
+
+            <a class="berth berth-link hidden-extra" href="./dp-prov-page-3.html">
+              <div>
+                <strong>DP Prov Page 3</strong>
+              </div>
+            </a>
+
+            <a class="berth berth-link hidden-extra" href="./dp-prov-page-4.html">
+              <div>
+                <strong>DP Prov Page 4</strong>
+              </div>
+            </a>
+
+            <a class="berth berth-link hidden-extra" href="./dp-prov-page-5.html">
+              <div>
+                <strong>DP Prov Page 5</strong>
+              </div>
+            </a>
+
+            <a class="berth berth-link hidden-extra" href="./dp-prov-page-6.html">
+              <div>
+                <strong>DP Prov Page 6</strong>
+              </div>
+            </a>
           </div>
+        </div>
+
+        <div class="view-all-toggle-row">
+          <p id="viewAllNote" class="view-all-note">Scroll inside the box for more options</p>
+          <label class="view-all-toggle" for="viewAllButtonsToggle">
+            <input id="viewAllButtonsToggle" type="checkbox" />
+            <span class="view-all-switch" aria-hidden="true"></span>
+            <span class="view-all-label">View All Buttons on same page</span>
+          </label>
         </div>
       </aside>
     </main>
@@ -481,6 +613,25 @@
     const cpBtnTheme = document.getElementById('cpBtnTheme');
     const cpBtnLight = document.getElementById('cpBtnLight');
     const cpBtnDark  = document.getElementById('cpBtnDark');
+    const viewAllButtonsToggle = document.getElementById('viewAllButtonsToggle');
+    const viewAllToggleRow = document.querySelector('.view-all-toggle-row');
+    const berthList = document.querySelector('.berth-list');
+    const buttonContainer = document.querySelector('.screen');
+
+    function lockButtonContainerSize() {
+      if (!buttonContainer) return;
+      const rect = buttonContainer.getBoundingClientRect();
+      buttonContainer.style.width = `${Math.round(rect.width)}px`;
+      buttonContainer.style.height = `${Math.round(rect.height)}px`;
+      buttonContainer.style.maxWidth = '100%';
+    }
+
+    function unlockButtonContainerSize() {
+      if (!buttonContainer) return;
+      buttonContainer.style.width = '';
+      buttonContainer.style.height = '';
+      buttonContainer.style.maxWidth = '';
+    }
 
     function expandPref() {
       wrap.classList.add('is-expanded');
@@ -506,6 +657,22 @@
     cpBtnTheme.addEventListener('click', (e) => { e.stopPropagation(); applyTheme('default'); });
     cpBtnLight.addEventListener('click', (e) => { e.stopPropagation(); applyTheme('light'); });
     cpBtnDark.addEventListener('click',  (e) => { e.stopPropagation(); applyTheme('dark'); });
+
+    if (viewAllButtonsToggle && berthList) {
+      viewAllButtonsToggle.addEventListener('change', () => {
+        const isExpanded = viewAllButtonsToggle.checked;
+        if (isExpanded) {
+          lockButtonContainerSize();
+        }
+        berthList.classList.toggle('show-all', isExpanded);
+        if (viewAllToggleRow) {
+          viewAllToggleRow.classList.toggle('show-note', isExpanded);
+        }
+        if (!isExpanded) {
+          unlockButtonContainerSize();
+        }
+      });
+    }
 
     // ── Page Guard ────────────────────────────────────────────
     startDockPilotPageGuard({

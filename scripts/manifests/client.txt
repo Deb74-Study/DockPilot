@@ -7,6 +7,12 @@ fleet-registration.html
 vessel-selector.html
 vessel-particulars-input.html
 dry-docking-project.html
+dp-prov-page-1.html
+dp-prov-page-2.html
+dp-prov-page-3.html
+dp-prov-page-4.html
+dp-prov-page-5.html
+dp-prov-page-6.html
 running-dd-project.html
 fleet-analytics.html
 vessel-register.html

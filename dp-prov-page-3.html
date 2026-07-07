@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DP Prov Page 3 | DockPilot</title>
+  <style>
+    :root {
+      --edge-padding: clamp(12px, 1.6vw, 22px);
+      --panel: rgba(11, 24, 45, 0.92);
+      --line: rgba(255, 255, 255, 0.1);
+      --text: #eef4ff;
+      --muted: #aebcda;
+      --accent: #67d6ff;
+      --accent-2: #72f1cb;
+      --ok: #8ef0b1;
+      --warn: #ffd28c;
+      --badge-fill: #093046;
+      --badge-line: rgba(107, 215, 255, 0.24);
+      --border: rgba(255,255,255,0.1);
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      min-height: 100dvh;
+      display: grid;
+      place-items: start center;
+      padding: var(--edge-padding);
+      overflow-x: hidden;
+      font-family: Inter, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(circle at top left, #133977 0%, transparent 32%),
+        radial-gradient(circle at bottom right, #0f8f98 0%, transparent 30%),
+        linear-gradient(135deg, #06111f, #0a1830 40%, #07111e 100%);
+      color: var(--text);
+    }
+
+    .manager-shell {
+      width: min(1280px, 100%);
+      max-width: calc(100vw - (2 * var(--edge-padding)));
+      margin: 0 auto;
+      display: grid;
+      gap: 10px;
+    }
+
+    .panel {
+      width: 100%;
+      min-width: 0;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .header-panel {
+      display: grid;
+      gap: 8px;
+      position: relative;
+    }
+
+    .toolbar-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      display: inline-flex;
+      width: 158px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      color: var(--accent);
+      background: var(--badge-fill);
+      border: 1px solid var(--badge-line);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.4vw, 1.95rem);
+      line-height: 1.1;
+    }
+
+    p,
+    .muted {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.35;
+      font-size: 0.86rem;
+    }
+
+    .return-link,
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 9px 13px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+    }
+
+    .return-link {
+      width: 168px;
+    }
+
+    .secondary-btn {
+      width: 158px;
+    }
+
+    .return-link:focus-visible,
+    button:focus-visible {
+      outline: 2px solid rgba(103,214,255,.5);
+      outline-offset: 2px;
+    }
+
+    .return-link:hover,
+    .return-link:focus-visible,
+    .secondary-btn:hover,
+    .secondary-btn:focus-visible {
+      transform: translateY(-2px);
+      border-color: rgba(103,214,255,.60);
+      background: linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72));
+    }
+
+    .status-note {
+      margin: 0;
+      padding: 7px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      line-height: 1.3;
+      font-size: 0.8rem;
+    }
+
+    .status-note.success {
+      color: var(--ok);
+      background: rgba(142, 240, 177, 0.08);
+      border-color: rgba(142, 240, 177, 0.18);
+    }
+
+    .status-note.warn {
+      color: var(--warn);
+      background: rgba(255, 210, 140, 0.08);
+      border-color: rgba(255, 210, 140, 0.18);
+    }
+
+    .more-actions-dropdown {
+      position: absolute;
+      top: calc(36px + 2px + 20px);
+      right: 16px;
+      display: flex;
+      width: 168px;
+      z-index: 10;
+    }
+
+    .more-actions-dropdown.collapsed {
+      flex-direction: row;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px;
+      justify-content: center;
+    }
+
+    .more-actions-dropdown.collapsed .more-actions-toggle {
+      width: 100%;
+      height: 32px;
+      padding: 0 13px !important;
+    }
+
+    .more-actions-dropdown:not(.collapsed) {
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(11, 24, 45, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 8px;
+      width: 168px;
+    }
+
+    .more-actions-toggle {
+      width: 100% !important;
+      padding: 9px 13px !important;
+      border-radius: 12px !important;
+    }
+
+    .more-actions-buttons {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .more-actions-dropdown:not(.collapsed) .more-actions-buttons {
+      display: flex;
+    }
+
+    .more-actions-dropdown button {
+      width: 100%;
+      height: 32px;
+      padding: 0 13px !important;
+      text-align: center;
+      justify-content: center;
+    }
+
+    .placeholder-panel {
+      min-height: 260px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      border: 1px dashed rgba(255, 255, 255, 0.18);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 20px;
+    }
+
+    @media (max-width: 900px) {
+      .manager-shell { width: 100%; }
+      .toolbar-row { align-items: flex-start; }
+      .more-actions-dropdown { position: static; margin-left: auto; }
+    }
+  </style>
+</head>
+<body>
+  <main class="manager-shell">
+    <section class="panel header-panel">
+      <div class="toolbar-row">
+        <span id="todayBadge" class="tag">Date:</span>
+        <div class="toolbar-actions">
+          <a class="return-link" href="./frontpage.html">Return to Frontpage</a>
+        </div>
+      </div>
+
+      <div id="moreActionsDropdown" class="more-actions-dropdown collapsed">
+        <button id="moreActionsToggle" type="button" class="secondary-btn more-actions-toggle">See More</button>
+        <div class="more-actions-buttons">
+          <button id="registerFleetBtn" type="button" class="secondary-btn">Register Fleet</button>
+          <button id="launchProjectBtn" type="button" class="secondary-btn">Launch Project</button>
+          <button id="editProjectBtn" type="button" class="secondary-btn">Edit Project</button>
+        </div>
+      </div>
+
+      <div>
+        <h1>DP Prov Page 3</h1>
+        <p class="muted">Project launch context and vessel details will be layered in the next build phase.</p>
+      </div>
+    </section>
+
+    <p id="statusNote" class="status-note">DP prov page 3 shell initialized.</p>
+
+    <section class="panel placeholder-panel">
+      <p>This area is reserved for project modules.</p>
+    </section>
+  </main>
+
+  <script type="module">
+    import { supabase } from './supabaseClient.js';
+    import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
+    import { loadSavedTheme } from './dockpilotTheme.js';
+
+    loadSavedTheme();
+
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const todayBadge = document.getElementById('todayBadge');
+    const moreActionsDropdown = document.getElementById('moreActionsDropdown');
+    const moreActionsToggle = document.getElementById('moreActionsToggle');
+    const registerFleetBtn = document.getElementById('registerFleetBtn');
+    const launchProjectBtn = document.getElementById('launchProjectBtn');
+    const editProjectBtn = document.getElementById('editProjectBtn');
+
+    const MORE_ACTIONS_IDLE_MS = 2000;
+    let moreActionsCollapseTimer = null;
+    let moreActionsKeyboardFocus = false;
+
+    function formatBadgeDate(date) {
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${day}-${monthNames[date.getMonth()]}-${date.getFullYear()}`;
+    }
+
+    function clearMoreActionsCollapseTimer() {
+      if (moreActionsCollapseTimer) {
+        window.clearTimeout(moreActionsCollapseTimer);
+        moreActionsCollapseTimer = null;
+      }
+    }
+
+    function setMoreActionsExpanded(isExpanded) {
+      moreActionsDropdown.classList.toggle('collapsed', !isExpanded);
+      moreActionsToggle.textContent = isExpanded ? 'See Less' : 'See More';
+      if (!isExpanded) {
+        clearMoreActionsCollapseTimer();
+        return;
+      }
+      scheduleMoreActionsAutoCollapse();
+    }
+
+    function scheduleMoreActionsAutoCollapse() {
+      clearMoreActionsCollapseTimer();
+      if (moreActionsDropdown.classList.contains('collapsed')) return;
+      moreActionsCollapseTimer = window.setTimeout(() => {
+        if (moreActionsDropdown.classList.contains('collapsed')) return;
+        if (moreActionsDropdown.matches(':hover')) return;
+        if (moreActionsKeyboardFocus && moreActionsDropdown.contains(document.activeElement)) return;
+        setMoreActionsExpanded(false);
+      }, MORE_ACTIONS_IDLE_MS);
+    }
+
+    function wireEvents() {
+      moreActionsToggle.addEventListener('click', () => {
+        setMoreActionsExpanded(moreActionsDropdown.classList.contains('collapsed'));
+      });
+      moreActionsDropdown.addEventListener('mouseenter', clearMoreActionsCollapseTimer);
+      moreActionsDropdown.addEventListener('mouseleave', scheduleMoreActionsAutoCollapse);
+      moreActionsDropdown.addEventListener('focusin', clearMoreActionsCollapseTimer);
+      moreActionsDropdown.addEventListener('pointerdown', () => {
+        moreActionsKeyboardFocus = false;
+      });
+      moreActionsDropdown.addEventListener('keydown', () => {
+        moreActionsKeyboardFocus = true;
+      });
+      moreActionsDropdown.addEventListener('focusout', () => {
+        window.setTimeout(() => {
+          if (!moreActionsDropdown.contains(document.activeElement)) {
+            scheduleMoreActionsAutoCollapse();
+          }
+        }, 0);
+      });
+      document.addEventListener('click', (event) => {
+        if (!moreActionsDropdown.contains(event.target) && !moreActionsDropdown.classList.contains('collapsed')) {
+          setMoreActionsExpanded(false);
+        }
+      });
+
+      registerFleetBtn.addEventListener('click', () => {
+        window.location.href = './fleet-registration.html';
+      });
+      launchProjectBtn.addEventListener('click', () => {
+        window.location.href = './dry-docking-project.html';
+      });
+      editProjectBtn.addEventListener('click', () => {
+        window.location.href = './running-dd-project.html';
+      });
+    }
+
+    function initPage() {
+      todayBadge.textContent = `Date: ${formatBadgeDate(new Date())}`;
+      wireEvents();
+    }
+
+    startDockPilotPageGuard({
+      supabase,
+      landingPage: './DockPilot_landing.html'
+    }).then(() => {
+      initPage();
+    }).catch((error) => {
+      console.error('DockPilot guard startup failed:', error);
+      window.location.href = './DockPilot_landing.html';
+    });
+  </script>
+</body>
+</html>

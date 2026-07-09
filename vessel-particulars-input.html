@@ -1022,9 +1022,10 @@
         <div class="more-actions-buttons">
           <button id="registerFleetBtn" type="button" class="secondary-btn">Register Fleet</button>
           <button id="launchProjectBtn" type="button" class="secondary-btn">Launch Project</button>
-          <button id="editProjectBtn" type="button" class="secondary-btn">Edit Project</button>
+          <button id="editProjectBtn" type="button" class="secondary-btn">Load Vessel</button>
         </div>
       </div>
+      <input type="file" id="loadVesselJsonInput" class="hidden" accept=".json,application/json" />
 
       <div>
         <h1>Vessel Particulars</h1>
@@ -1445,6 +1446,7 @@
     const registerFleetBtn    = document.getElementById('registerFleetBtn');
     const launchProjectBtn    = document.getElementById('launchProjectBtn');
     const editProjectBtn      = document.getElementById('editProjectBtn');
+    const loadVesselJsonInput = document.getElementById('loadVesselJsonInput');
     const modalOverlay        = document.getElementById('modalOverlay');
     const modalTitle          = document.getElementById('modalTitle');
     const modalMessage        = document.getElementById('modalMessage');
@@ -2009,6 +2011,157 @@
       }
 
       uploadsCompleted = countUploads();
+      updateUploadButtonGating();
+      computeAndUpdateProgress();
+    }
+
+    function validateLoadedVpJson(payload) {
+      if (!payload || typeof payload !== 'object') {
+        return { ok: false, reason: 'Selected file is not a valid JSON object.' };
+      }
+
+      if (!payload.context || typeof payload.context !== 'object') {
+        return { ok: false, reason: 'JSON must include a context object.' };
+      }
+
+      if (!payload.particulars || typeof payload.particulars !== 'object') {
+        return { ok: false, reason: 'JSON must include a particulars object.' };
+      }
+
+      if (!Array.isArray(payload.files)) {
+        return { ok: false, reason: 'JSON must include a files array.' };
+      }
+
+      if (!payload.tokens || typeof payload.tokens !== 'object') {
+        return { ok: false, reason: 'JSON must include a tokens object.' };
+      }
+
+      const p = payload.particulars;
+      const hasVesselName = normalizeValueLength(p.vesselName) > 0;
+      const hasImo = /^\d{7}$/.test(String(p.imo ?? '').replace(/\D/g, '').slice(0, 7));
+      if (!hasVesselName || !hasImo) {
+        return { ok: false, reason: 'JSON particulars must include vesselName and a valid 7-digit IMO.' };
+      }
+
+      return { ok: true };
+    }
+
+    function clearAllUploadUiStates() {
+      for (const def of UPLOAD_DEFS) {
+        const btn = document.getElementById(def.btnId);
+        const statusEl = document.getElementById(def.statusId);
+        const slot = uploadState[def.prefix];
+        if (slot?.objectUrl) {
+          URL.revokeObjectURL(slot.objectUrl);
+        }
+        uploadState[def.prefix] = null;
+        if (btn) {
+          btn.classList.remove('upload-done');
+          btn.textContent = 'Upload File';
+        }
+        if (statusEl) {
+          statusEl.textContent = '';
+        }
+      }
+      uploadsCompleted = 0;
+    }
+
+    function applyLoadedVpFileStatuses(files) {
+      const byPrefix = new Map();
+      for (const item of files) {
+        const prefix = String(item?.prefix ?? '').trim().toUpperCase();
+        if (prefix) byPrefix.set(prefix, item);
+      }
+
+      for (const def of UPLOAD_DEFS) {
+        const statusEl = document.getElementById(def.statusId);
+        const item = byPrefix.get(def.prefix);
+        if (!statusEl) continue;
+        if (item?.fileName) {
+          const sizeText = Number.isFinite(item.sizeBytes)
+            ? ` (${Math.round(Number(item.sizeBytes) / 1024)} KB)`
+            : '';
+          statusEl.textContent = `Loaded from JSON: ${item.fileName}${sizeText}. Re-upload required to save/export actual files.`;
+        } else {
+          statusEl.textContent = '';
+        }
+      }
+    }
+
+    function applyLoadedVpContext(context, particulars) {
+      const loadedContext = {
+        fleetGroup: String(context?.fleetGroup ?? '').trim(),
+        managerName: String(context?.managerName ?? '').trim(),
+        vesselName: String(context?.vesselName ?? particulars?.vesselName ?? '').trim(),
+        tsiName: String(context?.tsiName ?? '').trim()
+      };
+      vpContext = loadedContext;
+      try {
+        localStorage.setItem(VP_CONTEXT_KEY, JSON.stringify(loadedContext));
+      } catch {
+        // Non-fatal: UI context still updates from in-memory value.
+      }
+      renderContextBanner();
+    }
+
+    function applyLoadedVpParticulars(particulars) {
+      fieldVesselName.value = String(particulars?.vesselName ?? '').trim();
+      fieldVesselName.classList.toggle('is-valid', normalizeValueLength(fieldVesselName.value) > 0);
+
+      fieldImo.value = String(particulars?.imo ?? '').replace(/\D/g, '').slice(0, 7);
+      fieldImo.classList.toggle('is-valid', /^\d{7}$/.test(fieldImo.value));
+
+      fieldYardBuild.value = String(particulars?.yardBuild ?? '').trim();
+      fieldFlag.value = String(particulars?.flag ?? '').trim();
+      fieldLoa.value = String(particulars?.loa ?? '').trim();
+      fieldLbp.value = String(particulars?.lbp ?? '').trim();
+      fieldBreadth.value = String(particulars?.breadth ?? '').trim();
+      fieldDepths.value = String(particulars?.depths ?? '').trim();
+      fieldSummerDraught.value = String(particulars?.summerDraught ?? '').trim();
+      fieldDwt.value = String(particulars?.dwt ?? '').trim();
+      fieldGt.value = String(particulars?.gt ?? '').trim();
+      fieldNt.value = String(particulars?.nt ?? '').trim();
+
+      fieldYardBuild.classList.toggle('is-valid', normalizeValueLength(fieldYardBuild.value) >= 5);
+      fieldFlag.classList.toggle('is-valid', normalizeValueLength(fieldFlag.value) >= 2);
+      fieldDwt.classList.toggle('is-valid', normalizeValueLength(fieldDwt.value) >= 4);
+      fieldGt.classList.toggle('is-valid', normalizeValueLength(fieldGt.value) >= 3);
+      fieldNt.classList.toggle('is-valid', normalizeValueLength(fieldNt.value) >= 3);
+
+      const monthLabel = String(particulars?.monthOfBuild ?? '').trim();
+      const yearLabel = String(particulars?.yearOfBuild ?? '').trim();
+      const classLabel = String(particulars?.class ?? '').trim();
+
+      const hasMonth = setRolodexValue(monthDrumEl, monthNames, monthLabel);
+      const hasYear = setRolodexValue(yearDrumEl, YEAR_OPTIONS, yearLabel);
+      monthYearCommitted = hasMonth && hasYear;
+      updateMonthYearPreview();
+
+      const hasClass = setRolodexValue(classDrumEl, classOptions, classLabel);
+      classCommitted = hasClass;
+      updateClassPreview();
+
+      updateUploadButtonGating();
+      computeAndUpdateProgress();
+    }
+
+    async function loadVesselFromJsonFile(file) {
+      let parsed = null;
+      try {
+        parsed = JSON.parse(await file.text());
+      } catch {
+        throw new Error('Selected file is not valid JSON.');
+      }
+
+      const validation = validateLoadedVpJson(parsed);
+      if (!validation.ok) {
+        throw new Error(validation.reason || 'Vessel JSON format is invalid.');
+      }
+
+      applyLoadedVpContext(parsed.context, parsed.particulars);
+      applyLoadedVpParticulars(parsed.particulars);
+      clearAllUploadUiStates();
+      applyLoadedVpFileStatuses(parsed.files);
       updateUploadButtonGating();
       computeAndUpdateProgress();
     }
@@ -2744,7 +2897,23 @@
         window.location.href = './dry-docking-project.html';
       });
       editProjectBtn.addEventListener('click', () => {
-        window.location.href = './running-dd-project.html';
+        loadVesselJsonInput?.click();
+      });
+
+      loadVesselJsonInput?.addEventListener('change', async () => {
+        const file = loadVesselJsonInput.files?.[0];
+        loadVesselJsonInput.value = '';
+        if (!file) return;
+        try {
+          await loadVesselFromJsonFile(file);
+          setStatus('Vessel JSON loaded. Re-upload required files to save/export actual package.', 'warn');
+        } catch (error) {
+          setStatus(error?.message || 'Unable to load vessel JSON.', 'error');
+          showModal({
+            title: 'Load Vessel Failed',
+            message: error?.message || 'Unable to load vessel JSON.'
+          });
+        }
       });
 
       // Close dropdown when clicking outside

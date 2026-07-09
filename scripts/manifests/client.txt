@@ -7,7 +7,7 @@ fleet-registration.html
 vessel-selector.html
 vessel-particulars-input.html
 dry-docking-project.html
-dp-prov-page-1.html
+dd-job-matrix.html
 dp-prov-page-2.html
 dp-prov-page-3.html
 dp-prov-page-4.html
@@ -23,5 +23,6 @@ dockpilotAuthContract.js
 dockpilotPageGuard.js
 dockpilotTheme.js
 supabaseClient.js
+docs/dd-job-selection-root.json
 
 test-assets

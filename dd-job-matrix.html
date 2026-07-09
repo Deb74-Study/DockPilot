@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DP Prov Page 1 | DockPilot</title>
+  <title>DD Job Matrix | DockPilot</title>
   <style>
     :root {
       --edge-padding: clamp(12px, 1.6vw, 22px);
@@ -242,6 +242,82 @@
       padding: 20px;
     }
 
+    .matrix-panel {
+      display: grid;
+      gap: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 12px;
+    }
+
+    .matrix-toolbar {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 8px;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .matrix-toolbar-left {
+      display: inline-flex;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .matrix-btn {
+      min-width: 128px;
+      height: 34px;
+      padding: 0 12px;
+    }
+
+    .matrix-meta {
+      color: var(--muted);
+      font-size: 0.8rem;
+    }
+
+    .matrix-wrap {
+      max-height: min(58vh, 560px);
+      overflow: auto;
+      border: 1px solid rgba(255, 255, 255, 0.12);
+      border-radius: 12px;
+      background: rgba(6, 15, 28, 0.8);
+    }
+
+    .matrix-table {
+      width: 100%;
+      border-collapse: collapse;
+      min-width: 980px;
+    }
+
+    .matrix-table th,
+    .matrix-table td {
+      border: 1px solid rgba(255, 255, 255, 0.09);
+      padding: 8px;
+      font-size: 0.8rem;
+      text-align: left;
+      vertical-align: top;
+    }
+
+    .matrix-table th {
+      position: sticky;
+      top: 0;
+      z-index: 1;
+      background: #0f2947;
+      color: var(--accent);
+    }
+
+    .matrix-table td[contenteditable="true"] {
+      background: rgba(255, 255, 255, 0.01);
+      outline: none;
+      white-space: pre-wrap;
+    }
+
+    .matrix-table td[contenteditable="true"]:focus {
+      background: rgba(103, 214, 255, 0.08);
+      box-shadow: inset 0 0 0 1px rgba(103, 214, 255, 0.45);
+    }
+
     @media (max-width: 900px) {
       .manager-shell { width: 100%; }
       .toolbar-row { align-items: flex-start; }
@@ -269,20 +345,32 @@
       </div>
 
       <div>
-        <h1>DP Prov Page 1</h1>
+        <h1>DD Job Matrix</h1>
         <p class="muted">Project launch context and vessel details will be layered in the next build phase.</p>
       </div>
     </section>
 
-    <p id="statusNote" class="status-note">DP prov page 1 shell initialized.</p>
+    <p id="statusNote" class="status-note">DD Job Matrix shell initialized.</p>
 
-    <section class="panel placeholder-panel">
-      <p>This area is reserved for project modules.</p>
+    <section class="panel">
+      <div class="matrix-panel">
+        <div class="matrix-toolbar">
+          <div class="matrix-toolbar-left">
+            <button id="addMatrixRowBtn" type="button" class="secondary-btn matrix-btn">Add Row</button>
+            <button id="resetMatrixBtn" type="button" class="secondary-btn matrix-btn">Reload Source</button>
+          </div>
+          <div id="matrixMeta" class="matrix-meta">Loading matrix...</div>
+        </div>
+        <div id="matrixWrap" class="matrix-wrap">
+          <table id="matrixTable" class="matrix-table" aria-label="DD Job Matrix editable array"></table>
+        </div>
+      </div>
     </section>
   </main>
 
   <script type="module">
     import { supabase } from './supabaseClient.js';
+    import { getSession } from './dockpilotAuthContract.js';
     import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
     import { loadSavedTheme } from './dockpilotTheme.js';
 
@@ -295,6 +383,14 @@
     const registerFleetBtn = document.getElementById('registerFleetBtn');
     const launchProjectBtn = document.getElementById('launchProjectBtn');
     const editProjectBtn = document.getElementById('editProjectBtn');
+    const statusNote = document.getElementById('statusNote');
+    const addMatrixRowBtn = document.getElementById('addMatrixRowBtn');
+    const resetMatrixBtn = document.getElementById('resetMatrixBtn');
+    const matrixMeta = document.getElementById('matrixMeta');
+    const matrixTable = document.getElementById('matrixTable');
+
+    let matrixHeader = [];
+    let ddJobMatrixArray = [];
 
     const MORE_ACTIONS_IDLE_MS = 2000;
     let moreActionsCollapseTimer = null;
@@ -375,11 +471,127 @@
       wireEvents();
     }
 
+    function normalizeRow(row, width) {
+      const out = Array.isArray(row) ? [...row] : [];
+      while (out.length < width) out.push('');
+      return out.slice(0, width);
+    }
+
+    function updateMatrixMeta() {
+      if (!matrixMeta) return;
+      matrixMeta.textContent = `${ddJobMatrixArray.length} rows x ${matrixHeader.length} columns`;
+    }
+
+    function renderMatrixTable() {
+      if (!matrixTable) return;
+      matrixTable.innerHTML = '';
+
+      const thead = document.createElement('thead');
+      const headRow = document.createElement('tr');
+      matrixHeader.forEach((label) => {
+        const th = document.createElement('th');
+        th.textContent = label || 'Column';
+        headRow.appendChild(th);
+      });
+      thead.appendChild(headRow);
+
+      const tbody = document.createElement('tbody');
+      ddJobMatrixArray.forEach((row, rowIndex) => {
+        const tr = document.createElement('tr');
+        const normalized = normalizeRow(row, matrixHeader.length);
+        ddJobMatrixArray[rowIndex] = normalized;
+
+        normalized.forEach((cell, colIndex) => {
+          const td = document.createElement('td');
+          td.contentEditable = 'true';
+          td.textContent = cell;
+          td.addEventListener('blur', () => {
+            ddJobMatrixArray[rowIndex][colIndex] = td.textContent || '';
+          });
+          tr.appendChild(td);
+        });
+
+        tbody.appendChild(tr);
+      });
+
+      matrixTable.append(thead, tbody);
+      updateMatrixMeta();
+    }
+
+    async function loadMatrixFromSource() {
+      const response = await fetch('./docs/dd-job-selection-root.json', { cache: 'no-store' });
+      if (!response.ok) {
+        throw new Error(`Unable to load matrix source (${response.status})`);
+      }
+
+      const data = await response.json();
+      const sheet = Array.isArray(data?.sheets) && data.sheets.length ? data.sheets[0] : null;
+      if (!sheet || !Array.isArray(sheet.header) || !Array.isArray(sheet.rows)) {
+        throw new Error('Matrix source format is invalid.');
+      }
+
+      matrixHeader = sheet.header.map((value) => String(value || ''));
+      ddJobMatrixArray = sheet.rows.map((row) => normalizeRow(row, matrixHeader.length));
+      renderMatrixTable();
+    }
+
+    function wireMatrixEvents() {
+      if (addMatrixRowBtn) {
+        addMatrixRowBtn.addEventListener('click', () => {
+          ddJobMatrixArray.push(Array(matrixHeader.length).fill(''));
+          renderMatrixTable();
+          statusNote.textContent = 'New blank row added to DD Job Matrix.';
+          statusNote.classList.remove('warn');
+          statusNote.classList.add('success');
+        });
+      }
+
+      if (resetMatrixBtn) {
+        resetMatrixBtn.addEventListener('click', async () => {
+          try {
+            await loadMatrixFromSource();
+            statusNote.textContent = 'DD Job Matrix reloaded from attachment source.';
+            statusNote.classList.remove('warn');
+            statusNote.classList.add('success');
+          } catch (error) {
+            statusNote.textContent = error?.message || 'Failed to reload DD Job Matrix source.';
+            statusNote.classList.remove('success');
+            statusNote.classList.add('warn');
+          }
+        });
+      }
+    }
+
+    function hasAllowedProfile(roleValue) {
+      const role = String(roleValue || '').trim().toLowerCase();
+      return role === 'company admin' || role.includes('developer');
+    }
+
     startDockPilotPageGuard({
       supabase,
       landingPage: './DockPilot_landing.html'
-    }).then(() => {
+    }).then((guard) => {
+      const session = guard?.session || getSession();
+      if (!hasAllowedProfile(session?.role)) {
+        if (statusNote) {
+          statusNote.textContent = 'Access denied. DD Job Matrix is restricted to Developer or Company Admin profiles.';
+          statusNote.classList.remove('success');
+          statusNote.classList.add('warn');
+        }
+        window.location.href = './frontpage.html';
+        return;
+      }
       initPage();
+      wireMatrixEvents();
+      loadMatrixFromSource().then(() => {
+        statusNote.textContent = 'DD Job Matrix loaded from attached workbook source.';
+        statusNote.classList.remove('warn');
+        statusNote.classList.add('success');
+      }).catch((error) => {
+        statusNote.textContent = error?.message || 'Unable to load DD Job Matrix source.';
+        statusNote.classList.remove('success');
+        statusNote.classList.add('warn');
+      });
     }).catch((error) => {
       console.error('DockPilot guard startup failed:', error);
       window.location.href = './DockPilot_landing.html';

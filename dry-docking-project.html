@@ -377,6 +377,98 @@
       background: rgba(255, 255, 255, 0.02);
     }
 
+    .criteria-panel {
+      display: grid;
+      gap: 10px;
+      border: 1px dashed rgba(255, 255, 255, 0.18);
+      border-radius: 10px;
+      padding: 12px;
+      background: rgba(255, 255, 255, 0.02);
+      align-content: start;
+    }
+
+    .criteria-row {
+      display: grid;
+      gap: 7px;
+      align-content: start;
+    }
+
+    .criteria-option-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(220px, 320px);
+      gap: 10px;
+      align-items: center;
+    }
+
+    .criteria-option-row.location-row {
+      grid-template-columns: minmax(90px, 120px) minmax(220px, 1fr) minmax(200px, 260px);
+    }
+
+    .criteria-title {
+      color: var(--accent);
+      font-weight: 700;
+      font-size: 0.86rem;
+      letter-spacing: 0.02em;
+    }
+
+    .criteria-subsection {
+      margin-top: 6px;
+      padding-top: 6px;
+      border-top: 1px solid rgba(255, 255, 255, 0.12);
+      display: grid;
+      gap: 8px;
+    }
+
+    .calendar-field {
+      position: relative;
+      width: 100%;
+    }
+
+    .calendar-field::after {
+      content: '';
+      position: absolute;
+      right: 10px;
+      top: 50%;
+      width: 16px;
+      height: 16px;
+      transform: translateY(-50%);
+      background-repeat: no-repeat;
+      background-position: center;
+      background-size: 16px 16px;
+      background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23d7e9ff' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Crect x='3' y='4' width='18' height='18' rx='2' ry='2'/%3E%3Cline x1='16' y1='2' x2='16' y2='6'/%3E%3Cline x1='8' y1='2' x2='8' y2='6'/%3E%3Cline x1='3' y1='10' x2='21' y2='10'/%3E%3C/svg%3E");
+      opacity: 0.92;
+      pointer-events: none;
+      z-index: 3;
+    }
+
+    .calendar-native {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      pointer-events: none;
+      cursor: default;
+      z-index: 2;
+    }
+
+    .calendar-native:disabled {
+      cursor: not-allowed;
+    }
+
+    .calendar-display {
+      width: 100%;
+      pointer-events: auto;
+      cursor: pointer;
+      padding-right: 34px;
+      font-variant-numeric: tabular-nums;
+    }
+
+    .calendar-display:disabled {
+      opacity: 0.65;
+      cursor: not-allowed;
+    }
+
     @media (max-width: 900px) {
       .manager-shell {
         width: 100%;
@@ -390,6 +482,9 @@
       .toolbar-row { align-items: flex-start; }
       .more-actions-dropdown { position: static; margin-left: auto; }
       .selection-row {
+        grid-template-columns: 1fr;
+      }
+      .criteria-option-row {
         grid-template-columns: 1fr;
       }
       .workspace-area {
@@ -425,7 +520,7 @@
         <button id="moreActionsToggle" type="button" class="secondary-btn more-actions-toggle">See More</button>
         <div class="more-actions-buttons">
           <button id="registerFleetBtn" type="button" class="secondary-btn">Register Fleet</button>
-          <button id="launchProjectBtn" type="button" class="secondary-btn">Launch Project</button>
+          <button id="launchProjectBtn" type="button" class="secondary-btn">Initiate Project</button>
           <button id="editProjectBtn" type="button" class="secondary-btn">Edit Project</button>
         </div>
       </div>
@@ -456,10 +551,72 @@
       </section>
       <section class="panel project-pane">
         <div class="panel-sticky-row">
-          <h2 class="project-pane-title">Reserved Panel</h2>
+          <h2 class="project-pane-title">Docking Inputs</h2>
           <span class="panel-scroll-note">Scroll down for more information</span>
         </div>
-        <div class="pane-placeholder">Reserved for next-phase dry-docking project modules.</div>
+        <div class="criteria-panel">
+          <div class="criteria-row">
+            <label class="criteria-title" for="dockingCriteriaSelect">Docking Criteria</label>
+            <select id="dockingCriteriaSelect" class="selection-select" aria-label="Docking Criteria">
+              <option value="">- Select Docking Criteria -</option>
+              <option value="1st Special Survey">1st Special Survey</option>
+              <option value="2nd Special Survey">2nd Special Survey</option>
+              <option value="3rd Special Survey">3rd Special Survey</option>
+              <option value="4th Intermediate Survey">4th Intermediate Survey</option>
+              <option value="4th Special Survey">4th Special Survey</option>
+              <option value="5th Intermediate Survey">5th Intermediate Survey</option>
+              <option value="5th Special Survey">5th Special Survey</option>
+            </select>
+          </div>
+
+          <div class="criteria-option-row">
+            <label class="criteria-title" for="capSurveyRequiredSelect">CAP Survey Required</label>
+            <select id="capSurveyRequiredSelect" class="selection-select" aria-label="CAP Survey Required">
+              <option value="">- Select -</option>
+              <option value="Yes">Yes</option>
+              <option value="No">No</option>
+            </select>
+          </div>
+
+          <div class="criteria-option-row">
+            <label class="criteria-title" for="expectedReleaseDatePicker">Expected Release Date</label>
+            <div class="calendar-field">
+              <input id="expectedReleaseDatePicker" class="calendar-native" type="date" aria-label="Expected Release Date" />
+              <input id="expectedReleaseDateDisplay" class="selection-select calendar-display" type="text" placeholder="dd-mmm-yyyy" aria-hidden="true" readonly />
+            </div>
+          </div>
+
+          <div class="criteria-subsection">
+            <span class="criteria-title">Preferred Dry-docking Location</span>
+
+            <div class="criteria-option-row location-row">
+              <label class="criteria-title" for="preferredLocationOption1">Option 1</label>
+              <select id="preferredLocationOption1" class="selection-select" aria-label="Preferred Dry-docking Location Option 1"></select>
+              <div class="calendar-field">
+                <input id="preferredLocationDate1Picker" class="calendar-native" type="date" aria-label="Preferred Dry-docking Location Option 1 Date" />
+                <input id="preferredLocationDate1Display" class="selection-select calendar-display" type="text" placeholder="dd-mmm-yyyy" aria-hidden="true" readonly />
+              </div>
+            </div>
+
+            <div class="criteria-option-row location-row">
+              <label class="criteria-title" for="preferredLocationOption2">Option 2</label>
+              <select id="preferredLocationOption2" class="selection-select" aria-label="Preferred Dry-docking Location Option 2"></select>
+              <div class="calendar-field">
+                <input id="preferredLocationDate2Picker" class="calendar-native" type="date" aria-label="Preferred Dry-docking Location Option 2 Date" />
+                <input id="preferredLocationDate2Display" class="selection-select calendar-display" type="text" placeholder="dd-mmm-yyyy" aria-hidden="true" readonly />
+              </div>
+            </div>
+
+            <div class="criteria-option-row location-row">
+              <label class="criteria-title" for="preferredLocationOption3">Option 3</label>
+              <select id="preferredLocationOption3" class="selection-select" aria-label="Preferred Dry-docking Location Option 3"></select>
+              <div class="calendar-field">
+                <input id="preferredLocationDate3Picker" class="calendar-native" type="date" aria-label="Preferred Dry-docking Location Option 3 Date" />
+                <input id="preferredLocationDate3Display" class="selection-select calendar-display" type="text" placeholder="dd-mmm-yyyy" aria-hidden="true" readonly />
+              </div>
+            </div>
+          </div>
+        </div>
       </section>
     </div>
   </main>
@@ -483,6 +640,17 @@
     const selectionMethodSelect = document.getElementById('selectionMethodSelect');
     const selectionValueSelect = document.getElementById('selectionValueSelect');
     const selectedVesselTable = document.getElementById('selectedVesselTable');
+    const preferredLocationOption1 = document.getElementById('preferredLocationOption1');
+    const preferredLocationOption2 = document.getElementById('preferredLocationOption2');
+    const preferredLocationOption3 = document.getElementById('preferredLocationOption3');
+    const expectedReleaseDatePicker = document.getElementById('expectedReleaseDatePicker');
+    const expectedReleaseDateDisplay = document.getElementById('expectedReleaseDateDisplay');
+    const preferredLocationDate1Picker = document.getElementById('preferredLocationDate1Picker');
+    const preferredLocationDate1Display = document.getElementById('preferredLocationDate1Display');
+    const preferredLocationDate2Picker = document.getElementById('preferredLocationDate2Picker');
+    const preferredLocationDate2Display = document.getElementById('preferredLocationDate2Display');
+    const preferredLocationDate3Picker = document.getElementById('preferredLocationDate3Picker');
+    const preferredLocationDate3Display = document.getElementById('preferredLocationDate3Display');
 
     const VESSEL_REGISTRY_KEY_PREFIX = 'DOCKPILOT_VESSEL_REGISTRY_';
     const REGISTRY_COL_HEADERS = [
@@ -504,6 +672,25 @@
       { label: 'Vessel Name', key: 'vesselName' },
       { label: 'IMO No.', key: 'imo' }
     ];
+    const PREFERRED_DRY_DOCK_LOCATIONS = [
+      'South China / Hong Kong',
+      'Mid China / Zhoushan',
+      'North China / Dalian',
+      'Korea',
+      'Singapore / Malaysia',
+      'Indonesia',
+      'Vietnam / Thailand',
+      'Colombo',
+      'Middle East / Oman',
+      'Egypt',
+      'Turkey',
+      'Bulgaria',
+      'Poland',
+      'Mediterranean Sea Area',
+      'Spain / Portugal',
+      'Western Europe',
+      'Denmark / Baltics'
+    ].sort((a, b) => a.localeCompare(b, undefined, { sensitivity: 'base' }));
 
     let registryRows = [];
 
@@ -514,6 +701,37 @@
     function formatBadgeDate(date) {
       const day = String(date.getDate()).padStart(2, '0');
       return `${day}-${monthNames[date.getMonth()]}-${date.getFullYear()}`;
+    }
+
+    function formatIsoDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function parseIsoDate(isoValue) {
+      if (!/^\d{4}-\d{2}-\d{2}$/.test(String(isoValue || ''))) {
+        return null;
+      }
+      const date = new Date(`${isoValue}T00:00:00`);
+      return Number.isNaN(date.getTime()) ? null : date;
+    }
+
+    function addYearsIsoDate(isoValue, years) {
+      const base = parseIsoDate(isoValue);
+      if (!base) return '';
+      base.setFullYear(base.getFullYear() + years);
+      return formatIsoDate(base);
+    }
+
+    function formatDisplayDate(isoValue) {
+      const date = parseIsoDate(isoValue);
+      if (!date) return '';
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = monthNames[date.getMonth()];
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
     }
 
     function normalizeDocStatus(value) {
@@ -553,6 +771,132 @@
       if (!statusNote) return;
       statusNote.textContent = text;
       statusNote.className = `status-note${tone ? ` ${tone}` : ''}`;
+    }
+
+    function normalizeChoice(value) {
+      return String(value ?? '').trim();
+    }
+
+    function syncCalendarDisplay(dateInput, displayInput) {
+      if (!dateInput || !displayInput) return;
+      displayInput.value = formatDisplayDate(dateInput.value);
+    }
+
+    function openCalendarPicker(dateInput) {
+      if (!dateInput || dateInput.disabled) return;
+      if (typeof dateInput.showPicker === 'function') {
+        try {
+          dateInput.showPicker();
+          return;
+        } catch {
+          // Fallback below for browsers that block showPicker in this context.
+        }
+      }
+      dateInput.focus();
+      dateInput.click();
+    }
+
+    function bindCalendarFieldOpen(dateInput, displayInput) {
+      if (!dateInput || !displayInput) return;
+
+      const field = dateInput.closest('.calendar-field');
+
+      if (field) {
+        field.addEventListener('click', (event) => {
+          if (dateInput.disabled) return;
+          openCalendarPicker(dateInput);
+        });
+      }
+
+      displayInput.addEventListener('click', () => {
+        openCalendarPicker(dateInput);
+      });
+    }
+
+    function getPreferredDatePairs() {
+      return [
+        [preferredLocationDate1Picker, preferredLocationDate1Display],
+        [preferredLocationDate2Picker, preferredLocationDate2Display],
+        [preferredLocationDate3Picker, preferredLocationDate3Display]
+      ];
+    }
+
+    function applyExpectedReleaseDateConstraints() {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      const minDateIso = formatIsoDate(today);
+      const maxDateIso = addYearsIsoDate(minDateIso, 1);
+
+      if (expectedReleaseDatePicker) {
+        expectedReleaseDatePicker.min = minDateIso;
+        expectedReleaseDatePicker.max = maxDateIso;
+      }
+    }
+
+    function updatePreferredDateConstraintsFromExpected() {
+      const expectedIso = expectedReleaseDatePicker?.value || '';
+      const hasExpected = Boolean(expectedIso);
+      const maxPreferredIso = hasExpected ? addYearsIsoDate(expectedIso, 1) : '';
+
+      getPreferredDatePairs().forEach(([dateInput, displayInput]) => {
+        if (!dateInput || !displayInput) return;
+
+        dateInput.disabled = !hasExpected;
+        displayInput.disabled = !hasExpected;
+
+        if (!hasExpected) {
+          dateInput.min = '';
+          dateInput.max = '';
+          dateInput.value = '';
+          displayInput.value = '';
+          return;
+        }
+
+        dateInput.min = expectedIso;
+        dateInput.max = maxPreferredIso;
+
+        if (dateInput.value && (dateInput.value < expectedIso || dateInput.value > maxPreferredIso)) {
+          dateInput.value = '';
+        }
+
+        if (!dateInput.value) {
+          dateInput.value = expectedIso;
+        }
+
+        syncCalendarDisplay(dateInput, displayInput);
+      });
+    }
+
+    function setLocationSelectOptions(selectEl, blockedValues, selectedValue) {
+      if (!selectEl) return;
+
+      const normalizedSelected = normalizeChoice(selectedValue);
+      const options = PREFERRED_DRY_DOCK_LOCATIONS.filter((location) => (
+        !blockedValues.has(location) || location === normalizedSelected
+      ));
+
+      selectEl.innerHTML = [
+        '<option value="">- Select Location -</option>',
+        ...options.map((location) => `<option value="${location}">${location}</option>`)
+      ].join('');
+
+      if (normalizedSelected && options.includes(normalizedSelected)) {
+        selectEl.value = normalizedSelected;
+      } else {
+        selectEl.value = '';
+      }
+    }
+
+    function refreshPreferredLocationOptions() {
+      if (!preferredLocationOption1 || !preferredLocationOption2 || !preferredLocationOption3) return;
+
+      const option1 = normalizeChoice(preferredLocationOption1.value);
+      const option2 = normalizeChoice(preferredLocationOption2.value);
+      const option3 = normalizeChoice(preferredLocationOption3.value);
+
+      setLocationSelectOptions(preferredLocationOption1, new Set([option2, option3].filter(Boolean)), option1);
+      setLocationSelectOptions(preferredLocationOption2, new Set([option1, option3].filter(Boolean)), option2);
+      setLocationSelectOptions(preferredLocationOption3, new Set([option1, option2].filter(Boolean)), option3);
     }
 
     function renderSelectedVesselTable(selectedRow) {
@@ -625,6 +969,28 @@
         const row = Number.isInteger(idx) && idx >= 0 ? registryRows[idx] : null;
         renderSelectedVesselTable(row || null);
       });
+
+      if (preferredLocationOption1 && preferredLocationOption2 && preferredLocationOption3) {
+        [preferredLocationOption1, preferredLocationOption2, preferredLocationOption3].forEach((selectEl) => {
+          selectEl.addEventListener('change', refreshPreferredLocationOptions);
+        });
+      }
+
+      if (expectedReleaseDatePicker && expectedReleaseDateDisplay) {
+        expectedReleaseDatePicker.addEventListener('change', () => {
+          syncCalendarDisplay(expectedReleaseDatePicker, expectedReleaseDateDisplay);
+          updatePreferredDateConstraintsFromExpected();
+        });
+        bindCalendarFieldOpen(expectedReleaseDatePicker, expectedReleaseDateDisplay);
+      }
+
+      getPreferredDatePairs().forEach(([dateInput, displayInput]) => {
+        if (!dateInput || !displayInput) return;
+        dateInput.addEventListener('change', () => {
+          syncCalendarDisplay(dateInput, displayInput);
+        });
+        bindCalendarFieldOpen(dateInput, displayInput);
+      });
     }
 
     function clearMoreActionsCollapseTimer() {
@@ -696,6 +1062,10 @@
       todayBadge.textContent = `Date: ${formatBadgeDate(new Date())}`;
       wireEvents();
       populateSelectionMethods();
+      applyExpectedReleaseDateConstraints();
+      syncCalendarDisplay(expectedReleaseDatePicker, expectedReleaseDateDisplay);
+      updatePreferredDateConstraintsFromExpected();
+      refreshPreferredLocationOptions();
       registryRows = loadRegistryRows();
       populateSelectionValues();
       wireSelectionEvents();

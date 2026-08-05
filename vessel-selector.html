@@ -192,6 +192,27 @@
       border-color: rgba(255, 210, 140, 0.18);
     }
 
+    .status-strip {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .status-badge {
+      display: inline-flex;
+      align-items: center;
+      padding: 7px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(103, 214, 255, 0.18);
+      background: rgba(103, 214, 255, 0.08);
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1.2;
+      white-space: nowrap;
+    }
+
     .composition-placeholder {
       min-height: 260px;
       display: grid;
@@ -686,12 +707,13 @@
           <a class="return-link" href="./frontpage.html">Return to Frontpage</a>
         </div>
       </div>
+      <input id="loadFleetJsonInput" type="file" accept=".json,application/json" style="display:none" />
 
       <div id="moreActionsDropdown" class="more-actions-dropdown collapsed">
         <button id="moreActionsToggle" type="button" class="secondary-btn more-actions-toggle">See More</button>
         <div class="more-actions-buttons">
           <button id="registerFleetBtn" type="button" class="secondary-btn">Register Fleet</button>
-          <button id="launchProjectBtn" type="button" class="secondary-btn">Launch Project</button>
+          <button id="launchProjectBtn" type="button" class="secondary-btn">Initiate Project</button>
           <button id="editProjectBtn" type="button" class="secondary-btn">Edit Project</button>
         </div>
       </div>
@@ -702,7 +724,10 @@
       </div>
     </section>
 
-    <p id="statusNote" class="status-note">Header shell initialized for phase 1.</p>
+    <div class="status-strip">
+      <p id="statusNote" class="status-note">Header shell initialized for phase 1.</p>
+      <span id="panelSourceBadge" class="status-badge">Bottom panel: awaiting data</span>
+    </div>
 
     <section class="panel vp-action-panel">
       <div class="vp-action-heading">
@@ -784,8 +809,10 @@
 
     const todayBadge = document.getElementById('todayBadge');
     const statusNote = document.getElementById('statusNote');
+    const panelSourceBadge = document.getElementById('panelSourceBadge');
     const loadFleetBtn = document.getElementById('loadFleetBtn');
     const saveFleetBtn = document.getElementById('saveFleetBtn');
+    const loadFleetJsonInput = document.getElementById('loadFleetJsonInput');
     const moreActionsDropdown = document.getElementById('moreActionsDropdown');
     const moreActionsToggle = document.getElementById('moreActionsToggle');
     const registerFleetBtn = document.getElementById('registerFleetBtn');
@@ -812,7 +839,8 @@
 
     const FLEET_REG_STATE_KEY = 'DOCKPILOT_FLEET_REG_STATE';
     const FLEET_TREE_CACHE_KEY = 'DOCKPILOT_FLEET_COMPOSITION_TREES';
-    const FLEET_TREE_EXPORT_NAME = 'fleet-composition-trees.json';
+    const FLEET_EXPORT_HISTORY_KEY = 'DOCKPILOT_FLEET_EXPORT_HISTORY';
+    const SELECTOR_FLEET_FORMAT = 'dockpilot-vessel-selector-fleet-v1';
     const FILTER_STATE_KEY = 'DOCKPILOT_VESSEL_FILTER_STATE';
     const VESSEL_REGISTRY_KEY_PREFIX = 'DOCKPILOT_VESSEL_REGISTRY_';
     const VP_NAV_SELECTION_KEY = 'DOCKPILOT_VP_NAV_SELECTION';
@@ -841,6 +869,7 @@
     let moreActionsKeyboardFocus = false;
     let currentCompanyId = '';
     let registryRows = [];
+    let registryRowsSource = 'registry';
     let registryHeadRendered = false;
     let registryFilterEnabled = false;
     let toggleCooldownActive = false;
@@ -874,6 +903,22 @@
     function setStatus(text, tone = '') {
       statusNote.textContent = text;
       statusNote.className = `status-note${tone ? ` ${tone}` : ''}`;
+    }
+
+    function updatePanelSourceBadge() {
+      if (!panelSourceBadge) return;
+
+      if (registryRowsSource === 'registry' && registryRows.length) {
+        panelSourceBadge.textContent = 'Bottom panel: saved particulars';
+        return;
+      }
+
+      if (registryRowsSource === 'fleet-preview' && registryRows.length) {
+        panelSourceBadge.textContent = 'Bottom panel: loaded selector fleet list';
+        return;
+      }
+
+      panelSourceBadge.textContent = 'Bottom panel: awaiting data';
     }
 
     function showModal({
@@ -966,6 +1011,28 @@
       }
     }
 
+    function buildFleetPreviewRows(trees) {
+      const groups = asArray(trees?.fleetGroups);
+      if (!groups.length) return [];
+
+      const rows = [];
+      groups.forEach((group) => {
+        const groupName = cleanText(group?.groupName);
+        const vessels = asArray(group?.vessels).map(cleanText).filter(Boolean);
+        vessels.forEach((vesselName) => {
+          const row = {};
+          REGISTRY_COL_KEYS.forEach((key) => {
+            row[key] = '';
+          });
+          row.vesselId = groupName;
+          row.vesselName = vesselName;
+          rows.push(normalizeRegistryRow(row));
+        });
+      });
+
+      return rows;
+    }
+
     function syncSelectorScrollControls() {
       if (!selectorTableViewport || !selectorHorizontalScroll || !selectorScrollLeftBtn || !selectorScrollRightBtn) {
         return;
@@ -1021,8 +1088,12 @@
     }
 
     function applyRegistryPanelFilter() {
+      const noDataMessage = registryRowsSource === 'fleet-preview'
+        ? 'No saved vessel particulars found. Showing vessels from loaded fleet JSON.'
+        : 'No vessels saved yet - save vessel particulars to populate this panel.';
+
       if (!registryFilterEnabled) {
-        renderRegistryTable(registryRows);
+        renderRegistryTable(registryRows, noDataMessage);
         return;
       }
 
@@ -1037,7 +1108,9 @@
       const filtered = registryRows.filter((row) => normalizeLookupValue(row?.vesselName ?? '') === normalizeLookupValue(selectedVessel));
 
       if (filtered.length === 0) {
-        renderRegistryTable([], 'Particulars for this vessel have not yet been saved.');
+        renderRegistryTable([], registryRowsSource === 'fleet-preview'
+          ? 'Selected vessel is not present in the loaded fleet preview list.'
+          : 'Particulars for this vessel have not yet been saved.');
         return;
       }
 
@@ -1045,8 +1118,48 @@
     }
 
     function refreshRegistryPanel() {
-      registryRows = loadRegistryRows();
+      const savedRows = loadRegistryRows();
+      if (savedRows.length) {
+        registryRows = savedRows;
+        registryRowsSource = 'registry';
+      } else {
+        registryRows = buildFleetPreviewRows(latestDerivedTrees);
+        registryRowsSource = registryRows.length ? 'fleet-preview' : 'registry';
+      }
+      updatePanelSourceBadge();
       applyRegistryPanelFilter();
+    }
+
+    function hasParticularsData(record) {
+      if (!record || typeof record !== 'object') return false;
+      const candidateKeys = [
+        'imo', 'monthYearOfBuild', 'yardOfBuild', 'flag', 'class',
+        'loa', 'lbp', 'breadth', 'depth', 'summerDraught',
+        'dwt', 'gt', 'nt'
+      ];
+      return candidateKeys.some((key) => cleanText(record[key]));
+    }
+
+    function findSelectedRegistryRecord() {
+      if (!selectedVesselName) return null;
+      const selectedVesselLookup = normalizeLookupValue(selectedVesselName);
+      const candidates = registryRows.filter((row) => (
+        normalizeLookupValue(row?.vesselName ?? '') === selectedVesselLookup
+      ));
+
+      if (!candidates.length) return null;
+      if (candidates.length === 1) return candidates[0];
+
+      const selectedGroupName = cleanText(getGroupByKey(selectedGroupKey)?.groupName || '');
+      if (selectedGroupName) {
+        const selectedGroupLookup = normalizeLookupValue(selectedGroupName);
+        const groupMatched = candidates.find((row) => (
+          normalizeLookupValue(row?.vesselId ?? '') === selectedGroupLookup
+        ));
+        if (groupMatched) return groupMatched;
+      }
+
+      return candidates[0];
     }
 
     function onSelectorFilterToggleClick() {
@@ -1228,27 +1341,395 @@
       }
     }
 
+    function readCachedDerivedTrees() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(FLEET_TREE_CACHE_KEY) || 'null');
+        if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
+        if (!Array.isArray(parsed.fleetGroups) || !parsed.fleetGroups.length) return null;
+        return parsed;
+      } catch (error) {
+        console.error('Failed to parse fleet composition tree cache:', error);
+        return null;
+      }
+    }
+
+    function persistRegistrationState(state) {
+      try {
+        localStorage.setItem(FLEET_REG_STATE_KEY, JSON.stringify(normalizeFleetRegistrationState(state)));
+      } catch (error) {
+        console.error('Failed to persist fleet registration state:', error);
+        setStatus('Fleet data could not be saved to browser storage.', 'warn');
+      }
+    }
+
+    function getRegistryStorageKey() {
+      return currentCompanyId ? (VESSEL_REGISTRY_KEY_PREFIX + currentCompanyId) : '';
+    }
+
+    function persistRegistryRows(rows) {
+      const key = getRegistryStorageKey();
+      if (!key) {
+        throw new Error('Active company session is required before saving vessel selector fleet data.');
+      }
+      localStorage.setItem(key, JSON.stringify(rows));
+    }
+
+    function normalizeSelectorFleetRows(rows) {
+      const normalizedRows = asArray(rows)
+        .map((row) => {
+          const source = row && typeof row === 'object' ? row : {};
+          const next = {};
+          REGISTRY_COL_KEYS.forEach((key) => {
+            next[key] = cleanText(source[key]);
+          });
+          return normalizeRegistryRow(next);
+        })
+        .filter((row) => cleanText(row.vesselName));
+
+      if (!normalizedRows.length) {
+        throw new Error('Selector fleet list contains no valid rows with Vessel Name.');
+      }
+
+      return normalizedRows;
+    }
+
+    function buildSelectorFleetExportFileName(baseDate = new Date()) {
+      const safeDate = Number.isNaN(baseDate.getTime()) ? new Date() : baseDate;
+      const day = String(safeDate.getDate()).padStart(2, '0');
+      const month = String(safeDate.getMonth() + 1).padStart(2, '0');
+      const year = String(safeDate.getFullYear());
+      return `Vessel-Selector-Fleet-${day}${month}${year}.JSON`;
+    }
+
+    function triggerSelectorFleetExportDownload(rows) {
+      const normalizedRows = normalizeSelectorFleetRows(rows);
+      const payload = JSON.stringify({
+        format: SELECTOR_FLEET_FORMAT,
+        generatedAt: new Date().toISOString(),
+        companyId: currentCompanyId,
+        columnHeaders: REGISTRY_COL_HEADERS,
+        columnKeys: REGISTRY_COL_KEYS,
+        fleetList: normalizedRows
+      }, null, 2);
+      const fileName = buildSelectorFleetExportFileName();
+      const blob = new Blob([payload], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = fileName;
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      URL.revokeObjectURL(url);
+      return { fileName, rowCount: normalizedRows.length };
+    }
+
+    function extractSelectorFleetRowsPayload(parsed) {
+      if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) {
+        throw new Error('Loaded selector fleet file must be a JSON object.');
+      }
+
+      if (Array.isArray(parsed.fleetGroups) || Array.isArray(parsed.subHeaderRowA)) {
+        throw new Error('This file is a fleet mapping/registration payload. Use a vessel-selector fleet list file instead.');
+      }
+
+      if (Array.isArray(parsed.fleetList)) {
+        return parsed.fleetList;
+      }
+      if (Array.isArray(parsed.rows)) {
+        return parsed.rows;
+      }
+
+      throw new Error('Selector fleet file is missing fleetList array.');
+    }
+
+    async function importSelectorFleetListFromJsonFile(file) {
+      const text = await file.text();
+      let parsed;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        throw new Error('Selected file is not valid JSON.');
+      }
+
+      const rowsPayload = extractSelectorFleetRowsPayload(parsed);
+      const normalizedRows = normalizeSelectorFleetRows(rowsPayload);
+      persistRegistryRows(normalizedRows);
+      refreshRegistryPanel();
+      return {
+        rowCount: normalizedRows.length,
+        detectedFormat: cleanText(parsed.format) || 'selector-fleet-list'
+      };
+    }
+
     function buildDerivedTreeExportJson() {
       const trees = latestDerivedTrees || deriveFleetTreesFromRegistration(readRegistrationState());
       return JSON.stringify(trees, null, 2);
     }
 
+    function buildFleetExportFileName(trees) {
+      const baseDate = trees?.generatedAt ? new Date(trees.generatedAt) : new Date();
+      const safeDate = Number.isNaN(baseDate.getTime()) ? new Date() : baseDate;
+      const day = String(safeDate.getDate()).padStart(2, '0');
+      const month = String(safeDate.getMonth() + 1).padStart(2, '0');
+      const year = String(safeDate.getFullYear());
+      return `Fleet-Data-${day}${month}${year}.JSON`;
+    }
+
+    function loadFleetExportHistory() {
+      try {
+        const parsed = JSON.parse(localStorage.getItem(FLEET_EXPORT_HISTORY_KEY) || '[]');
+        if (!Array.isArray(parsed)) return [];
+        return parsed
+          .map((entry) => cleanText(entry))
+          .filter(Boolean);
+      } catch {
+        return [];
+      }
+    }
+
+    function saveFleetExportHistory(history) {
+      try {
+        localStorage.setItem(FLEET_EXPORT_HISTORY_KEY, JSON.stringify(history));
+      } catch (error) {
+        console.error('Failed to persist fleet export history:', error);
+      }
+    }
+
+    function markFleetFileExported(fileName) {
+      const history = loadFleetExportHistory();
+      const deduped = [fileName, ...history.filter((name) => name !== fileName)].slice(0, 120);
+      saveFleetExportHistory(deduped);
+    }
+
+    function hasFleetFileBeenExported(fileName) {
+      return loadFleetExportHistory().includes(fileName);
+    }
+
     function triggerDerivedTreeExportDownload() {
-      const payload = buildDerivedTreeExportJson();
+      const trees = latestDerivedTrees || deriveFleetTreesFromRegistration(readRegistrationState());
+      const payload = JSON.stringify(trees, null, 2);
+      const fileName = buildFleetExportFileName(trees);
       const blob = new Blob([payload], { type: 'application/json' });
       const url = URL.createObjectURL(blob);
       const link = document.createElement('a');
       link.href = url;
-      link.download = FLEET_TREE_EXPORT_NAME;
+      link.download = fileName;
       document.body.appendChild(link);
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
+      return fileName;
+    }
+
+    function normalizeLoadedDerivedTrees(raw) {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+        throw new Error('Loaded file must be a JSON object.');
+      }
+
+      const groups = Array.isArray(raw.fleetGroups) ? raw.fleetGroups : null;
+      if (!groups) {
+        throw new Error('Loaded file is missing fleetGroups array.');
+      }
+      if (!groups.length) {
+        throw new Error('Loaded file has an empty fleetGroups array.');
+      }
+
+      const firstInvalidGroupIndex = groups.findIndex((group) => {
+        if (!group || typeof group !== 'object' || Array.isArray(group)) return true;
+        return !cleanText(group.groupName);
+      });
+      if (firstInvalidGroupIndex >= 0) {
+        throw new Error(`Loaded fleetGroups[${firstInvalidGroupIndex}] is missing groupName.`);
+      }
+
+      const normalizedFleetGroups = groups
+        .map((group) => {
+          if (!group || typeof group !== 'object') return null;
+          const groupName = cleanText(group.groupName);
+          const managerName = cleanText(group.managerName);
+          const vessels = uniqueNonBlank(asArray(group.vessels));
+          const tsis = uniqueNonBlank(asArray(group.tsis));
+
+          if (!groupName) return null;
+
+          return {
+            groupName,
+            managerName,
+            vesselCount: vessels.length,
+            vessels,
+            tsis
+          };
+        })
+        .filter(Boolean);
+
+      if (!normalizedFleetGroups.length) {
+        throw new Error('Loaded fleetGroups does not contain valid entries.');
+      }
+
+      const managerToTsiList = {};
+      const tsiToVesselList = {};
+      const vesselToTsiMap = {};
+
+      normalizedFleetGroups.forEach((group) => {
+        const managerKey = `${group.groupName}||${group.managerName}`;
+        managerToTsiList[managerKey] = uniqueNonBlank(group.tsis);
+
+        group.vessels.forEach((vessel) => {
+          if (!(vessel in vesselToTsiMap)) {
+            vesselToTsiMap[vessel] = '';
+          }
+        });
+      });
+
+      if (raw.managerToTsiList && typeof raw.managerToTsiList === 'object') {
+        Object.entries(raw.managerToTsiList).forEach(([key, value]) => {
+          managerToTsiList[key] = uniqueNonBlank(value);
+        });
+      }
+
+      if (raw.tsiToVesselList && typeof raw.tsiToVesselList === 'object') {
+        Object.entries(raw.tsiToVesselList).forEach(([key, value]) => {
+          const cleanKey = cleanText(key);
+          if (!cleanKey) return;
+          tsiToVesselList[cleanKey] = uniqueNonBlank(value);
+        });
+      }
+
+      if (raw.vesselToTsiMap && typeof raw.vesselToTsiMap === 'object') {
+        Object.entries(raw.vesselToTsiMap).forEach(([key, value]) => {
+          const cleanKey = cleanText(key);
+          if (!cleanKey) return;
+          vesselToTsiMap[cleanKey] = cleanText(value);
+        });
+      }
+
+      return {
+        generatedAt: new Date().toISOString(),
+        source: {
+          key: FLEET_REG_STATE_KEY,
+          importedFrom: 'load-fleet-json'
+        },
+        fleetGroups: normalizedFleetGroups,
+        managerToTsiList,
+        tsiToVesselList,
+        vesselToTsiMap
+      };
+    }
+
+    function getFleetRegistrationPayloadError(raw) {
+      if (!raw || typeof raw !== 'object' || Array.isArray(raw)) {
+        return 'Loaded file must be a JSON object.';
+      }
+      if (!Array.isArray(raw.subHeaderRowA)) {
+        return 'Registration-matrix file is missing subHeaderRowA array.';
+      }
+      if (!Array.isArray(raw.matrixData)) {
+        return 'Registration-matrix file is missing matrixData array.';
+      }
+      return '';
+    }
+
+    function isFleetRegistrationPayload(raw) {
+      return !getFleetRegistrationPayloadError(raw);
+    }
+
+    function buildRegistrationStateFromDerivedTrees(trees) {
+      const groups = Array.isArray(trees?.fleetGroups) ? trees.fleetGroups : [];
+      const columnCount = Math.max(groups.length * 2, 2);
+      const subHeaderRowA = [];
+      const subHeaderRowB = [];
+      const rowLengths = [];
+
+      groups.forEach((group) => {
+        subHeaderRowA.push(cleanText(group.groupName), cleanText(group.managerName));
+        subHeaderRowB.push('Vessel Name', 'TSI Name');
+        rowLengths.push(asArray(group.vessels).length);
+      });
+
+      while (subHeaderRowA.length < columnCount) {
+        const index = subHeaderRowA.length;
+        subHeaderRowA.push(index % 2 === 0 ? 'Fleet Group Name' : 'TM / FM Name');
+        subHeaderRowB.push(index % 2 === 0 ? 'Vessel Name' : 'TSI Name');
+        if (index % 2 === 1) {
+          rowLengths.push(0);
+        }
+      }
+
+      const rowCount = Math.max(...rowLengths, 1);
+      const rowLabels = Array.from({ length: rowCount }, (_, index) => `Vessel ${index + 1}`);
+      const matrixData = Array.from({ length: rowCount }, () => Array(columnCount).fill(''));
+
+      groups.forEach((group, groupIndex) => {
+        const vesselColumnIndex = groupIndex * 2;
+        const tsiColumnIndex = vesselColumnIndex + 1;
+        const vessels = asArray(group.vessels).map(cleanText).filter(Boolean);
+
+        vessels.forEach((vesselName, rowIndex) => {
+          matrixData[rowIndex][vesselColumnIndex] = vesselName;
+          matrixData[rowIndex][tsiColumnIndex] = cleanText(trees?.vesselToTsiMap?.[vesselName] || '');
+        });
+      });
+
+      return normalizeFleetRegistrationState({
+        mainHeader: 'Fleet Registration Matrix',
+        subHeaderRowA,
+        subHeaderRowB,
+        rowLabels,
+        matrixData
+      });
+    }
+
+    async function importFleetTreesFromJsonFile(file) {
+      const text = await file.text();
+      let parsed;
+      try {
+        parsed = JSON.parse(text);
+      } catch {
+        throw new Error('Selected file is not valid JSON.');
+      }
+
+      if (!isFleetRegistrationPayload(parsed) && !Array.isArray(parsed?.fleetGroups)) {
+        const registrationError = getFleetRegistrationPayloadError(parsed);
+        throw new Error(
+          `${registrationError} Expected either registration-matrix fields (subHeaderRowA, matrixData) or derived-tree field (fleetGroups).`
+        );
+      }
+
+      const detectedFormat = isFleetRegistrationPayload(parsed)
+        ? 'registration-matrix'
+        : 'derived-tree';
+      if (detectedFormat === 'registration-matrix') {
+        const registrationState = normalizeFleetRegistrationState(parsed);
+        persistRegistrationState(registrationState);
+        latestDerivedTrees = deriveFleetTreesFromRegistration(registrationState);
+      } else {
+        const normalizedTrees = normalizeLoadedDerivedTrees(parsed);
+        const registrationState = buildRegistrationStateFromDerivedTrees(normalizedTrees);
+        persistRegistrationState(registrationState);
+        latestDerivedTrees = normalizedTrees;
+      }
+
+      persistDerivedTrees(latestDerivedTrees);
+      refreshSelectorsAfterTreeUpdate();
+      refreshRegistryPanel();
+      saveFilterState();
+      return {
+        trees: latestDerivedTrees,
+        detectedFormat
+      };
     }
 
     function refreshDerivedTrees() {
       const registrationState = readRegistrationState();
       latestDerivedTrees = deriveFleetTreesFromRegistration(registrationState);
+      if (!latestDerivedTrees.fleetGroups.length) {
+        const cachedTrees = readCachedDerivedTrees();
+        if (cachedTrees) {
+          latestDerivedTrees = cachedTrees;
+          return latestDerivedTrees;
+        }
+      }
       persistDerivedTrees(latestDerivedTrees);
       return latestDerivedTrees;
     }
@@ -1653,12 +2134,31 @@
         }
 
         try {
+          const selectedRecord = findSelectedRegistryRecord();
+          const hasRecordPayload = hasParticularsData(selectedRecord);
+
           localStorage.setItem('DOCKPILOT_VP_CONTEXT', JSON.stringify({
             fleetGroup: getGroupByKey(selectedGroupKey)?.groupName || '',
             managerName: tmFmDisplay.value.trim(),
             vesselName: selectedVesselName,
             tsiName: tsiDisplay.value.trim()
           }));
+
+          if (hasRecordPayload) {
+            localStorage.setItem(VP_NAV_SELECTION_KEY, JSON.stringify({
+              vesselName: selectedVesselName,
+              imo: cleanText(selectedRecord?.imo || ''),
+              context: {
+                fleetGroup: getGroupByKey(selectedGroupKey)?.groupName || '',
+                managerName: tmFmDisplay.value.trim(),
+                tsiName: tsiDisplay.value.trim(),
+                vesselName: selectedVesselName
+              },
+              record: selectedRecord
+            }));
+          } else {
+            localStorage.removeItem(VP_NAV_SELECTION_KEY);
+          }
         } catch (error) {
           console.error('Failed to write vessel particulars context:', error);
         }
@@ -1675,19 +2175,69 @@
       });
 
       loadFleetBtn.addEventListener('click', () => {
-        showModal({
-          title: 'Alert',
-          message: 'Load Fleet will be enabled in a later phase.',
-          confirmText: 'Continue'
-        });
+        if (!loadFleetJsonInput) return;
+        loadFleetJsonInput.click();
       });
 
       saveFleetBtn.addEventListener('click', () => {
-        showModal({
-          title: 'Alert',
-          message: 'Save Fleet will be enabled in a later phase.',
-          confirmText: 'Continue'
-        });
+        const rowsForExport = loadRegistryRows();
+        if (!rowsForExport.length) {
+          setStatus('No vessel selector fleet rows found to export.', 'warn');
+          showModal({
+            title: 'Export Fleet List',
+            message: 'No vessel rows are available in the selector list. Please add or load vessel data first.',
+            confirmText: 'Continue'
+          });
+          return;
+        }
+
+        const exportFileName = buildSelectorFleetExportFileName();
+
+        const runExport = () => {
+          try {
+            const result = triggerSelectorFleetExportDownload(rowsForExport);
+            markFleetFileExported(result.fileName);
+            setStatus(`Selector fleet list exported as ${result.fileName} (${result.rowCount} rows).`, 'success');
+          } catch (error) {
+            console.error('Fleet export failed:', error);
+            setStatus('Unable to export selector fleet list JSON.', 'warn');
+          }
+        };
+
+        if (hasFleetFileBeenExported(exportFileName)) {
+          showModal({
+            title: 'Overwrite Warning',
+            message: `A previously saved file named ${exportFileName} exists for today. Continuing may overwrite the existing file in your saved folder.`,
+            confirmText: 'Overwrite',
+            cancelText: 'Cancel',
+            onConfirm: runExport
+          });
+          return;
+        }
+
+        runExport();
+      });
+
+      loadFleetJsonInput?.addEventListener('change', async () => {
+        const file = loadFleetJsonInput.files?.[0];
+        loadFleetJsonInput.value = '';
+        if (!file) return;
+
+        try {
+          const { rowCount, detectedFormat } = await importSelectorFleetListFromJsonFile(file);
+          setStatus(
+            `Selector fleet list loaded from ${file.name} as ${detectedFormat} (${rowCount} rows).`,
+            'success'
+          );
+        } catch (error) {
+          const message = error?.message || 'Unable to load fleet JSON file.';
+          setStatus(message, 'warn');
+          showModal({
+            title: 'Load Fleet Failed',
+            message,
+            confirmText: 'Continue'
+          });
+        }
       });
 
       fleetGroupSelect.addEventListener('change', applyFleetGroupSelection);
@@ -1711,6 +2261,7 @@
         if (eventKey === FLEET_REG_STATE_KEY) {
           const trees = refreshDerivedTrees();
           refreshSelectorsAfterTreeUpdate();
+          refreshRegistryPanel();
           const now = Date.now();
           if ((now - lastSyncStatusAt) >= SYNC_STATUS_THROTTLE_MS) {
             setStatus(
@@ -1774,6 +2325,15 @@
       const navigationApplied = restoreNavigationSelection();
       if (!navigationApplied) {
         restoreFilterState();
+      }
+
+      if (!selectedGroupKey && fleetGroupSelect.options.length > 1) {
+        fleetGroupSelect.selectedIndex = 1;
+        applyFleetGroupSelection();
+        if (vesselSelect.options.length > 1) {
+          vesselSelect.selectedIndex = 1;
+          applyVesselSelection();
+        }
       }
 
       window.dockpilotFleetComposition = {

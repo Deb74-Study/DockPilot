@@ -610,7 +610,7 @@
         <div class="more-actions-buttons">
           <button id="vesselParticularsBtn" type="button" class="secondary-btn">Register Fleet</button>
           <button id="registerFleetBtn"     type="button" class="secondary-btn">Modify Fleet</button>
-          <button id="launchProjectBtn"     type="button" class="secondary-btn">Launch Project</button>
+          <button id="launchProjectBtn"     type="button" class="secondary-btn">Initiate Project</button>
         </div>
       </div>
 
@@ -669,7 +669,7 @@
     // ── Constants ──
     const REGISTRY_KEY_PREFIX = 'DOCKPILOT_VESSEL_REGISTRY_';
     const DDP_NAV_SELECTION_KEY = 'DOCKPILOT_DDP_NAV_SELECTION';
-    const LAUNCH_HINT_TEXT = 'Click to Launch project for this vessel.';
+    const LAUNCH_HINT_TEXT = 'Click to Initiate project for this vessel.';
 
     const COL_HEADERS = [
       'Vessel ID', 'Vessel Name', 'IMO No.', 'Month-Year of Build',
@@ -904,7 +904,7 @@
             .join(' ');
           const attrEditable = editable ? 'true' : 'false';
           const attrTabIndex = launchCell ? '0' : '-1';
-          const ariaLabel = launchCell ? `Launch project for vessel ${escapeHtml(row.vesselName ?? row.vesselId ?? '')}` : '';
+          const ariaLabel = launchCell ? `Initiate project for vessel ${escapeHtml(row.vesselName ?? row.vesselId ?? '')}` : '';
           const value = DOC_STATUS_KEYS.has(k)
             ? normalizeDocStatus(row[k])
             : String(row[k] ?? '');

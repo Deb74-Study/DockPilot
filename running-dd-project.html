@@ -247,9 +247,16 @@
     .screen-top {
       display: flex;
       justify-content: space-between;
-      align-items: center;
+      align-items: flex-start;
+      gap: 12px;
       color: var(--muted);
       font-size: .88rem;
+    }
+
+    .screen-title {
+      font-size: calc(.88rem + 2px);
+      font-weight: 700;
+      color: var(--text);
     }
 
     .screen .eyebrow {
@@ -257,18 +264,35 @@
       width: fit-content;
     }
 
-    .status {
+    .year-filter {
       display: inline-flex;
-      gap: 8px;
-      align-items: center;
+      align-items: flex-start;
+      gap: 10px;
+      margin-left: auto;
     }
 
-    .dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #41d37d;
-      box-shadow: 0 0 10px rgba(65,211,125,.55);
+    .year-filter-label {
+      padding-top: 8px;
+      color: var(--text);
+      font-weight: 700;
+    }
+
+    .year-filter-select {
+      width: 92px;
+      min-width: 92px;
+      height: 100px;
+      padding: 8px;
+      border-radius: 12px;
+      border: 1px solid var(--border);
+      background: rgba(255,255,255,.04);
+      color: var(--text);
+      font: inherit;
+      overflow-y: auto;
+    }
+
+    .year-filter-select:focus-visible {
+      outline: 2px solid rgba(103,214,255,.5);
+      outline-offset: 2px;
     }
 
     .berth-list {
@@ -346,12 +370,6 @@
           <div class="eyebrow">⚓ Smart Docking Control</div>
         </div>
       </div>
-      <nav>
-        <span>Scheduling</span>
-        <span>Berth Allocation</span>
-        <span>Analytics</span>
-        <span>Support</span>
-      </nav>
     </header>
 
     <main class="hero">
@@ -380,8 +398,28 @@
       <aside class="preview">
         <div class="screen">
           <div class="screen-top">
-            <span>Live Dock Overview</span>
-            <div class="status"><span class="dot"></span>All systems synced</div>
+            <span class="screen-title">DD Projects Overview</span>
+            <div class="year-filter">
+              <span class="year-filter-label">Year</span>
+              <select class="year-filter-select" aria-label="Year" size="3">
+                <option value="2025">2025</option>
+                <option value="2026">2026</option>
+                <option value="2027">2027</option>
+                <option value="2028">2028</option>
+                <option value="2029">2029</option>
+                <option value="2030">2030</option>
+                <option value="2031">2031</option>
+                <option value="2032">2032</option>
+                <option value="2033">2033</option>
+                <option value="2034">2034</option>
+                <option value="2035">2035</option>
+                <option value="2036">2036</option>
+                <option value="2037">2037</option>
+                <option value="2038">2038</option>
+                <option value="2039">2039</option>
+                <option value="2040">2040</option>
+              </select>
+            </div>
           </div>
 
           <div class="berth-list">
@@ -414,8 +452,6 @@
     </main>
 
     <footer>
-      <span>Built for laptop and desktop screens</span>
-      <span>Landscape-first responsive front page</span>
       <a class="return-link" href="./frontpage.html">Return to Frontpage</a>
     </footer>
   </section>

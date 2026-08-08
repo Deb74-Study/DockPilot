@@ -133,6 +133,19 @@
       width: 168px;
     }
 
+    .launch-project-btn {
+      width: 168px;
+      background: linear-gradient(135deg, rgba(12, 128, 126, 0.95), rgba(24, 180, 122, 0.88));
+      border-color: rgba(114, 241, 203, 0.45);
+      color: #effff9;
+    }
+
+    .launch-project-btn:hover,
+    .launch-project-btn:focus-visible {
+      border-color: rgba(114, 241, 203, 0.7);
+      background: linear-gradient(135deg, rgba(18, 149, 147, 0.98), rgba(36, 196, 138, 0.94));
+    }
+
     .secondary-btn {
       width: 158px;
     }
@@ -512,6 +525,7 @@
       <div class="toolbar-row">
         <span id="todayBadge" class="tag">Date:</span>
         <div class="toolbar-actions">
+          <button id="launchProjectHeaderBtn" type="button" class="launch-project-btn">Launch Project</button>
           <a class="return-link" href="./frontpage.html">Return to Frontpage</a>
         </div>
       </div>
@@ -633,6 +647,7 @@
     const todayBadge = document.getElementById('todayBadge');
     const moreActionsDropdown = document.getElementById('moreActionsDropdown');
     const moreActionsToggle = document.getElementById('moreActionsToggle');
+    const launchProjectHeaderBtn = document.getElementById('launchProjectHeaderBtn');
     const registerFleetBtn = document.getElementById('registerFleetBtn');
     const launchProjectBtn = document.getElementById('launchProjectBtn');
     const editProjectBtn = document.getElementById('editProjectBtn');
@@ -1022,6 +1037,9 @@
     }
 
     function wireEvents() {
+      launchProjectHeaderBtn.addEventListener('click', () => {
+        window.location.href = './running-dd-project.html';
+      });
       moreActionsToggle.addEventListener('click', () => {
         setMoreActionsExpanded(moreActionsDropdown.classList.contains('collapsed'));
       });

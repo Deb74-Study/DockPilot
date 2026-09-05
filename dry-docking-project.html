@@ -258,6 +258,83 @@
       padding: 20px;
     }
 
+    .launch-modal-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(2, 10, 20, 0.72);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+    }
+
+    .launch-modal-overlay.show {
+      display: flex;
+    }
+
+    .launch-modal {
+      width: min(560px, 100%);
+      background: linear-gradient(180deg, rgba(13, 28, 51, 0.98), rgba(8, 17, 32, 0.98));
+      border: 1px solid rgba(103, 214, 255, 0.24);
+      border-radius: 20px;
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.5);
+      padding: 20px;
+      display: grid;
+      gap: 14px;
+    }
+    .launch-modal[hidden],
+    .data-file-modal[hidden] {
+      display: none !important;
+    }
+
+    .launch-modal h2 {
+      margin: 0;
+      font-size: 1.1rem;
+    }
+
+    .launch-modal p {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.45;
+      font-size: 0.95rem;
+    }
+
+    .launch-modal-actions {
+      display: flex;
+      gap: 10px;
+      justify-content: flex-end;
+      flex-wrap: wrap;
+    }
+
+    .launch-modal-actions button {
+      min-width: 128px;
+    }
+
+    .launch-modal .proceed-btn {
+      background: linear-gradient(135deg, #7ef0a2, #3dd179);
+      color: #062111;
+      border-color: transparent;
+    }
+
+    .launch-modal .reject-btn {
+      background: linear-gradient(135deg, #ffcb86, #f39a3d);
+      color: #281300;
+      border-color: transparent;
+    }
+
+    .launch-modal .ok-btn {
+      background: linear-gradient(135deg, #67d6ff, #7ef0a2);
+      color: #04101d;
+      border-color: transparent;
+    }
+
+    .launch-modal .secondary-note {
+      font-size: 0.8rem;
+      color: rgba(174, 188, 218, 0.9);
+    }
+
     .selection-panel {
       display: grid;
       gap: 10px;
@@ -635,11 +712,36 @@
     </div>
   </main>
 
+  <div id="launchModalOverlay" class="launch-modal-overlay" aria-hidden="true">
+    <div id="launchPromptModal" class="launch-modal" role="dialog" aria-modal="true" aria-labelledby="launchPromptTitle" hidden>
+      <h2 id="launchPromptTitle">Create Project Folder</h2>
+      <p>A new docking project folder for this vessel needs to be created!</p>
+      <p class="secondary-note">Proceed will ask you to choose the local folder where the project directory will be created.</p>
+      <div class="launch-modal-actions">
+        <button id="launchRejectBtn" type="button" class="reject-btn">Reject</button>
+        <button id="launchProceedBtn" type="button" class="proceed-btn">Proceed</button>
+      </div>
+    </div>
+    <div id="launchAbortModal" class="launch-modal" role="dialog" aria-modal="true" aria-labelledby="launchAbortTitle" hidden>
+      <h2 id="launchAbortTitle">Launch Aborted</h2>
+      <p>Project Launch aborted! Please launch later. Folder creation is a necessary step to proceed further.</p>
+      <div class="launch-modal-actions">
+        <button id="launchAbortOkBtn" type="button" class="ok-btn">Ok</button>
+      </div>
+    </div>
+  </div>
+
   <script type="module">
     import { supabase } from './supabaseClient.js';
     import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
     import { loadSavedTheme } from './dockpilotTheme.js';
     import { getSession } from './dockpilotAuthContract.js';
+    import {
+      buildProjectFileText,
+      buildProjectFolderName,
+      buildProjectFolderPath,
+      saveProjectRecord
+    } from './dockpilotProjectStorage.js';
 
     loadSavedTheme();
 
@@ -651,10 +753,18 @@
     const registerFleetBtn = document.getElementById('registerFleetBtn');
     const launchProjectBtn = document.getElementById('launchProjectBtn');
     const editProjectBtn = document.getElementById('editProjectBtn');
+    const launchModalOverlay = document.getElementById('launchModalOverlay');
+    const launchPromptModal = document.getElementById('launchPromptModal');
+    const launchAbortModal = document.getElementById('launchAbortModal');
+    const launchProceedBtn = document.getElementById('launchProceedBtn');
+    const launchRejectBtn = document.getElementById('launchRejectBtn');
+    const launchAbortOkBtn = document.getElementById('launchAbortOkBtn');
     const statusNote = document.getElementById('statusNote');
     const selectionMethodSelect = document.getElementById('selectionMethodSelect');
     const selectionValueSelect = document.getElementById('selectionValueSelect');
     const selectedVesselTable = document.getElementById('selectedVesselTable');
+    const dockingCriteriaSelect = document.getElementById('dockingCriteriaSelect');
+    const capSurveyRequiredSelect = document.getElementById('capSurveyRequiredSelect');
     const preferredLocationOption1 = document.getElementById('preferredLocationOption1');
     const preferredLocationOption2 = document.getElementById('preferredLocationOption2');
     const preferredLocationOption3 = document.getElementById('preferredLocationOption3');
@@ -668,6 +778,9 @@
     const preferredLocationDate3Display = document.getElementById('preferredLocationDate3Display');
 
     const VESSEL_REGISTRY_KEY_PREFIX = 'DOCKPILOT_VESSEL_REGISTRY_';
+    const DDP_NAV_SELECTION_KEY = 'DOCKPILOT_DDP_NAV_SELECTION';
+    const DDP_FRONT_CONTEXT_KEY = 'DOCKPILOT_DDP_FRONT_CONTEXT';
+    const DDP_RUNNING_PROJECT_CONTEXT_KEY = 'DOCKPILOT_RUNNING_PROJECT_CONTEXT';
     const REGISTRY_COL_HEADERS = [
       'Vessel ID', 'Vessel Name', 'IMO No.', 'Month-Year of Build',
       'Yard of Build', 'Flag', 'Class', 'LOA (m)', 'LBP (m)',
@@ -712,6 +825,138 @@
     const MORE_ACTIONS_IDLE_MS = 2000;
     let moreActionsCollapseTimer = null;
     let moreActionsKeyboardFocus = false;
+    let activeLaunchDialog = null;
+
+    function getLaunchContextPayload() {
+      return buildFrontpageContextPayload();
+    }
+
+    function openLaunchDialog(mode) {
+      activeLaunchDialog = mode;
+      launchModalOverlay.classList.add('show');
+      launchModalOverlay.setAttribute('aria-hidden', 'false');
+      launchPromptModal.hidden = mode !== 'prompt';
+      launchAbortModal.hidden = mode !== 'abort';
+      window.setTimeout(() => {
+        if (mode === 'prompt') {
+          launchProceedBtn.focus();
+        } else {
+          launchAbortOkBtn.focus();
+        }
+      }, 0);
+    }
+
+    function closeLaunchDialog() {
+      activeLaunchDialog = null;
+      launchModalOverlay.classList.remove('show');
+      launchModalOverlay.setAttribute('aria-hidden', 'true');
+      launchPromptModal.hidden = true;
+      launchAbortModal.hidden = true;
+    }
+
+    function handleLaunchReject() {
+      closeLaunchDialog();
+      openLaunchDialog('abort');
+    }
+
+    function handleAbortDismiss() {
+      closeLaunchDialog();
+    }
+
+    function handleLaunchDialogKeydown(event) {
+      if (event.key !== 'Escape' || !activeLaunchDialog) return;
+      event.preventDefault();
+      if (activeLaunchDialog === 'prompt') {
+        handleLaunchReject();
+      } else {
+        handleAbortDismiss();
+      }
+    }
+
+    async function createProjectFolderAndFile(payload) {
+      if (!window.showDirectoryPicker) {
+        throw new Error('Folder creation is not supported in this browser. Use a Chromium-based browser with File System Access API support.');
+      }
+
+      const projectFolderName = buildProjectFolderName(payload?.vessel?.vesselId, payload?.createdAt);
+      const baseFolderHandle = await window.showDirectoryPicker({ mode: 'readwrite' });
+      const projectFolderHandle = await baseFolderHandle.getDirectoryHandle(projectFolderName, { create: true });
+      if (projectFolderHandle.name !== projectFolderName) {
+        throw new Error('Project folder name validation failed.');
+      }
+
+      const projectFolderPath = buildProjectFolderPath(baseFolderHandle.name, projectFolderName);
+      const txtFileName = `${projectFolderName}.txt`;
+      const fileText = buildProjectFileText({
+        payload,
+        projectFolderName,
+        projectFolderPath,
+        baseFolderName: baseFolderHandle.name,
+        txtFileName
+      });
+
+      const dataFileHandle = await projectFolderHandle.getFileHandle(txtFileName, { create: true });
+      const writable = await dataFileHandle.createWritable();
+      await writable.write(fileText);
+      await writable.close();
+
+      const record = {
+        projectKey: projectFolderName,
+        projectFolderName,
+        projectFolderPath,
+        txtFileName,
+        fileText,
+        payload,
+        createdAt: payload.createdAt,
+        baseFolderName: baseFolderHandle.name,
+        fileHandle: dataFileHandle,
+        folderHandle: projectFolderHandle
+      };
+
+      await saveProjectRecord(record);
+
+      const serializedRecord = JSON.stringify({
+        projectKey: record.projectKey,
+        projectFolderName: record.projectFolderName,
+        projectFolderPath: record.projectFolderPath,
+        txtFileName: record.txtFileName,
+        createdAt: record.createdAt,
+        baseFolderName: record.baseFolderName
+      });
+
+      try {
+        sessionStorage.setItem('DOCKPILOT_DDP_PROJECT_FILE_META', serializedRecord);
+      } catch {
+        // Best-effort metadata handoff only.
+      }
+      try {
+        localStorage.setItem('DOCKPILOT_DDP_PROJECT_FILE_META', serializedRecord);
+      } catch {
+        // Best-effort metadata handoff only.
+      }
+
+      return record;
+    }
+
+    async function handleLaunchProceed() {
+      closeLaunchDialog();
+      const payload = getLaunchContextPayload();
+      persistFrontpageContext(payload);
+      setStatus('Choose the base folder for the new docking project.', 'success');
+      try {
+        await createProjectFolderAndFile(payload);
+        setStatus('Project folder and data file created. Opening Project Frontpage.', 'success');
+        window.location.href = './dd-project-frontpage.html?from=launch';
+      } catch (error) {
+        const message = String(error?.message ?? 'Project folder creation failed.');
+        if (/AbortError/i.test(message)) {
+          setStatus('Folder selection was cancelled.', 'warn');
+          return;
+        }
+        console.error('Project launch failed:', error);
+        setStatus(message, 'warn');
+      }
+    }
 
     function formatBadgeDate(date) {
       const day = String(date.getDate()).padStart(2, '0');
@@ -974,6 +1219,139 @@
       }
     }
 
+    function readNavigationSelection() {
+      try {
+        const raw = localStorage.getItem(DDP_NAV_SELECTION_KEY);
+        localStorage.removeItem(DDP_NAV_SELECTION_KEY);
+        return raw ? JSON.parse(raw) : null;
+      } catch {
+        localStorage.removeItem(DDP_NAV_SELECTION_KEY);
+        return null;
+      }
+    }
+
+    function findSelectedRegistryRowIndex(navSelection) {
+      if (!navSelection || !Array.isArray(registryRows) || !registryRows.length) return -1;
+
+      const selectedVesselId = String(navSelection?.record?.vesselId ?? navSelection?.vesselId ?? '').trim().toLowerCase();
+      const selectedImo = String(navSelection?.record?.imo ?? navSelection?.imo ?? '').trim().toLowerCase();
+
+      if (selectedVesselId || selectedImo) {
+        const exactMatchIndex = registryRows.findIndex((row) => (
+          String(row?.vesselId ?? '').trim().toLowerCase() === selectedVesselId &&
+          String(row?.imo ?? '').trim().toLowerCase() === selectedImo
+        ));
+        if (exactMatchIndex >= 0) return exactMatchIndex;
+      }
+
+      const methodKey = SELECTION_METHODS.some((method) => method.key === navSelection?.selectionMethodKey)
+        ? navSelection.selectionMethodKey
+        : '';
+      const selectedValue = String(navSelection?.selectionValue ?? '').trim().toLowerCase();
+
+      if (methodKey && selectedValue) {
+        const methodMatchIndex = registryRows.findIndex((row) => (
+          String(row?.[methodKey] ?? '').trim().toLowerCase() === selectedValue
+        ));
+        if (methodMatchIndex >= 0) return methodMatchIndex;
+      }
+
+      return -1;
+    }
+
+    function applyNavigationSelection() {
+      if (!selectionMethodSelect || !selectionValueSelect || !registryRows.length) return false;
+
+      const navSelection = readNavigationSelection();
+      if (!navSelection) return false;
+
+      const methodKey = SELECTION_METHODS.some((method) => method.key === navSelection.selectionMethodKey)
+        ? navSelection.selectionMethodKey
+        : '';
+      if (!methodKey) return false;
+
+      selectionMethodSelect.value = methodKey;
+      populateSelectionValues();
+
+      const rowIndex = findSelectedRegistryRowIndex(navSelection);
+      if (rowIndex >= 0) {
+        selectionValueSelect.value = String(rowIndex);
+        renderSelectedVesselTable(registryRows[rowIndex]);
+        return true;
+      }
+
+      return false;
+    }
+
+    function getSelectedRegistryRow() {
+      const idx = Number(selectionValueSelect?.value);
+      if (Number.isInteger(idx) && idx >= 0 && idx < registryRows.length) {
+        return registryRows[idx];
+      }
+      return registryRows[0] || null;
+    }
+
+    function getDateDisplay(displayInput, dateInput) {
+      const displayValue = String(displayInput?.value ?? '').trim();
+      if (displayValue) return displayValue;
+      return formatDisplayDate(String(dateInput?.value ?? '').trim());
+    }
+
+    function buildFrontpageContextPayload() {
+      const selectedRow = getSelectedRegistryRow();
+      return {
+        sourcePage: 'dry-docking-project',
+        launchedTo: 'dd-project-frontpage',
+        nextPageHint: 'running-dd-project',
+        createdAt: new Date().toISOString(),
+        vessel: {
+          vesselId: String(selectedRow?.vesselId ?? '').trim(),
+          vesselName: String(selectedRow?.vesselName ?? '').trim(),
+          imo: String(selectedRow?.imo ?? '').trim(),
+        },
+        selectedVesselDetails: selectedRow ? { ...selectedRow } : null,
+        docking: {
+          dockingCriteria: String(dockingCriteriaSelect?.value ?? '').trim(),
+          capSurveyRequired: String(capSurveyRequiredSelect?.value ?? '').trim(),
+          estReleaseDate: getDateDisplay(expectedReleaseDateDisplay, expectedReleaseDatePicker),
+        },
+        preferredLocations: [
+          {
+            location: String(preferredLocationOption1?.value ?? '').trim(),
+            date: getDateDisplay(preferredLocationDate1Display, preferredLocationDate1Picker),
+          },
+          {
+            location: String(preferredLocationOption2?.value ?? '').trim(),
+            date: getDateDisplay(preferredLocationDate2Display, preferredLocationDate2Picker),
+          },
+          {
+            location: String(preferredLocationOption3?.value ?? '').trim(),
+            date: getDateDisplay(preferredLocationDate3Display, preferredLocationDate3Picker),
+          },
+        ],
+      };
+    }
+
+    function persistFrontpageContext(payload) {
+      if (!payload || typeof payload !== 'object') return;
+      const encoded = JSON.stringify(payload);
+      try {
+        sessionStorage.setItem(DDP_FRONT_CONTEXT_KEY, encoded);
+      } catch {
+        // Session storage failures should not block navigation.
+      }
+      try {
+        localStorage.setItem(DDP_FRONT_CONTEXT_KEY, encoded);
+      } catch {
+        // Local storage failures should not block navigation.
+      }
+      try {
+        localStorage.setItem(DDP_RUNNING_PROJECT_CONTEXT_KEY, encoded);
+      } catch {
+        // Running project hook key is best-effort for future integration.
+      }
+    }
+
     function wireSelectionEvents() {
       if (!selectionMethodSelect || !selectionValueSelect) return;
       selectionMethodSelect.addEventListener('change', () => {
@@ -1038,8 +1416,12 @@
 
     function wireEvents() {
       launchProjectHeaderBtn.addEventListener('click', () => {
-        window.location.href = './running-dd-project.html';
+        openLaunchDialog('prompt');
       });
+      launchProceedBtn.addEventListener('click', handleLaunchProceed);
+      launchRejectBtn.addEventListener('click', handleLaunchReject);
+      launchAbortOkBtn.addEventListener('click', handleAbortDismiss);
+      document.addEventListener('keydown', handleLaunchDialogKeydown);
       moreActionsToggle.addEventListener('click', () => {
         setMoreActionsExpanded(moreActionsDropdown.classList.contains('collapsed'));
       });
@@ -1085,7 +1467,9 @@
       updatePreferredDateConstraintsFromExpected();
       refreshPreferredLocationOptions();
       registryRows = loadRegistryRows();
-      populateSelectionValues();
+      if (!applyNavigationSelection()) {
+        populateSelectionValues();
+      }
       wireSelectionEvents();
       if (!registryRows.length) {
         setStatus('No vessel registry data found for this company. Save vessel particulars first.', 'warn');

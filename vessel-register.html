@@ -90,6 +90,23 @@
       flex-wrap: wrap;
     }
 
+    .registry-notice {
+      display: inline-flex;
+      align-items: center;
+      max-width: min(520px, 100%);
+      padding: 8px 12px;
+      border-radius: 12px;
+      border: 1px solid rgba(103, 214, 255, 0.75);
+      background: rgba(5, 14, 28, 0.84);
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1.25;
+      letter-spacing: 0.02em;
+      white-space: normal;
+      text-wrap: balance;
+    }
+
     .tag {
       display: inline-flex;
       width: 158px;
@@ -531,6 +548,7 @@
     @media (max-width: 900px) {
       .manager-shell { width: 100%; }
       .toolbar-row { align-items: flex-start; }
+      .registry-notice { max-width: 100%; }
       .more-actions-dropdown { position: static; margin-left: auto; }
     }
 
@@ -601,6 +619,7 @@
       <div class="toolbar-row">
         <span id="todayBadge" class="tag">Date:</span>
         <div class="toolbar-actions">
+          <div class="registry-notice">Click Vessel Name or IMO Number to Initiate a Docking Project</div>
           <a class="return-link" href="./frontpage.html">Return to Frontpage</a>
         </div>
       </div>
@@ -812,10 +831,12 @@
       }
     }
 
-    function launchProjectForRow(rowIndex) {
+    function launchProjectForRow(rowIndex, colIndex = 1) {
       if (!Number.isFinite(rowIndex)) return;
       const row = displayedRows[rowIndex];
       if (!row || typeof row !== 'object') return;
+      const selectionMethodKey = Number(colIndex) === 2 ? 'imo' : 'vesselName';
+      const selectionMethodLabel = selectionMethodKey === 'imo' ? 'IMO No.' : 'Vessel Name';
       const payload = {
         vesselId: String(row.vesselId ?? '').trim(),
         vesselName: String(row.vesselName ?? '').trim(),
@@ -823,13 +844,16 @@
         record: row,
         source: 'vessel-register',
         timestamp: new Date().toISOString(),
+        selectionMethodKey,
+        selectionMethodLabel,
+        selectionValue: String(row?.[selectionMethodKey] ?? '').trim(),
       };
       try {
         localStorage.setItem(DDP_NAV_SELECTION_KEY, JSON.stringify(payload));
       } catch (err) {
         console.warn('[Vessel Registry] Could not write launch navigation payload:', err);
       }
-      window.location.href = './dry-docking-project_p2.html';
+      window.location.href = './dry-docking-project.html';
     }
 
     function commitCellEdit(cell) {
@@ -1051,7 +1075,7 @@
       tableBody.addEventListener('click', (event) => {
         const cell = event.target.closest('td.vessel-launch-cell');
         if (!cell || !tableBody.contains(cell)) return;
-        launchProjectForRow(Number(cell.dataset.rowIndex));
+        launchProjectForRow(Number(cell.dataset.rowIndex), Number(cell.dataset.colIndex));
       });
 
       tableBody.addEventListener('focusin', (event) => {
@@ -1076,7 +1100,7 @@
         const launchCell = event.target.closest('td.vessel-launch-cell');
         if (launchCell && (event.key === 'Enter' || event.key === ' ')) {
           event.preventDefault();
-          launchProjectForRow(Number(launchCell.dataset.rowIndex));
+          launchProjectForRow(Number(launchCell.dataset.rowIndex), Number(launchCell.dataset.colIndex));
           return;
         }
 

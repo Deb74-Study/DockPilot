@@ -4,6 +4,7 @@
   <meta charset="UTF-8" />
   <title>Job Index</title>
   <style>
+    html, body { background: #ffffff !important; }
     body { font-family: Arial, sans-serif; margin: 20px; }
     table { border-collapse: collapse; width: 100%; max-width: 1200px; }
     th, td { border: 1px solid #888; padding: 6px 8px; text-align: left; }
@@ -295,7 +296,7 @@
     function generateHtmlContent() {
       const exportTimestamp = new Date().toLocaleString();
       const styles = `
-        body { font-family: Arial, sans-serif; margin: 20px; }
+        body { font-family: Arial, sans-serif; margin: 20px; background: #ffffff; }
         table { border-collapse: collapse; width: 100%; max-width: 1200px; }
         th, td { border: 1px solid #888; padding: 6px 8px; text-align: left; }
         th { background: #f2f2f2; }
@@ -816,10 +817,6 @@
   <script type="module">
     import { supabase } from './supabaseClient.js';
     import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
-    import { loadSavedTheme } from './dockpilotTheme.js';
-
-    // Apply saved theme before anything renders
-    loadSavedTheme();
 
     startDockPilotPageGuard({
       supabase,

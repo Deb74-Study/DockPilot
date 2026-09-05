@@ -294,6 +294,20 @@
       border: 1px solid var(--line);
     }
 
+    .more-actions-dropdown #editProjectBtn {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2)) !important;
+      color: #04101d !important;
+      border-color: transparent !important;
+    }
+
+    .more-actions-dropdown #editProjectBtn:hover,
+    .more-actions-dropdown #editProjectBtn:focus-visible {
+      transform: translateY(-2px);
+      filter: brightness(1.1);
+      border-color: transparent !important;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2)) !important;
+    }
+
     .more-actions-dropdown button:not(.more-actions-toggle):hover {
       transform: translateY(-2px);
       border-color: rgba(103,214,255,.60);
@@ -1022,7 +1036,7 @@
         <div class="more-actions-buttons">
           <button id="registerFleetBtn" type="button" class="secondary-btn">Register Fleet</button>
           <button id="launchProjectBtn" type="button" class="secondary-btn">Initiate Project</button>
-          <button id="editProjectBtn" type="button" class="secondary-btn">Load Vessel</button>
+          <button id="editProjectBtn" type="button" class="secondary-btn primary-btn">Load Vessel</button>
         </div>
       </div>
       <input type="file" id="loadVesselJsonInput" class="hidden" accept=".json,application/json" />
@@ -2725,6 +2739,10 @@
       window.location.href = './vessel-selector.html';
     }
 
+    function openVesselRegisterTab() {
+      return window.open('./vessel-register.html', '_blank', 'noopener');
+    }
+
     async function exportVpPackage(metadata) {
       const { vesselToken, imoToken } = metadata.tokens;
       // 1. JSON metadata file
@@ -2823,10 +2841,11 @@
           message: 'The export package containing the JSON record and uploaded files have been saved in the device\'s download folder. Please move them to your project\'s working folder.',
           confirmText: 'Done',
           onConfirm: () => {
-            closeModal();
+            openVesselRegisterTab();
             goToVesselRegister();
           },
           onCancel: () => {
+            openVesselRegisterTab();
             goToVesselRegister();
           },
         });

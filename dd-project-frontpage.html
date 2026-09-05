@@ -1,0 +1,969 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Project Frontpage | DockPilot</title>
+  <style>
+    :root {
+      --edge-padding: clamp(12px, 1.6vw, 22px);
+      --panel: rgba(11, 24, 45, 0.92);
+      --line: rgba(255, 255, 255, 0.1);
+      --text: #eef4ff;
+      --muted: #aebcda;
+      --accent: #67d6ff;
+      --accent-2: #72f1cb;
+      --ok: #8ef0b1;
+      --warn: #ffd28c;
+      --badge-fill: #093046;
+      --badge-line: rgba(107, 215, 255, 0.24);
+      --border: rgba(255,255,255,0.1);
+      --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
+    }
+
+    * { box-sizing: border-box; }
+
+    html, body {
+      height: 100%;
+      margin: 0;
+    }
+
+    body {
+      min-height: 100dvh;
+      display: grid;
+      place-items: start center;
+      padding: var(--edge-padding);
+      overflow-x: hidden;
+      font-family: Inter, "Segoe UI", Roboto, sans-serif;
+      background:
+        radial-gradient(circle at top left, #133977 0%, transparent 32%),
+        radial-gradient(circle at bottom right, #0f8f98 0%, transparent 30%),
+        linear-gradient(135deg, #06111f, #0a1830 40%, #07111e 100%);
+      color: var(--text);
+    }
+
+    .manager-shell {
+      width: min(1280px, 100%);
+      max-width: calc(100vw - (2 * var(--edge-padding)));
+      margin: 0 auto;
+      display: grid;
+      gap: 10px;
+    }
+
+    .panel {
+      width: 100%;
+      min-width: 0;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .header-panel {
+      display: grid;
+      gap: 8px;
+      position: relative;
+    }
+
+    .toolbar-row {
+      display: flex;
+      align-items: flex-start;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .toolbar-actions {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      flex-wrap: wrap;
+    }
+
+    .tag {
+      display: inline-flex;
+      width: 158px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      color: var(--accent);
+      background: var(--badge-fill);
+      border: 1px solid var(--badge-line);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.4vw, 1.95rem);
+      line-height: 1.1;
+    }
+
+    p,
+    .muted {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.35;
+      font-size: 0.86rem;
+    }
+
+    .return-link,
+    button {
+      border: 0;
+      border-radius: 12px;
+      padding: 9px 13px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-decoration: none;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+    }
+
+    .return-link {
+      width: 168px;
+    }
+
+    .review-running-link {
+      width: auto;
+      min-width: 244px;
+      text-align: center;
+    }
+
+    .secondary-btn {
+      width: 158px;
+    }
+
+    .return-link:focus-visible,
+    button:focus-visible {
+      outline: 2px solid rgba(103,214,255,.5);
+      outline-offset: 2px;
+    }
+
+    .return-link:hover,
+    .return-link:focus-visible,
+    .secondary-btn:hover,
+    .secondary-btn:focus-visible {
+      transform: translateY(-2px);
+      border-color: rgba(103,214,255,.60);
+      background: linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72));
+    }
+
+    button[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none !important;
+      filter: none !important;
+      background: rgba(255, 255, 255, 0.06) !important;
+      border-color: var(--line) !important;
+    }
+
+    .status-note {
+      margin: 0;
+      padding: 7px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      line-height: 1.3;
+      font-size: 0.8rem;
+    }
+
+    .status-note.success {
+      color: var(--ok);
+      background: rgba(142, 240, 177, 0.08);
+      border-color: rgba(142, 240, 177, 0.18);
+    }
+
+    .status-note.warn {
+      color: var(--warn);
+      background: rgba(255, 210, 140, 0.08);
+      border-color: rgba(255, 210, 140, 0.18);
+    }
+
+    .more-actions-dropdown {
+      position: absolute;
+      top: calc(36px + 2px + 20px);
+      right: 16px;
+      display: flex;
+      width: 168px;
+      z-index: 10;
+    }
+
+    .more-actions-dropdown.collapsed {
+      flex-direction: row;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px;
+      justify-content: center;
+    }
+
+    .more-actions-dropdown.collapsed .more-actions-toggle {
+      width: 100%;
+      height: 32px;
+      padding: 0 13px !important;
+    }
+
+    .more-actions-dropdown:not(.collapsed) {
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(11, 24, 45, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 8px;
+      width: 168px;
+    }
+
+    .more-actions-toggle {
+      width: 100% !important;
+      padding: 9px 13px !important;
+      border-radius: 12px !important;
+    }
+
+    .more-actions-buttons {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .more-actions-dropdown:not(.collapsed) .more-actions-buttons {
+      display: flex;
+    }
+
+    .more-actions-dropdown button {
+      width: 100%;
+      height: 32px;
+      padding: 0 13px !important;
+      text-align: center;
+      justify-content: center;
+    }
+
+    .project-details-panel {
+      display: grid;
+      gap: 12px;
+    }
+
+    .project-details-title {
+      margin: 0;
+      font-size: 1.05rem;
+      color: var(--accent);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .project-details-heading {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .project-launch-date {
+      font-size: 0.8rem;
+      color: #0f233a;
+      border: 1px solid #79b8ff;
+      border-radius: 999px;
+      padding: 4px 10px;
+      background: linear-gradient(180deg, #e6f3ff 0%, #cfe8ff 100%);
+      box-shadow: 0 0 0 1px rgba(24, 92, 166, 0.2) inset;
+    }
+
+    .project-launch-date.pending {
+      color: #0f233a;
+      font-style: italic;
+      border-color: #9bb4cf;
+      background: linear-gradient(180deg, #f2f7fd 0%, #e4eef9 100%);
+      box-shadow: 0 0 0 1px rgba(114, 137, 163, 0.2) inset;
+    }
+
+    .project-details-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 24px;
+    }
+
+    .project-details-column {
+      display: grid;
+      gap: 9px;
+      min-width: 0;
+      position: relative;
+      padding-right: 6px;
+    }
+
+    .project-details-column:not(:last-child) {
+      border-right: 1px solid rgba(174, 188, 218, 0.35);
+      padding-right: 16px;
+    }
+
+    .project-detail-row {
+      display: grid;
+      grid-template-columns: minmax(0, 1fr) minmax(160px, 220px);
+      align-items: center;
+      gap: 8px;
+    }
+
+    .project-detail-label {
+      font-size: 0.82rem;
+      color: var(--text);
+      line-height: 1.25;
+      word-break: break-word;
+    }
+
+    .project-detail-value {
+      min-height: 32px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 6px 10px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
+      font-size: 0.8rem;
+      color: var(--text);
+      line-height: 1.2;
+      word-break: break-word;
+      text-align: left;
+    }
+
+    .project-detail-value.pending,
+    .project-detail-label.pending {
+      color: rgba(174, 188, 218, 0.75);
+      font-style: italic;
+    }
+
+    .placeholder-panel {
+      min-height: 260px;
+      display: grid;
+      place-items: center;
+      text-align: center;
+      border: 1px dashed rgba(255, 255, 255, 0.18);
+      border-radius: 16px;
+      background: rgba(255, 255, 255, 0.02);
+      padding: 20px;
+    }
+
+    .project-links-panel {
+      display: grid;
+      gap: 12px;
+      align-content: start;
+    }
+
+    .project-links-grid {
+      display: grid;
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+      gap: 12px;
+    }
+
+    .project-link-card {
+      display: grid;
+      gap: 10px;
+      padding: 14px;
+      border-radius: 16px;
+      border: 1px solid rgba(103, 214, 255, 0.14);
+      background: linear-gradient(180deg, rgba(9, 22, 40, 0.95), rgba(6, 16, 28, 0.96));
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+    }
+
+    .project-link-card-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .project-link-card-title {
+      margin: 0;
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.2;
+    }
+
+    .project-link-card-note {
+      margin: 0;
+      color: var(--muted);
+      font-size: 0.78rem;
+      line-height: 1.35;
+    }
+
+    .project-link-button {
+      min-width: 132px;
+    }
+
+    .project-link-button:disabled {
+      opacity: 0.58;
+      cursor: not-allowed;
+      transform: none !important;
+      background: rgba(255, 255, 255, 0.06) !important;
+      border-color: rgba(255, 255, 255, 0.12) !important;
+    }
+
+    .data-file-overlay {
+      position: fixed;
+      inset: 0;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      padding: 20px;
+      background: rgba(2, 10, 20, 0.72);
+      backdrop-filter: blur(8px);
+      z-index: 1000;
+    }
+
+    .data-file-overlay.show {
+      display: flex;
+    }
+
+    .data-file-modal {
+      width: min(920px, 100%);
+      max-height: min(80dvh, 900px);
+      display: grid;
+      gap: 12px;
+      padding: 18px;
+      border-radius: 20px;
+      border: 1px solid rgba(103, 214, 255, 0.22);
+      background: linear-gradient(180deg, rgba(12, 26, 47, 0.98), rgba(6, 15, 28, 0.98));
+      box-shadow: 0 28px 80px rgba(0, 0, 0, 0.5);
+      overflow: hidden;
+    }
+
+    .data-file-modal-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+      flex-wrap: wrap;
+    }
+
+    .data-file-modal-title {
+      margin: 0;
+      font-size: 1.08rem;
+      color: var(--text);
+    }
+
+    .data-file-body {
+      margin: 0;
+      padding: 16px;
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      background: rgba(3, 14, 26, 0.95);
+      color: #eaf3ff;
+      font-size: 0.82rem;
+      line-height: 1.45;
+      white-space: pre-wrap;
+      overflow: auto;
+      min-height: 300px;
+      max-height: calc(80dvh - 120px);
+    }
+
+    .data-file-modal .close-data-file-btn {
+      min-width: 112px;
+      background: linear-gradient(135deg, #67d6ff, #7ef0a2);
+      color: #04101d;
+      border-color: transparent;
+    }
+
+    @media (max-width: 900px) {
+      .manager-shell { width: 100%; }
+      .toolbar-row { align-items: flex-start; }
+      .more-actions-dropdown { position: static; margin-left: auto; }
+      .project-details-grid { grid-template-columns: 1fr; }
+      .project-detail-row { grid-template-columns: minmax(0, 1fr); }
+    }
+  </style>
+</head>
+<body>
+  <main class="manager-shell">
+    <section class="panel header-panel">
+      <div class="toolbar-row">
+        <span id="todayBadge" class="tag">Date:</span>
+        <div class="toolbar-actions">
+          <a id="reviewRunningProjectsLink" class="return-link review-running-link" href="./running-dd-project.html">Review all running Projects</a>
+          <a class="return-link" href="./frontpage.html">Return to Frontpage</a>
+        </div>
+      </div>
+
+      <div id="moreActionsDropdown" class="more-actions-dropdown collapsed">
+        <button id="moreActionsToggle" type="button" class="secondary-btn more-actions-toggle">See More</button>
+        <div class="more-actions-buttons">
+          <button id="registerFleetBtn" type="button" class="secondary-btn" disabled>Save Project</button>
+          <button id="launchProjectBtn" type="button" class="secondary-btn" disabled>Load Project</button>
+          <button id="editProjectBtn" type="button" class="secondary-btn" disabled>Dummy button</button>
+        </div>
+      </div>
+
+      <div>
+        <h1>Project Frontpage</h1>
+        <p class="muted">Project launch context and vessel details will be layered in the next build phase.</p>
+      </div>
+    </section>
+
+    <p id="statusNote" class="status-note">Project frontpage shell initialized.</p>
+
+    <section class="panel project-details-panel" aria-label="Project Details">
+      <div class="project-details-heading">
+        <h2 class="project-details-title">Project Details</h2>
+        <span id="projectLaunchDate" class="project-launch-date pending">Launch date: Data pending</span>
+      </div>
+      <div class="project-details-grid">
+        <div class="project-details-column">
+          <div class="project-detail-row">
+            <span class="project-detail-label">Vessel ID</span>
+            <span id="projectDetailVesselId" class="project-detail-value pending">Data pending</span>
+          </div>
+          <div class="project-detail-row">
+            <span class="project-detail-label">Vessel Name</span>
+            <span id="projectDetailVesselName" class="project-detail-value pending">Data pending</span>
+          </div>
+          <div class="project-detail-row">
+            <span class="project-detail-label">IMO No.</span>
+            <span id="projectDetailImo" class="project-detail-value pending">Data pending</span>
+          </div>
+        </div>
+
+        <div class="project-details-column">
+          <div class="project-detail-row">
+            <span class="project-detail-label">Docking Criteria</span>
+            <span id="projectDetailDockingCriteria" class="project-detail-value pending">Data pending</span>
+          </div>
+          <div class="project-detail-row">
+            <span class="project-detail-label">CAP Survey</span>
+            <span id="projectDetailCapSurvey" class="project-detail-value pending">Data pending</span>
+          </div>
+          <div class="project-detail-row">
+            <span class="project-detail-label">Est. Release Date</span>
+            <span id="projectDetailEstReleaseDate" class="project-detail-value pending">Data pending</span>
+          </div>
+        </div>
+
+        <div class="project-details-column">
+          <div class="project-detail-row">
+            <span id="projectDetailLocLabel1" class="project-detail-label pending">Data pending</span>
+            <span id="projectDetailLocDate1" class="project-detail-value pending">Data pending</span>
+          </div>
+          <div class="project-detail-row">
+            <span id="projectDetailLocLabel2" class="project-detail-label pending">Data pending</span>
+            <span id="projectDetailLocDate2" class="project-detail-value pending">Data pending</span>
+          </div>
+          <div class="project-detail-row">
+            <span id="projectDetailLocLabel3" class="project-detail-label pending">Data pending</span>
+            <span id="projectDetailLocDate3" class="project-detail-value pending">Data pending</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel project-links-panel" aria-label="Project Links">
+      <h2 class="project-details-title">Project Links</h2>
+      <div class="project-links-grid">
+        <div class="project-link-card">
+          <div class="project-link-card-header">
+            <h3 class="project-link-card-title">Project Data File</h3>
+            <button id="openDataFileBtn" type="button" class="project-link-button launch-project-btn" disabled>Open Data File</button>
+          </div>
+          <p id="projectDataFileNote" class="project-link-card-note">Waiting for a launched project to generate the browser-readable .txt file.</p>
+        </div>
+        <div class="project-link-card">
+          <div class="project-link-card-header">
+            <h3 class="project-link-card-title">Field Header 2</h3>
+            <button type="button" class="project-link-button secondary-btn" disabled>Button 2</button>
+          </div>
+          <p class="project-link-card-note">Status - Disabled</p>
+        </div>
+        <div class="project-link-card">
+          <div class="project-link-card-header">
+            <h3 class="project-link-card-title">Field Header 3</h3>
+            <button type="button" class="project-link-button secondary-btn" disabled>Button 3</button>
+          </div>
+          <p class="project-link-card-note">Status - Disabled</p>
+        </div>
+        <div class="project-link-card">
+          <div class="project-link-card-header">
+            <h3 class="project-link-card-title">Field Header 4</h3>
+            <button type="button" class="project-link-button secondary-btn" disabled>Button 4</button>
+          </div>
+          <p class="project-link-card-note">Status - Disabled</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <div id="dataFileOverlay" class="data-file-overlay" aria-hidden="true">
+    <div id="dataFileModal" class="data-file-modal" role="dialog" aria-modal="true" aria-labelledby="dataFileModalTitle" hidden>
+      <div class="data-file-modal-header">
+        <h2 id="dataFileModalTitle" class="data-file-modal-title">Project Data File</h2>
+        <button id="closeDataFileBtn" type="button" class="close-data-file-btn">Close</button>
+      </div>
+      <pre id="dataFileBody" class="data-file-body"></pre>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from './supabaseClient.js';
+    import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
+    import { loadSavedTheme } from './dockpilotTheme.js';
+    import {
+      buildProjectFolderName,
+      loadProjectRecord,
+      readProjectTextFromRecord
+    } from './dockpilotProjectStorage.js';
+
+    loadSavedTheme();
+
+    const DDP_FRONT_CONTEXT_KEY = 'DOCKPILOT_DDP_FRONT_CONTEXT';
+    const DDP_RUNNING_PROJECT_CONTEXT_KEY = 'DOCKPILOT_RUNNING_PROJECT_CONTEXT';
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const todayBadge = document.getElementById('todayBadge');
+    const reviewRunningProjectsLink = document.getElementById('reviewRunningProjectsLink');
+    const moreActionsDropdown = document.getElementById('moreActionsDropdown');
+    const moreActionsToggle = document.getElementById('moreActionsToggle');
+    const registerFleetBtn = document.getElementById('registerFleetBtn');
+    const launchProjectBtn = document.getElementById('launchProjectBtn');
+    const editProjectBtn = document.getElementById('editProjectBtn');
+    const statusNote = document.getElementById('statusNote');
+    const projectDetailVesselId = document.getElementById('projectDetailVesselId');
+    const projectDetailVesselName = document.getElementById('projectDetailVesselName');
+    const projectDetailImo = document.getElementById('projectDetailImo');
+    const projectDetailDockingCriteria = document.getElementById('projectDetailDockingCriteria');
+    const projectDetailCapSurvey = document.getElementById('projectDetailCapSurvey');
+    const projectDetailEstReleaseDate = document.getElementById('projectDetailEstReleaseDate');
+    const projectDetailLocLabel1 = document.getElementById('projectDetailLocLabel1');
+    const projectDetailLocLabel2 = document.getElementById('projectDetailLocLabel2');
+    const projectDetailLocLabel3 = document.getElementById('projectDetailLocLabel3');
+    const projectDetailLocDate1 = document.getElementById('projectDetailLocDate1');
+    const projectDetailLocDate2 = document.getElementById('projectDetailLocDate2');
+    const projectDetailLocDate3 = document.getElementById('projectDetailLocDate3');
+    const projectLaunchDate = document.getElementById('projectLaunchDate');
+    const openDataFileBtn = document.getElementById('openDataFileBtn');
+    const projectDataFileNote = document.getElementById('projectDataFileNote');
+    const dataFileOverlay = document.getElementById('dataFileOverlay');
+    const dataFileModal = document.getElementById('dataFileModal');
+    const dataFileBody = document.getElementById('dataFileBody');
+    const closeDataFileBtn = document.getElementById('closeDataFileBtn');
+
+    const MORE_ACTIONS_IDLE_MS = 2000;
+    let moreActionsCollapseTimer = null;
+    let moreActionsKeyboardFocus = false;
+    let activeProjectContext = null;
+    let activeProjectRecord = null;
+    let activeDataFileOpen = false;
+
+    function formatBadgeDate(date) {
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${day}-${monthNames[date.getMonth()]}-${date.getFullYear()}`;
+    }
+
+    function setStatus(text, tone = '') {
+      if (!statusNote) return;
+      statusNote.textContent = text;
+      statusNote.className = `status-note${tone ? ` ${tone}` : ''}`;
+    }
+
+    function setValueBox(el, value) {
+      if (!el) return;
+      const text = String(value ?? '').trim();
+      if (text) {
+        el.textContent = text;
+        el.classList.remove('pending');
+      } else {
+        el.textContent = 'Data pending';
+        el.classList.add('pending');
+      }
+    }
+
+    function setLocationLabel(el, value) {
+      if (!el) return;
+      const text = String(value ?? '').trim();
+      if (text) {
+        el.textContent = text;
+        el.classList.remove('pending');
+      } else {
+        el.textContent = 'Data pending';
+        el.classList.add('pending');
+      }
+    }
+
+    function formatLaunchDate(isoValue) {
+      const raw = String(isoValue ?? '').trim();
+      if (!raw) return '';
+      const date = new Date(raw);
+      if (Number.isNaN(date.getTime())) return '';
+      const day = String(date.getDate()).padStart(2, '0');
+      const month = monthNames[date.getMonth()] || 'Jan';
+      const year = date.getFullYear();
+      return `${day}-${month}-${year}`;
+    }
+
+    function setLaunchDate(isoValue) {
+      if (!projectLaunchDate) return;
+      const formatted = formatLaunchDate(isoValue);
+      if (formatted) {
+        projectLaunchDate.textContent = `Launch date: ${formatted}`;
+        projectLaunchDate.classList.remove('pending');
+      } else {
+        projectLaunchDate.textContent = 'Launch date: Data pending';
+        projectLaunchDate.classList.add('pending');
+      }
+    }
+
+    function getProjectKeyFromContext(context) {
+      if (!context) return '';
+      return buildProjectFolderName(context?.vessel?.vesselId, context?.createdAt);
+    }
+
+    function readProjectMetaFromStorage() {
+      const keys = ['DOCKPILOT_DDP_PROJECT_FILE_META'];
+      for (const storageArea of [sessionStorage, localStorage]) {
+        for (const key of keys) {
+          try {
+            const raw = storageArea.getItem(key);
+            if (!raw) continue;
+            const parsed = JSON.parse(raw);
+            if (parsed && typeof parsed === 'object') return parsed;
+          } catch {
+            // Ignore malformed metadata.
+          }
+        }
+      }
+      return null;
+    }
+
+    function setProjectLinksState(record) {
+      activeProjectRecord = record || null;
+      const hasRecord = Boolean(activeProjectRecord);
+      openDataFileBtn.disabled = !hasRecord;
+      if (hasRecord) {
+        const pathText = String(activeProjectRecord.projectFolderPath ?? '').trim();
+        const fileText = String(activeProjectRecord.txtFileName ?? '').trim();
+        projectDataFileNote.textContent = pathText
+          ? `Read-only .txt file available: ${fileText} at ${pathText}`
+          : `Read-only .txt file available: ${fileText}`;
+      } else {
+        projectDataFileNote.textContent = 'Waiting for a launched project to generate the browser-readable .txt file.';
+      }
+    }
+
+    function openDataFileViewer(text) {
+      activeDataFileOpen = true;
+      dataFileBody.textContent = String(text ?? '');
+      dataFileOverlay.classList.add('show');
+      dataFileOverlay.setAttribute('aria-hidden', 'false');
+      dataFileModal.hidden = false;
+      window.setTimeout(() => closeDataFileBtn.focus(), 0);
+    }
+
+    function closeDataFileViewer() {
+      activeDataFileOpen = false;
+      dataFileOverlay.classList.remove('show');
+      dataFileOverlay.setAttribute('aria-hidden', 'true');
+      dataFileModal.hidden = true;
+    }
+
+    function handleDataFileKeydown(event) {
+      if (event.key !== 'Escape' || !activeDataFileOpen) return;
+      event.preventDefault();
+      closeDataFileViewer();
+    }
+
+    async function resolveProjectRecord(context) {
+      const contextKey = getProjectKeyFromContext(context);
+      if (contextKey) {
+        const record = await loadProjectRecord(contextKey);
+        if (record) return record;
+      }
+
+      const meta = readProjectMetaFromStorage();
+      const metaKey = String(meta?.projectKey ?? '').trim();
+      if (metaKey) {
+        const record = await loadProjectRecord(metaKey);
+        if (record) return record;
+      }
+
+      return null;
+    }
+
+    async function handleOpenDataFile() {
+      if (!activeProjectRecord) return;
+      try {
+        const text = await readProjectTextFromRecord(activeProjectRecord);
+        openDataFileViewer(text || activeProjectRecord.fileText || 'No data available.');
+      } catch (error) {
+        console.error('Unable to open project data file:', error);
+        openDataFileViewer(activeProjectRecord.fileText || 'No data available.');
+      }
+    }
+
+    function readFrontContextFromStorage() {
+      const fromLaunch = new URLSearchParams(window.location.search).get('from') === 'launch';
+      if (!fromLaunch) return null;
+
+      const parsePayload = (raw) => {
+        if (!raw) return null;
+        try {
+          const parsed = JSON.parse(raw);
+          return parsed && typeof parsed === 'object' ? parsed : null;
+        } catch {
+          return null;
+        }
+      };
+
+      let payload = null;
+      try {
+        payload = parsePayload(sessionStorage.getItem(DDP_FRONT_CONTEXT_KEY));
+      } catch {
+        payload = null;
+      }
+      if (payload) return payload;
+
+      try {
+        return parsePayload(localStorage.getItem(DDP_FRONT_CONTEXT_KEY));
+      } catch {
+        return null;
+      }
+    }
+
+    function renderProjectDetails(context) {
+      activeProjectContext = context && typeof context === 'object' ? context : null;
+      setLaunchDate(activeProjectContext?.createdAt || '');
+
+      const vessel = activeProjectContext?.vessel || {};
+      const docking = activeProjectContext?.docking || {};
+      const preferred = Array.isArray(activeProjectContext?.preferredLocations)
+        ? activeProjectContext.preferredLocations
+        : [];
+
+      setValueBox(projectDetailVesselId, vessel.vesselId);
+      setValueBox(projectDetailVesselName, vessel.vesselName);
+      setValueBox(projectDetailImo, vessel.imo);
+
+      setValueBox(projectDetailDockingCriteria, docking.dockingCriteria);
+
+      const capRaw = String(docking.capSurveyRequired ?? '').trim();
+      const capValue = capRaw
+        ? (capRaw.toLowerCase() === 'yes' ? 'Required' : 'Not required')
+        : '';
+      setValueBox(projectDetailCapSurvey, capValue);
+
+      setValueBox(projectDetailEstReleaseDate, docking.estReleaseDate);
+
+      const p1 = preferred[0] || {};
+      const p2 = preferred[1] || {};
+      const p3 = preferred[2] || {};
+
+      setLocationLabel(projectDetailLocLabel1, p1.location);
+      setLocationLabel(projectDetailLocLabel2, p2.location);
+      setLocationLabel(projectDetailLocLabel3, p3.location);
+      setValueBox(projectDetailLocDate1, p1.date);
+      setValueBox(projectDetailLocDate2, p2.date);
+      setValueBox(projectDetailLocDate3, p3.date);
+    }
+
+    function clearMoreActionsCollapseTimer() {
+      if (moreActionsCollapseTimer) {
+        window.clearTimeout(moreActionsCollapseTimer);
+        moreActionsCollapseTimer = null;
+      }
+    }
+
+    function setMoreActionsExpanded(isExpanded) {
+      moreActionsDropdown.classList.toggle('collapsed', !isExpanded);
+      moreActionsToggle.textContent = isExpanded ? 'See Less' : 'See More';
+      if (!isExpanded) {
+        clearMoreActionsCollapseTimer();
+        return;
+      }
+      scheduleMoreActionsAutoCollapse();
+    }
+
+    function scheduleMoreActionsAutoCollapse() {
+      clearMoreActionsCollapseTimer();
+      if (moreActionsDropdown.classList.contains('collapsed')) return;
+      moreActionsCollapseTimer = window.setTimeout(() => {
+        if (moreActionsDropdown.classList.contains('collapsed')) return;
+        if (moreActionsDropdown.matches(':hover')) return;
+        if (moreActionsKeyboardFocus && moreActionsDropdown.contains(document.activeElement)) return;
+        setMoreActionsExpanded(false);
+      }, MORE_ACTIONS_IDLE_MS);
+    }
+
+    function wireEvents() {
+      moreActionsToggle.addEventListener('click', () => {
+        setMoreActionsExpanded(moreActionsDropdown.classList.contains('collapsed'));
+      });
+      moreActionsDropdown.addEventListener('mouseenter', clearMoreActionsCollapseTimer);
+      moreActionsDropdown.addEventListener('mouseleave', scheduleMoreActionsAutoCollapse);
+      moreActionsDropdown.addEventListener('focusin', clearMoreActionsCollapseTimer);
+      moreActionsDropdown.addEventListener('pointerdown', () => {
+        moreActionsKeyboardFocus = false;
+      });
+      moreActionsDropdown.addEventListener('keydown', () => {
+        moreActionsKeyboardFocus = true;
+      });
+      moreActionsDropdown.addEventListener('focusout', () => {
+        window.setTimeout(() => {
+          if (!moreActionsDropdown.contains(document.activeElement)) {
+            scheduleMoreActionsAutoCollapse();
+          }
+        }, 0);
+      });
+      document.addEventListener('click', (event) => {
+        if (!moreActionsDropdown.contains(event.target) && !moreActionsDropdown.classList.contains('collapsed')) {
+          setMoreActionsExpanded(false);
+        }
+      });
+
+      reviewRunningProjectsLink?.addEventListener('click', () => {
+        if (!activeProjectContext) return;
+        try {
+          localStorage.setItem(DDP_RUNNING_PROJECT_CONTEXT_KEY, JSON.stringify(activeProjectContext));
+        } catch {
+          // Forwarding hook is best-effort only.
+        }
+      });
+
+      openDataFileBtn?.addEventListener('click', handleOpenDataFile);
+      closeDataFileBtn?.addEventListener('click', closeDataFileViewer);
+      document.addEventListener('keydown', handleDataFileKeydown);
+
+      registerFleetBtn.disabled = true;
+      launchProjectBtn.disabled = true;
+      editProjectBtn.disabled = true;
+    }
+
+    async function initPage() {
+      todayBadge.textContent = `Date: ${formatBadgeDate(new Date())}`;
+      wireEvents();
+
+      const context = readFrontContextFromStorage();
+      if (context) {
+        renderProjectDetails(context);
+        setStatus('Project details loaded from Launch Project context.', 'success');
+      } else {
+        renderProjectDetails(null);
+        setStatus('Project details pending. Use Launch Project from Dry-Docking Project to populate this page.', 'warn');
+      }
+
+      const record = await resolveProjectRecord(context);
+      setProjectLinksState(record);
+    }
+
+    startDockPilotPageGuard({
+      supabase,
+      landingPage: './DockPilot_landing.html'
+    }).then(() => {
+      initPage();
+    }).catch((error) => {
+      console.error('DockPilot guard startup failed:', error);
+      window.location.href = './DockPilot_landing.html';
+    });
+  </script>
+</body>
+</html>

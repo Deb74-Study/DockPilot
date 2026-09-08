@@ -30,16 +30,22 @@
 
     body {
       min-height: 100dvh;
-      display: grid;
-      place-items: start center;
+      display: block;
+      margin: 0;
       padding: var(--edge-padding);
       overflow-x: hidden;
       font-family: Inter, "Segoe UI", Roboto, sans-serif;
       background:
-        radial-gradient(circle at top left, #133977 0%, transparent 32%),
-        radial-gradient(circle at bottom right, #0f8f98 0%, transparent 30%),
-        linear-gradient(135deg, #06111f, #0a1830 40%, #07111e 100%);
+        linear-gradient(
+          180deg,
+          #2a4b6b 0%,
+          #1b6ea8 20%,
+          #2d8cd6 45%,
+          #6ab7e9 70%,
+          #2a4b6b 100%
+        );
       color: var(--text);
+      box-sizing: border-box;
     }
 
     .manager-shell {
@@ -312,22 +318,23 @@
     }
 
     .project-detail-label {
-      font-size: 0.82rem;
+      font-size: 0.95rem;
       color: var(--text);
       line-height: 1.25;
       word-break: break-word;
+      font-weight: 600;
     }
 
     .project-detail-value {
-      min-height: 32px;
+      min-height: 28px;
       border-radius: 10px;
       border: 1px solid var(--line);
       background: rgba(255, 255, 255, 0.05);
-      padding: 6px 10px;
+      padding: 5px 8px;
       display: inline-flex;
       align-items: center;
       justify-content: flex-start;
-      font-size: 0.8rem;
+      font-size: 0.95rem;
       color: var(--text);
       line-height: 1.2;
       word-break: break-word;
@@ -349,6 +356,90 @@
       border-radius: 16px;
       background: rgba(255, 255, 255, 0.02);
       padding: 20px;
+    }
+
+    .project-running-status-panel {
+      display: grid;
+      gap: 12px;
+    }
+
+    .project-running-status-title {
+      margin: 0;
+      font-size: 1.05rem;
+      color: var(--accent);
+      letter-spacing: 0.03em;
+      text-transform: uppercase;
+    }
+
+    .project-running-status-grid {
+      display: grid;
+      grid-template-columns: repeat(3, minmax(0, 1fr));
+      gap: 20px;
+    }
+
+    .project-running-status-column {
+      display: grid;
+      gap: 12px;
+      min-width: 0;
+      position: relative;
+      padding-right: 6px;
+    }
+
+    .project-running-status-column:not(:last-child) {
+      border-right: 1px solid rgba(174, 188, 218, 0.35);
+      padding-right: 16px;
+    }
+
+    .project-running-status-item {
+      display: grid;
+      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.6fr);
+      align-items: center;
+      gap: 8px;
+      min-height: 76px;
+      padding: 8px 10px;
+      border-radius: 12px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    .project-running-status-label {
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.25;
+      word-break: break-word;
+      font-weight: 600;
+    }
+
+    .project-running-status-value {
+      min-height: 28px;
+      border-radius: 10px;
+      border: 1px solid var(--line);
+      background: rgba(255, 255, 255, 0.05);
+      padding: 5px 8px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: flex-start;
+      font-size: 0.95rem;
+      color: var(--text);
+      line-height: 1.2;
+      word-break: break-word;
+      text-align: left;
+    }
+
+    .project-running-status-value.pending,
+    .project-running-status-label.pending {
+      color: rgba(174, 188, 218, 0.75);
+      font-style: italic;
+    }
+
+    .project-running-status-action {
+      width: 100%;
+      min-width: 0;
+      justify-self: stretch;
+      margin-top: 2px;
+      grid-column: 1 / -1;
+      font-size: 0.78rem;
+      padding: 7px 10px;
     }
 
     .project-links-panel {
@@ -556,6 +647,65 @@
           <div class="project-detail-row">
             <span id="projectDetailLocLabel3" class="project-detail-label pending">Data pending</span>
             <span id="projectDetailLocDate3" class="project-detail-value pending">Data pending</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="panel project-running-status-panel" aria-label="Project Running Status">
+      <h2 class="project-running-status-title">Project Running Status</h2>
+      <div class="project-running-status-grid">
+        <div class="project-running-status-column">
+          <div class="project-running-status-item">
+            <span class="project-running-status-label">Status Field 1</span>
+            <span class="project-running-status-value pending">Data pending</span>
+            <button type="button" class="project-running-status-action secondary-btn" disabled>Button 1</button>
+          </div>
+          <div class="project-running-status-item">
+            <span class="project-running-status-label">Status Field 2</span>
+            <span class="project-running-status-value pending">Data pending</span>
+            <button type="button" class="project-running-status-action secondary-btn" disabled>Button 2</button>
+          </div>
+          <div class="project-running-status-item">
+            <span class="project-running-status-label">Status Field 3</span>
+            <span class="project-running-status-value pending">Data pending</span>
+            <button type="button" class="project-running-status-action secondary-btn" disabled>Button 3</button>
+          </div>
+        </div>
+
+        <div class="project-running-status-column">
+          <div class="project-running-status-item">
+            <span class="project-running-status-label">Status Field 4</span>
+            <span class="project-running-status-value pending">Data pending</span>
+            <button type="button" class="project-running-status-action secondary-btn" disabled>Button 4</button>
+          </div>
+          <div class="project-running-status-item">
+            <span class="project-running-status-label">Status Field 5</span>
+            <span class="project-running-status-value pending">Data pending</span>
+            <button type="button" class="project-running-status-action secondary-btn" disabled>Button 5</button>
+          </div>
+          <div class="project-running-status-item">
+            <span class="project-running-status-label">Status Field 6</span>
+            <span class="project-running-status-value pending">Data pending</span>
+            <button type="button" class="project-running-status-action secondary-btn" disabled>Button 6</button>
+          </div>
+        </div>
+
+        <div class="project-running-status-column">
+          <div class="project-running-status-item">
+            <span class="project-running-status-label">Status Field 7</span>
+            <span class="project-running-status-value pending">Data pending</span>
+            <button type="button" class="project-running-status-action secondary-btn" disabled>Button 7</button>
+          </div>
+          <div class="project-running-status-item">
+            <span class="project-running-status-label">Status Field 8</span>
+            <span class="project-running-status-value pending">Data pending</span>
+            <button type="button" class="project-running-status-action secondary-btn" disabled>Button 8</button>
+          </div>
+          <div class="project-running-status-item">
+            <span class="project-running-status-label">Status Field 9</span>
+            <span class="project-running-status-value pending">Data pending</span>
+            <button type="button" class="project-running-status-action secondary-btn" disabled>Button 9</button>
           </div>
         </div>
       </div>

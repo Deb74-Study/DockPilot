@@ -837,11 +837,14 @@
     import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
     import { loadSavedTheme } from './dockpilotTheme.js';
     import { getSession } from './dockpilotAuthContract.js';
+    import { getStoreKey, readStoreValue, writeStoreValue, removeStoreValue } from './Store.js';
 
     // Apply saved theme before anything renders
     loadSavedTheme();
 
     const STATE_KEY = 'DOCKPILOT_FLEET_REG_STATE';
+    const FLEET_DB_TABLE = 'fleet_registration';
+    const FLEET_DB_MATRIX_KEY = 'default';
     const MIN_DATA_COLUMNS = 2;
     const MAX_CELL_CHARS = 30;
     const DEFAULT_MAIN_HEADER = 'Fleet Registration Matrix';
@@ -1321,9 +1324,73 @@
         && Array.isArray(rawData.matrixData);
     }
 
-    function loadState() {
+    function normalizeDbFleetState(row) {
+      if (!row || typeof row !== 'object') return null;
+      return normalizeState({
+        mainHeader: row.main_header || row.mainHeader || DEFAULT_MAIN_HEADER,
+        subHeaderRowA: Array.isArray(row.sub_header_row_a) ? row.sub_header_row_a : Array.isArray(row.subHeaderRowA) ? row.subHeaderRowA : [...DEFAULT_SUBHEADER_ROW_A],
+        subHeaderRowB: Array.isArray(row.sub_header_row_b) ? row.sub_header_row_b : Array.isArray(row.subHeaderRowB) ? row.subHeaderRowB : [...DEFAULT_SUBHEADER_ROW_B],
+        rowLabels: Array.isArray(row.row_labels) ? row.row_labels : Array.isArray(row.rowLabels) ? row.rowLabels : [...DEFAULT_ROW_LABELS],
+        matrixData: Array.isArray(row.matrix_data) ? row.matrix_data : Array.isArray(row.matrixData) ? row.matrixData : []
+      });
+    }
+
+    async function loadFleetStateFromDatabase() {
+      const companyId = getSession()?.companyId;
+      if (!companyId) return null;
+
       try {
-        const parsed = JSON.parse(localStorage.getItem(STATE_KEY) || 'null');
+        const response = await fetch(`http://localhost:3001/fleet-registration?company_id=${encodeURIComponent(companyId)}`);
+        if (!response.ok) return null;
+        const payload = await response.json();
+        const row = Array.isArray(payload?.rows) && payload.rows[0] ? payload.rows[0] : null;
+        if (!row) return null;
+        return normalizeDbFleetState(row);
+      } catch (error) {
+        console.warn('[Fleet DB] Failed to load matrix from local API:', error);
+        return null;
+      }
+    }
+
+    async function saveFleetStateToDatabase(payload) {
+      const companyId = getSession()?.companyId;
+      if (!companyId) return false;
+
+      try {
+        const response = await fetch('http://localhost:3001/fleet-registration', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            company_id: companyId,
+            matrix_key: FLEET_DB_MATRIX_KEY,
+            main_header: payload.mainHeader || DEFAULT_MAIN_HEADER,
+            sub_header_row_a: Array.isArray(payload.subHeaderRowA) ? payload.subHeaderRowA : [],
+            sub_header_row_b: Array.isArray(payload.subHeaderRowB) ? payload.subHeaderRowB : [],
+            row_labels: Array.isArray(payload.rowLabels) ? payload.rowLabels : [],
+            matrix_data: Array.isArray(payload.matrixData) ? payload.matrixData : []
+          })
+        });
+
+        return response.ok;
+      } catch (error) {
+        console.warn('[Fleet DB] Failed to save matrix to local API:', error);
+        return false;
+      }
+    }
+
+    async function loadState() {
+      const dbState = await loadFleetStateFromDatabase();
+      if (dbState) {
+        try {
+          writeStoreValue(STATE_KEY, dbState);
+        } catch (error) {
+          console.warn('[Fleet State] Local cache write skipped:', error);
+        }
+        return dbState;
+      }
+
+      try {
+        const parsed = readStoreValue(STATE_KEY, null);
         if (parsed && typeof parsed === 'object' && !Array.isArray(parsed)) {
           const saved = typeof structuredClone === 'function' ? structuredClone(parsed) : JSON.parse(JSON.stringify(parsed));
           return normalizeState(saved);
@@ -1335,12 +1402,22 @@
       return normalizeState();
     }
 
-    function saveState() {
+    async function saveState() {
+      const payload = getFleetPayload();
       try {
-        localStorage.setItem(STATE_KEY, JSON.stringify(getFleetPayload()));
+        writeStoreValue(STATE_KEY, payload);
       } catch (error) {
         console.error('Fleet registration state save failed:', error);
         setStatus('Storage limit reached. Changes are not persisted yet.', 'warn');
+      }
+
+      try {
+        const synced = await saveFleetStateToDatabase(payload);
+        if (synced) {
+          setStatus('Fleet matrix synced to local PostgreSQL.', 'success');
+        }
+      } catch (error) {
+        console.warn('[Fleet State] Database sync failed:', error);
       }
     }
 
@@ -1564,11 +1641,10 @@
       if (!companyId) return [];
 
       try {
-        const raw = localStorage.getItem(VESSEL_REGISTRY_KEY_PREFIX + companyId);
-        const parsed = raw ? JSON.parse(raw) : [];
-        const registry = Array.isArray(parsed) ? parsed : [];
+        const registryKey = getStoreKey('vesselRegistry', companyId);
+        const registry = readStoreValue(registryKey, []) || [];
         const target = normalizeLookupValue(vesselName);
-        return registry.filter((row) => normalizeLookupValue(row?.vesselName ?? '') === target);
+        return (Array.isArray(registry) ? registry : []).filter((row) => normalizeLookupValue(row?.vesselName ?? '') === target);
       } catch {
         return [];
       }
@@ -1583,15 +1659,15 @@
       };
 
       try {
-        localStorage.setItem(VP_CONTEXT_KEY, JSON.stringify(context));
-        localStorage.setItem(VP_NAV_SELECTION_KEY, JSON.stringify({
+        writeStoreValue(VP_CONTEXT_KEY, context);
+        writeStoreValue(VP_NAV_SELECTION_KEY, {
           vesselName: context.vesselName,
           imo: candidate?.record?.imo || '',
           context,
           record: candidate?.record || null,
           sourcePage: 'fleet-registration',
           selectedAt: new Date().toISOString()
-        }));
+        });
       } catch (error) {
         console.error('Failed to persist VP navigation selection:', error);
       }
@@ -1669,7 +1745,7 @@
         if (!key || !key.startsWith(PAGE_PRESENCE_PREFIX)) {
           continue;
         }
-        const parsed = parsePresencePayload(localStorage.getItem(key));
+        const parsed = parsePresencePayload(readStoreValue(key, null));
         if (!parsed) {
           continue;
         }
@@ -1682,7 +1758,7 @@
       const now = Date.now();
       collectPresenceEntries().forEach((entry) => {
         if (now - entry.updatedAt > PAGE_STALE_MS) {
-          localStorage.removeItem(entry.key);
+          removeStoreValue(entry.key);
         }
       });
     }
@@ -1723,7 +1799,7 @@
     }
 
     function removeOwnPresence() {
-      localStorage.removeItem(ownPresenceKey);
+      removeStoreValue(ownPresenceKey);
     }
 
     function updateOwnPresence() {
@@ -1737,7 +1813,7 @@
         tabId: presenceTabId,
         updatedAt: Date.now()
       };
-      localStorage.setItem(ownPresenceKey, JSON.stringify(payload));
+      writeStoreValue(ownPresenceKey, payload);
     }
 
     function startPresenceTracking() {
@@ -2368,8 +2444,8 @@
       });
     }
 
-    function initFleetRegistration() {
-      const state = loadState();
+    async function initFleetRegistration() {
+      const state = await loadState();
       mainHeader = state.mainHeader;
       subHeaderRowA = state.subHeaderRowA;
       subHeaderRowB = state.subHeaderRowB;
@@ -2397,7 +2473,7 @@
       supabase,
       landingPage: './DockPilot_landing.html'
     }).then(() => {
-      initFleetRegistration();
+      void initFleetRegistration();
     }).catch((error) => {
       console.error('DockPilot guard startup failed:', error);
       window.location.href = './DockPilot_landing.html';

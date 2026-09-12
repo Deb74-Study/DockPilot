@@ -638,7 +638,8 @@
     }
 
     function initializeCompanyIdFromStorage() {
-      const savedCompanyId = localStorage.getItem('dockpilot_company_id') || '';
+      const companyStoreKey = getStoreKey('defaults', null, 'company_id');
+      const savedCompanyId = readStoreValue(companyStoreKey, '') || '';
       if (savedCompanyId) {
         companyIdInput.value = savedCompanyId;
       }
@@ -690,7 +691,7 @@
         issuedAt: account.issued_at || account.issuedAt || new Date().toISOString(),
         sessionToken: account.session_token || account.sessionToken || null
       });
-      localStorage.setItem('dockpilot_company_id', companyIdValue);
+      writeStoreValue(getStoreKey('defaults', null, 'company_id'), companyIdValue);
       hideLoginFailPopup();
       saveSession(safeSession);
       markActivity();

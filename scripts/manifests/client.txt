@@ -24,6 +24,8 @@ dockpilotPageGuard.js
 dockpilotTheme.js
 dockpilotProjectStorage.js
 supabaseClient.js
+Store.js
+vesselRegistryStore.js
 docs/dd-job-selection-root.json
 
 test-assets

@@ -803,6 +803,15 @@
     import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
     import { loadSavedTheme } from './dockpilotTheme.js';
     import { getSession } from './dockpilotAuthContract.js';
+    import { getStoreKey, readStoreValue, writeStoreValue, removeStoreValue } from './Store.js';
+    import {
+      REGISTRY_COL_HEADERS,
+      REGISTRY_COL_KEYS,
+      DOC_STATUS_KEYS,
+      loadCompanyVesselRegistry,
+      normalizeDocStatus,
+      normalizeRegistryRow,
+    } from './vesselRegistryStore.js';
 
     // Apply saved theme before anything renders
     loadSavedTheme();
@@ -837,13 +846,14 @@
     const selectorScrollLeftBtn = document.getElementById('selectorScrollLeftBtn');
     const selectorScrollRightBtn = document.getElementById('selectorScrollRightBtn');
 
-    const FLEET_REG_STATE_KEY = 'DOCKPILOT_FLEET_REG_STATE';
-    const FLEET_TREE_CACHE_KEY = 'DOCKPILOT_FLEET_COMPOSITION_TREES';
-    const FLEET_EXPORT_HISTORY_KEY = 'DOCKPILOT_FLEET_EXPORT_HISTORY';
+    const DEFAULT_COMPANY_SCOPE = getSession()?.companyId || 'default';
+    const FLEET_REG_STATE_KEY = getStoreKey('fleetRegistration', DEFAULT_COMPANY_SCOPE, 'state');
+    const FLEET_TREE_CACHE_KEY = getStoreKey('fleetRegistration', DEFAULT_COMPANY_SCOPE, 'trees');
+    const FLEET_EXPORT_HISTORY_KEY = getStoreKey('fleetRegistration', DEFAULT_COMPANY_SCOPE, 'export_history');
     const SELECTOR_FLEET_FORMAT = 'dockpilot-vessel-selector-fleet-v1';
-    const FILTER_STATE_KEY = 'DOCKPILOT_VESSEL_FILTER_STATE';
+    const FILTER_STATE_KEY = getStoreKey('fleetRegistration', DEFAULT_COMPANY_SCOPE, 'filter_state');
     const VESSEL_REGISTRY_KEY_PREFIX = 'DOCKPILOT_VESSEL_REGISTRY_';
-    const VP_NAV_SELECTION_KEY = 'DOCKPILOT_VP_NAV_SELECTION';
+    const VP_NAV_SELECTION_KEY = getStoreKey('projectContext', DEFAULT_COMPANY_SCOPE, 'vp_nav_selection');
     const PAGE_PRESENCE_PREFIX = 'DOCKPILOT_PAGE_PRESENCE_';
     const PAGE_TYPE = 'fleet-composition';
     const INTERLOCK_BLOCKER_PAGE_TYPE = 'fleet-registration';
@@ -874,26 +884,9 @@
     let registryFilterEnabled = false;
     let toggleCooldownActive = false;
 
-    const REGISTRY_COL_HEADERS = [
-      'Vessel ID', 'Vessel Name', 'IMO No.', 'Month-Year of Build',
-      'Yard of Build', 'Flag', 'Class', 'LOA (m)', 'LBP (m)',
-      'Breadth (m)', 'Depth (m)', 'Summer Draught (m)', 'DWT (t)', 'GT', 'NT',
-      'GA Plan', 'Midship Plan', 'Shell Exp. Plan', 'Docking Plan',
-      'P/d UTM', 'P/d Blr. Boro.', 'P/d M/E LDM'
-    ];
-
-    const REGISTRY_COL_KEYS = [
-      'vesselId', 'vesselName', 'imo', 'monthYearOfBuild',
-      'yardOfBuild', 'flag', 'class', 'loa', 'lbp',
-      'breadth', 'depth', 'summerDraught', 'dwt', 'gt', 'nt',
-      'gaPlanStatus', 'midshipPlanStatus', 'shellExpPlanStatus', 'dockingPlanStatus',
-      'pdUtmStatus', 'pdBlrBoroStatus', 'pdLdmStatus'
-    ];
-
-    const DOC_STATUS_KEYS = new Set([
-      'gaPlanStatus', 'midshipPlanStatus', 'shellExpPlanStatus', 'dockingPlanStatus',
-      'pdUtmStatus', 'pdBlrBoroStatus', 'pdLdmStatus'
-    ]);
+    const REGISTRY_COL_HEADERS = REGISTRY_COL_HEADERS;
+    const REGISTRY_COL_KEYS = REGISTRY_COL_KEYS;
+    const DOC_STATUS_KEYS = DOC_STATUS_KEYS;
 
     function formatBadgeDate(date) {
       const day = String(date.getDate()).padStart(2, '0');
@@ -976,39 +969,11 @@
       return Array.isArray(value) ? value : [];
     }
 
-    function normalizeDocStatus(value) {
-      const raw = cleanText(value);
-      if (!raw) return 'Pending';
-      if (/^pending$/i.test(raw)) return 'Pending';
-      const match = raw.match(/^(\d{2})-([A-Za-z]{3})-(\d{4})$/);
-      if (!match) return 'Pending';
-      const monthIndex = monthNames.findIndex((name) => name.toLowerCase() === match[2].toLowerCase());
-      if (monthIndex < 0) return 'Pending';
-      return `${match[1]}-${monthNames[monthIndex]}-${match[3]}`;
-    }
-
-    function normalizeRegistryRow(row) {
-      const source = row && typeof row === 'object' ? row : {};
-      const normalized = { ...source };
-      DOC_STATUS_KEYS.forEach((key) => {
-        normalized[key] = normalizeDocStatus(source[key]);
-      });
-      return normalized;
-    }
-
-    function loadRegistryRows() {
+    async function loadRegistryRows() {
       if (!currentCompanyId) {
         return [];
       }
-      try {
-        const raw = localStorage.getItem(VESSEL_REGISTRY_KEY_PREFIX + currentCompanyId);
-        const parsed = raw ? JSON.parse(raw) : [];
-        const rows = Array.isArray(parsed) ? parsed : [];
-        return rows.map(normalizeRegistryRow);
-      } catch (error) {
-        console.error('Failed to load vessel particulars registry:', error);
-        return [];
-      }
+      return loadCompanyVesselRegistry(currentCompanyId, VESSEL_REGISTRY_KEY_PREFIX);
     }
 
     function buildFleetPreviewRows(trees) {
@@ -1117,8 +1082,8 @@
       renderRegistryTable(filtered);
     }
 
-    function refreshRegistryPanel() {
-      const savedRows = loadRegistryRows();
+    async function refreshRegistryPanel() {
+      const savedRows = await loadRegistryRows();
       if (savedRows.length) {
         registryRows = savedRows;
         registryRowsSource = 'registry';
@@ -1208,7 +1173,7 @@
 
     function readRegistrationState() {
       try {
-        const parsed = JSON.parse(localStorage.getItem(FLEET_REG_STATE_KEY) || 'null');
+        const parsed = readStoreValue(FLEET_REG_STATE_KEY, null);
         return normalizeFleetRegistrationState(parsed);
       } catch (error) {
         console.error('Failed to parse fleet registration state:', error);
@@ -1334,7 +1299,7 @@
 
     function persistDerivedTrees(trees) {
       try {
-        localStorage.setItem(FLEET_TREE_CACHE_KEY, JSON.stringify(trees));
+        writeStoreValue(FLEET_TREE_CACHE_KEY, trees);
       } catch (error) {
         console.error('Failed to persist fleet composition tree cache:', error);
         setStatus('Tree cache could not be saved to browser storage.', 'warn');
@@ -1343,7 +1308,7 @@
 
     function readCachedDerivedTrees() {
       try {
-        const parsed = JSON.parse(localStorage.getItem(FLEET_TREE_CACHE_KEY) || 'null');
+        const parsed = readStoreValue(FLEET_TREE_CACHE_KEY, null);
         if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null;
         if (!Array.isArray(parsed.fleetGroups) || !parsed.fleetGroups.length) return null;
         return parsed;
@@ -1355,7 +1320,7 @@
 
     function persistRegistrationState(state) {
       try {
-        localStorage.setItem(FLEET_REG_STATE_KEY, JSON.stringify(normalizeFleetRegistrationState(state)));
+        writeStoreValue(FLEET_REG_STATE_KEY, normalizeFleetRegistrationState(state));
       } catch (error) {
         console.error('Failed to persist fleet registration state:', error);
         setStatus('Fleet data could not be saved to browser storage.', 'warn');
@@ -1366,12 +1331,16 @@
       return currentCompanyId ? (VESSEL_REGISTRY_KEY_PREFIX + currentCompanyId) : '';
     }
 
-    function persistRegistryRows(rows) {
+    async function persistRegistryRows(rows) {
       const key = getRegistryStorageKey();
       if (!key) {
         throw new Error('Active company session is required before saving vessel selector fleet data.');
       }
-      localStorage.setItem(key, JSON.stringify(rows));
+      if (currentCompanyId) {
+        await saveCompanyVesselRegistry(currentCompanyId, rows, VESSEL_REGISTRY_KEY_PREFIX);
+        return;
+      }
+      writeStoreValue(key, rows);
     }
 
     function normalizeSelectorFleetRows(rows) {
@@ -1454,8 +1423,8 @@
 
       const rowsPayload = extractSelectorFleetRowsPayload(parsed);
       const normalizedRows = normalizeSelectorFleetRows(rowsPayload);
-      persistRegistryRows(normalizedRows);
-      refreshRegistryPanel();
+      await persistRegistryRows(normalizedRows);
+      await refreshRegistryPanel();
       return {
         rowCount: normalizedRows.length,
         detectedFormat: cleanText(parsed.format) || 'selector-fleet-list'
@@ -1478,7 +1447,7 @@
 
     function loadFleetExportHistory() {
       try {
-        const parsed = JSON.parse(localStorage.getItem(FLEET_EXPORT_HISTORY_KEY) || '[]');
+        const parsed = readStoreValue(FLEET_EXPORT_HISTORY_KEY, []) || [];
         if (!Array.isArray(parsed)) return [];
         return parsed
           .map((entry) => cleanText(entry))
@@ -1490,7 +1459,7 @@
 
     function saveFleetExportHistory(history) {
       try {
-        localStorage.setItem(FLEET_EXPORT_HISTORY_KEY, JSON.stringify(history));
+        writeStoreValue(FLEET_EXPORT_HISTORY_KEY, history);
       } catch (error) {
         console.error('Failed to persist fleet export history:', error);
       }
@@ -1814,10 +1783,10 @@
 
     function saveFilterState() {
       try {
-        localStorage.setItem(FILTER_STATE_KEY, JSON.stringify({
+        writeStoreValue(FILTER_STATE_KEY, {
           groupKey: selectedGroupKey,
           vesselName: selectedVesselName
-        }));
+        });
       } catch (error) {
         console.error('Failed to save filter state:', error);
       }
@@ -1825,7 +1794,7 @@
 
     function restoreFilterState() {
       try {
-        const saved = JSON.parse(localStorage.getItem(FILTER_STATE_KEY) || 'null');
+        const saved = readStoreValue(FILTER_STATE_KEY, null);
         if (!saved || typeof saved !== 'object') return;
         if (saved.groupKey) {
           const groupOption = [...fleetGroupSelect.options].find((o) => o.value === saved.groupKey);
@@ -1855,14 +1824,13 @@
     function restoreNavigationSelection() {
       let selection = null;
       try {
-        const raw = localStorage.getItem(VP_NAV_SELECTION_KEY);
-        selection = raw ? JSON.parse(raw) : null;
+        selection = readStoreValue(VP_NAV_SELECTION_KEY, null);
       } catch (error) {
         console.error('Failed to parse vessel navigation selection:', error);
         selection = null;
       }
 
-      localStorage.removeItem(VP_NAV_SELECTION_KEY);
+      removeStoreValue(VP_NAV_SELECTION_KEY);
 
       if (!selection || typeof selection !== 'object') {
         return false;
@@ -1959,7 +1927,7 @@
         if (!key || !key.startsWith(PAGE_PRESENCE_PREFIX)) {
           continue;
         }
-        const parsed = parsePresencePayload(localStorage.getItem(key));
+        const parsed = parsePresencePayload(readStoreValue(key, null));
         if (!parsed) {
           continue;
         }
@@ -1972,7 +1940,7 @@
       const now = Date.now();
       collectPresenceEntries().forEach((entry) => {
         if (now - entry.updatedAt > PAGE_STALE_MS) {
-          localStorage.removeItem(entry.key);
+          removeStoreValue(entry.key);
         }
       });
     }
@@ -2013,7 +1981,7 @@
     }
 
     function removeOwnPresence() {
-      localStorage.removeItem(ownPresenceKey);
+      removeStoreValue(ownPresenceKey);
     }
 
     function updateOwnPresence() {
@@ -2027,7 +1995,7 @@
         tabId: presenceTabId,
         updatedAt: Date.now()
       };
-      localStorage.setItem(ownPresenceKey, JSON.stringify(payload));
+      writeStoreValue(ownPresenceKey, payload);
     }
 
     function startPresenceTracking() {
@@ -2137,15 +2105,15 @@
           const selectedRecord = findSelectedRegistryRecord();
           const hasRecordPayload = hasParticularsData(selectedRecord);
 
-          localStorage.setItem('DOCKPILOT_VP_CONTEXT', JSON.stringify({
+          writeStoreValue(getStoreKey('projectContext', currentCompanyId || 'default', 'vp_context'), {
             fleetGroup: getGroupByKey(selectedGroupKey)?.groupName || '',
             managerName: tmFmDisplay.value.trim(),
             vesselName: selectedVesselName,
             tsiName: tsiDisplay.value.trim()
-          }));
+          });
 
           if (hasRecordPayload) {
-            localStorage.setItem(VP_NAV_SELECTION_KEY, JSON.stringify({
+            writeStoreValue(VP_NAV_SELECTION_KEY, {
               vesselName: selectedVesselName,
               imo: cleanText(selectedRecord?.imo || ''),
               context: {
@@ -2155,9 +2123,9 @@
                 vesselName: selectedVesselName
               },
               record: selectedRecord
-            }));
+            });
           } else {
-            localStorage.removeItem(VP_NAV_SELECTION_KEY);
+            removeStoreValue(VP_NAV_SELECTION_KEY);
           }
         } catch (error) {
           console.error('Failed to write vessel particulars context:', error);
@@ -2314,12 +2282,12 @@
       });
     }
 
-    function initFleetComposition() {
+    async function initFleetComposition() {
       currentCompanyId = getSession()?.companyId || '';
       todayBadge.textContent = `Date: ${formatBadgeDate(new Date())}`;
       const trees = refreshDerivedTrees();
       setSelectorFilterToggleState(false);
-      refreshRegistryPanel();
+      await refreshRegistryPanel();
 
       populateFleetGroupDropdown(false);
       const navigationApplied = restoreNavigationSelection();

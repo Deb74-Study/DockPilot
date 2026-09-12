@@ -273,6 +273,53 @@
       flex-wrap: wrap;
     }
 
+    .project-details-badges {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      flex-wrap: wrap;
+    }
+
+    .recall-status-badge {
+      font-size: 0.8rem;
+      font-weight: 600;
+      border-radius: 999px;
+      padding: 4px 10px;
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      white-space: nowrap;
+      transition: all 0.2s ease;
+    }
+
+    .recall-status-badge.pending {
+      color: #3b5066;
+      border: 1px solid #9bb4cf;
+      background: linear-gradient(180deg, #f2f7fd 0%, #e4eef9 100%);
+      box-shadow: 0 0 0 1px rgba(114, 137, 163, 0.2) inset;
+    }
+
+    .recall-status-badge.syncing {
+      color: #784c00;
+      border: 1px solid #ffd27d;
+      background: linear-gradient(180deg, #fff9e6 0%, #ffecb3 100%);
+      box-shadow: 0 0 0 1px rgba(217, 142, 0, 0.2) inset;
+    }
+
+    .recall-status-badge.synced {
+      color: #065f46;
+      border: 1px solid #6ee7b7;
+      background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
+      box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.25) inset;
+    }
+
+    .recall-status-badge.error {
+      color: #991b1b;
+      border: 1px solid #fca5a5;
+      background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%);
+      box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2) inset;
+    }
+
     .project-launch-date {
       font-size: 0.8rem;
       color: #0f233a;
@@ -361,6 +408,7 @@
     .project-running-status-panel {
       display: grid;
       gap: 12px;
+      overflow-x: auto;
     }
 
     .project-running-status-title {
@@ -372,74 +420,346 @@
     }
 
     .project-running-status-grid {
-      display: grid;
-      grid-template-columns: repeat(3, minmax(0, 1fr));
-      gap: 20px;
-    }
-
-    .project-running-status-column {
-      display: grid;
-      gap: 12px;
-      min-width: 0;
+      --line-thickness: 8px;
+      --roundel-size: 32px;
+      --edge-gap: 24px;
+      --lane-height: 126px;
+      --lane-gap: 24px;
+      --snake-top-pad: 22px;
       position: relative;
-      padding-right: 6px;
+      min-height: 420px;
+      margin-top: 16px;
+      padding: var(--snake-top-pad) 0 14px;
+      width: max(100%, 1240px);
     }
 
-    .project-running-status-column:not(:last-child) {
-      border-right: 1px solid rgba(174, 188, 218, 0.35);
-      padding-right: 16px;
+    .project-running-status-track {
+      position: absolute;
+      left: 0;
+      right: 0;
+      top: var(--snake-top-pad);
+      height: calc((3 * var(--lane-height)) + (2 * var(--lane-gap)));
+      width: 100%;
+      z-index: 0;
+      overflow: visible;
+      pointer-events: none;
     }
 
-    .project-running-status-item {
+    .project-running-status-track path {
+      fill: none;
+      stroke: url(#projectRunningStatusTrackGradient);
+      stroke-width: var(--line-thickness);
+      stroke-linecap: round;
+      stroke-linejoin: round;
+      vector-effect: non-scaling-stroke;
+      filter: drop-shadow(0 0 0 rgba(255, 255, 255, 0.08));
+    }
+
+    .project-running-status-snake-lanes {
+      position: relative;
+      z-index: 1;
       display: grid;
-      grid-template-columns: minmax(0, 1.15fr) minmax(0, 1.6fr);
-      align-items: center;
-      gap: 8px;
-      min-height: 76px;
-      padding: 8px 10px;
-      border-radius: 12px;
-      border: 1px solid rgba(255, 255, 255, 0.08);
-      background: rgba(255, 255, 255, 0.03);
+      grid-template-rows: repeat(3, var(--lane-height));
+      gap: var(--lane-gap);
     }
 
-    .project-running-status-label {
-      font-size: 0.95rem;
-      color: var(--text);
-      line-height: 1.25;
-      word-break: break-word;
+    .project-running-status-lane {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(8, minmax(0, 1fr));
+      align-items: stretch;
+      padding-inline: var(--edge-gap);
+      box-sizing: border-box;
+    }
+
+    .project-running-status-lane.lane-2 {
+      direction: rtl;
+    }
+
+    .project-running-status-roundel {
+      position: relative;
+      z-index: 1;
+      justify-self: center;
+      align-self: center;
+      width: var(--roundel-size);
+      aspect-ratio: 1;
+      border-radius: 50%;
+      border: 2px solid rgba(234, 243, 255, 0.92);
+      box-shadow: 0 0 0 2px rgba(2, 14, 26, 0.95);
+      background:
+        radial-gradient(circle at center,
+        #eaf3ff 0 24%,
+        rgba(2, 14, 26, 0.96) 24% 43%,
+        rgba(255, 228, 94, 0.96) 43% 64%,
+        rgba(2, 14, 26, 0.96) 64% 100%);
+    }
+
+    button.project-running-status-roundel {
+      appearance: none;
+      -webkit-appearance: none;
+      padding: 0;
+      cursor: pointer;
+      transition: transform 140ms ease, box-shadow 200ms ease, filter 200ms ease;
+    }
+
+    button.project-running-status-roundel:hover:not(:disabled) {
+      transform: scale(1.06);
+    }
+
+    button.project-running-status-roundel:disabled {
+      cursor: not-allowed;
+      opacity: 0.95;
+    }
+
+    .project-running-status-roundel.is-complete {
+      background:
+        radial-gradient(circle at center,
+        #e9fff2 0 24%,
+        rgba(2, 14, 26, 0.96) 24% 43%,
+        rgba(34, 229, 97, 0.96) 43% 64%,
+        rgba(2, 14, 26, 0.96) 64% 100%);
+      border-color: rgba(210, 255, 223, 0.98);
+      box-shadow: 0 0 0 2px rgba(2, 14, 26, 0.95), 0 0 16px rgba(65, 232, 114, 0.45);
+    }
+
+    .project-running-status-roundel.flashing {
+      background:
+        radial-gradient(circle at center,
+        #ffecec 0 24%,
+        rgba(2, 14, 26, 0.96) 24% 43%,
+        #ff3a3a 43% 64%,
+        rgba(2, 14, 26, 0.96) 64% 100%);
+      border-color: rgba(255, 184, 184, 0.98);
+      box-shadow: 0 0 0 2px rgba(2, 14, 26, 0.95), 0 0 18px rgba(255, 55, 55, 0.42);
+      animation: checkpoint-pulse 2.5s ease-in-out infinite;
+    }
+
+    @keyframes checkpoint-pulse {
+      0% { opacity: 0.52; filter: brightness(0.86); }
+      25% { opacity: 0.85; filter: brightness(1); }
+      50% { opacity: 1; filter: brightness(1.28); }
+      75% { opacity: 0.85; filter: brightness(1); }
+      100% { opacity: 0.52; filter: brightness(0.86); }
+    }
+
+    .project-running-status-point {
+      position: relative;
+      display: grid;
+      place-items: center;
+      min-height: var(--lane-height);
+    }
+
+    .project-running-status-point-label {
+      position: absolute;
+      left: 50%;
+      transform: translateX(-50%);
+      top: auto;
+      bottom: calc(50% + 18px);
+      width: 118px;
+      margin: 0;
+      color: #eaf3ff;
+      text-align: center;
+      font-size: 0.7rem;
+      line-height: 1.18;
       font-weight: 600;
+      letter-spacing: 0.01em;
+      text-wrap: pretty;
+      display: -webkit-box;
+      -webkit-box-orient: vertical;
+      -webkit-line-clamp: 3;
+      line-clamp: 3;
+      overflow: hidden;
+      overflow-wrap: anywhere;
     }
 
-    .project-running-status-value {
-      min-height: 28px;
-      border-radius: 10px;
-      border: 1px solid var(--line);
-      background: rgba(255, 255, 255, 0.05);
-      padding: 5px 8px;
+    .project-running-status-date-control {
+      position: absolute;
+      left: 50%;
+      top: calc(50% + 26px);
+      transform: translateX(-50%);
       display: inline-flex;
       align-items: center;
-      justify-content: flex-start;
-      font-size: 0.95rem;
+      gap: 0;
+    }
+
+    .project-running-status-date-capsule {
+      display: inline-flex;
+      align-items: center;
+      height: 28px;
+      border-radius: 999px;
+      border: 1px solid rgba(255, 255, 255, 0.28);
+      background: rgba(7, 20, 36, 0.96);
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.03);
+    }
+
+    .project-running-status-date-btn {
+      appearance: none;
+      -webkit-appearance: none;
+      border: 0;
+      width: 24px;
+      height: 100%;
+      margin: 0;
+      color: #f5f7ff;
+      font-size: 0.88rem;
+      font-weight: 900;
+      line-height: 1;
+      cursor: pointer;
+      background: linear-gradient(180deg, rgba(30, 51, 74, 0.9), rgba(14, 30, 48, 0.95));
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      text-shadow: 0 1px 0 rgba(0, 0, 0, 0.25);
+    }
+
+    .project-running-status-date-btn:disabled {
+      cursor: not-allowed;
+      opacity: 0.45;
+    }
+
+    .project-running-status-date-value {
+      min-width: 66px;
+      padding: 0 8px;
+      text-align: center;
+      font-size: 0.7rem;
+      line-height: 1;
+      color: #edf4ff;
+      letter-spacing: 0.01em;
+      font-weight: 700;
+      direction: ltr;
+      unicode-bidi: isolate;
+    }
+
+    input.project-running-status-date-value {
+      appearance: none;
+      -webkit-appearance: none;
+      background: transparent;
+      border: 0;
+      outline: none;
+      width: 64px;
+      padding: 0 2px;
+      margin: 0;
+      font-family: inherit;
+      font-size: 0.7rem;
+      line-height: 1;
+      color: #edf4ff;
+      letter-spacing: 0.01em;
+      font-weight: 700;
+      text-align: center;
+      direction: ltr;
+      unicode-bidi: isolate;
+      box-sizing: border-box;
+      transition: background 150ms ease, box-shadow 150ms ease;
+    }
+
+    input.project-running-status-date-value:focus {
+      background: rgba(103, 214, 255, 0.18);
+      box-shadow: 0 0 0 1px rgba(103, 214, 255, 0.6);
+      border-radius: 4px;
+    }
+
+    input.project-running-status-date-value.is-invalid-highlight {
+      background: rgba(255, 60, 60, 0.38) !important;
+      box-shadow: 0 0 0 1.5px #ff4d4d, 0 0 8px rgba(255, 77, 77, 0.55) !important;
+      border-radius: 4px;
+      color: #ffffff !important;
+    }
+
+    input.project-running-status-date-value:disabled {
+      color: rgba(237, 244, 255, 0.65);
+      cursor: not-allowed;
+    }
+
+    .progress-dialog-overlay {
+      position: fixed;
+      inset: 0;
+      z-index: 1100;
+      display: grid;
+      place-items: center;
+      padding: 16px;
+      background: rgba(3, 11, 20, 0.76);
+      backdrop-filter: blur(4px);
+    }
+
+    .progress-dialog-overlay[hidden] {
+      display: none;
+    }
+
+    .progress-dialog {
+      width: min(480px, 100%);
+      border-radius: 16px;
+      border: 1px solid rgba(255, 255, 255, 0.16);
+      background: linear-gradient(180deg, rgba(12, 26, 47, 0.98), rgba(6, 15, 28, 0.98));
+      box-shadow: 0 28px 70px rgba(0, 0, 0, 0.45);
+      padding: 18px;
+      display: grid;
+      gap: 12px;
+    }
+
+    .progress-dialog-title {
+      margin: 0;
+      color: #eaf3ff;
+      font-size: 1rem;
+    }
+
+    .progress-dialog-body {
+      margin: 0;
+      color: #d2dff6;
+      font-size: 0.88rem;
+      line-height: 1.35;
+    }
+
+    .progress-dialog-actions {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      gap: 16px;
+      margin-top: 4px;
+      flex-wrap: wrap;
+    }
+
+    .progress-dialog-btn {
+      width: 140px;
+      min-width: 140px;
+      height: 38px;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 12px;
+      font-size: 0.92rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
+      cursor: pointer;
+      transition: all 150ms ease;
+      text-decoration: none;
+      box-sizing: border-box;
+    }
+
+    .progress-dialog-btn.btn-primary {
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      border: 1px solid transparent;
+      color: #04101d;
+      box-shadow: 0 4px 14px rgba(103, 214, 255, 0.25);
+    }
+
+    .progress-dialog-btn.btn-primary:hover,
+    .progress-dialog-btn.btn-primary:focus-visible {
+      transform: translateY(-2px);
+      filter: brightness(1.1);
+      box-shadow: 0 6px 18px rgba(103, 214, 255, 0.35);
+    }
+
+    .progress-dialog-btn.btn-secondary {
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--line);
       color: var(--text);
-      line-height: 1.2;
-      word-break: break-word;
-      text-align: left;
     }
 
-    .project-running-status-value.pending,
-    .project-running-status-label.pending {
-      color: rgba(174, 188, 218, 0.75);
-      font-style: italic;
-    }
-
-    .project-running-status-action {
-      width: 100%;
-      min-width: 0;
-      justify-self: stretch;
-      margin-top: 2px;
-      grid-column: 1 / -1;
-      font-size: 0.78rem;
-      padding: 7px 10px;
+    .progress-dialog-btn.btn-secondary:hover,
+    .progress-dialog-btn.btn-secondary:focus-visible {
+      transform: translateY(-2px);
+      border-color: rgba(103, 214, 255, 0.6);
+      background: linear-gradient(135deg, rgba(10, 55, 120, 0.8), rgba(8, 110, 130, 0.72));
     }
 
     .project-links-panel {
@@ -568,6 +888,7 @@
       .more-actions-dropdown { position: static; margin-left: auto; }
       .project-details-grid { grid-template-columns: 1fr; }
       .project-detail-row { grid-template-columns: minmax(0, 1fr); }
+      .project-running-status-grid { width: 1240px; }
     }
   </style>
 </head>
@@ -602,7 +923,10 @@
     <section class="panel project-details-panel" aria-label="Project Details">
       <div class="project-details-heading">
         <h2 class="project-details-title">Project Details</h2>
-        <span id="projectLaunchDate" class="project-launch-date pending">Launch date: Data pending</span>
+        <div class="project-details-badges">
+          <span id="recallStatusBadge" class="recall-status-badge pending">DB Recall: Standby</span>
+          <span id="projectLaunchDate" class="project-launch-date pending">Launch date: Data pending</span>
+        </div>
       </div>
       <div class="project-details-grid">
         <div class="project-details-column">
@@ -654,58 +978,97 @@
 
     <section class="panel project-running-status-panel" aria-label="Project Running Status">
       <h2 class="project-running-status-title">Project Running Status</h2>
-      <div class="project-running-status-grid">
-        <div class="project-running-status-column">
-          <div class="project-running-status-item">
-            <span class="project-running-status-label">Status Field 1</span>
-            <span class="project-running-status-value pending">Data pending</span>
-            <button type="button" class="project-running-status-action secondary-btn" disabled>Button 1</button>
-          </div>
-          <div class="project-running-status-item">
-            <span class="project-running-status-label">Status Field 2</span>
-            <span class="project-running-status-value pending">Data pending</span>
-            <button type="button" class="project-running-status-action secondary-btn" disabled>Button 2</button>
-          </div>
-          <div class="project-running-status-item">
-            <span class="project-running-status-label">Status Field 3</span>
-            <span class="project-running-status-value pending">Data pending</span>
-            <button type="button" class="project-running-status-action secondary-btn" disabled>Button 3</button>
-          </div>
-        </div>
+      <div class="project-running-status-grid" role="img" aria-label="Three-line snaked milestone progress with twenty-four checkpoints">
+        <svg class="project-running-status-track" viewBox="0 0 1000 360" preserveAspectRatio="none" aria-hidden="true">
+          <defs>
+            <linearGradient id="projectRunningStatusTrackGradient" x1="24" y1="0" x2="976" y2="0" gradientUnits="userSpaceOnUse">
+              <stop offset="0%" stop-color="rgba(255, 242, 120, 0.95)"></stop>
+              <stop offset="100%" stop-color="rgba(255, 158, 62, 0.95)"></stop>
+            </linearGradient>
+          </defs>
+          <path d="M24 52 H924 A52 52 0 0 1 924 180 H76 A52 52 0 0 0 76 308 H976"></path>
+        </svg>
 
-        <div class="project-running-status-column">
-          <div class="project-running-status-item">
-            <span class="project-running-status-label">Status Field 4</span>
-            <span class="project-running-status-value pending">Data pending</span>
-            <button type="button" class="project-running-status-action secondary-btn" disabled>Button 4</button>
+        <div class="project-running-status-snake-lanes">
+          <div class="project-running-status-lane lane-1">
+            <div class="project-running-status-point"><p class="project-running-status-point-label">Project launched</p><span class="project-running-status-roundel" aria-hidden="true"></span></div>
+            <div class="project-running-status-point"><p class="project-running-status-point-label">Pre-docking UTM completed</p><span class="project-running-status-roundel" aria-hidden="true"></span></div>
+            <div class="project-running-status-point"><p class="project-running-status-point-label">Pre-docking Boroscopy completed</p><span class="project-running-status-roundel" aria-hidden="true"></span></div>
+            <div class="project-running-status-point"><p class="project-running-status-point-label">Pre-docking LDM completed</p><span class="project-running-status-roundel" aria-hidden="true"></span></div>
+            <div class="project-running-status-point"><p class="project-running-status-point-label">DD Specs submitted by Tech</p><span class="project-running-status-roundel" aria-hidden="true"></span></div>
+            <div class="project-running-status-point"><p class="project-running-status-point-label">DD Specs reviewed</p><span class="project-running-status-roundel" aria-hidden="true"></span></div>
+            <div class="project-running-status-point"><p class="project-running-status-point-label">Tenders floated</p><span class="project-running-status-roundel" aria-hidden="true"></span></div>
+            <div class="project-running-status-point"><p class="project-running-status-point-label">Yard Quote Comparison submitted</p><span class="project-running-status-roundel" aria-hidden="true"></span></div>
           </div>
-          <div class="project-running-status-item">
-            <span class="project-running-status-label">Status Field 5</span>
-            <span class="project-running-status-value pending">Data pending</span>
-            <button type="button" class="project-running-status-action secondary-btn" disabled>Button 5</button>
-          </div>
-          <div class="project-running-status-item">
-            <span class="project-running-status-label">Status Field 6</span>
-            <span class="project-running-status-value pending">Data pending</span>
-            <button type="button" class="project-running-status-action secondary-btn" disabled>Button 6</button>
-          </div>
-        </div>
 
-        <div class="project-running-status-column">
-          <div class="project-running-status-item">
-            <span class="project-running-status-label">Status Field 7</span>
-            <span class="project-running-status-value pending">Data pending</span>
-            <button type="button" class="project-running-status-action secondary-btn" disabled>Button 7</button>
+          <div class="project-running-status-lane lane-2">
+            <div class="project-running-status-point">
+              <p class="project-running-status-point-label">Yard Approved - Confirmation sent</p>
+              <span class="project-running-status-roundel" aria-hidden="true"></span>
+            </div>
+            <div class="project-running-status-point">
+              <p class="project-running-status-point-label">Critical Spares ordered</p>
+              <span class="project-running-status-roundel" aria-hidden="true"></span>
+            </div>
+            <div class="project-running-status-point">
+              <p class="project-running-status-point-label">Vessel Commercial release</p>
+              <span class="project-running-status-roundel" aria-hidden="true"></span>
+            </div>
+            <div class="project-running-status-point">
+              <p class="project-running-status-point-label">Tanks washed / Gas Free</p>
+              <span class="project-running-status-roundel" aria-hidden="true"></span>
+            </div>
+            <div class="project-running-status-point">
+              <p class="project-running-status-point-label">Demucked / Deslopped</p>
+              <span class="project-running-status-roundel" aria-hidden="true"></span>
+            </div>
+            <div class="project-running-status-point">
+              <p class="project-running-status-point-label">Arrived Shipyard</p>
+              <span class="project-running-status-roundel" aria-hidden="true"></span>
+            </div>
+            <div class="project-running-status-point">
+              <p class="project-running-status-point-label">Repairs / Surveys commenced</p>
+              <span class="project-running-status-roundel" aria-hidden="true"></span>
+            </div>
+            <div class="project-running-status-point">
+              <p class="project-running-status-point-label">Docking completed</p>
+              <span class="project-running-status-roundel" aria-hidden="true"></span>
+            </div>
           </div>
-          <div class="project-running-status-item">
-            <span class="project-running-status-label">Status Field 8</span>
-            <span class="project-running-status-value pending">Data pending</span>
-            <button type="button" class="project-running-status-action secondary-btn" disabled>Button 8</button>
-          </div>
-          <div class="project-running-status-item">
-            <span class="project-running-status-label">Status Field 9</span>
-            <span class="project-running-status-value pending">Data pending</span>
-            <button type="button" class="project-running-status-action secondary-btn" disabled>Button 9</button>
+
+          <div class="project-running-status-lane lane-3">
+            <div class="project-running-status-point">
+              <p class="project-running-status-point-label">Repairs completed</p>
+              <span class="project-running-status-roundel" aria-hidden="true"></span>
+            </div>
+            <div class="project-running-status-point">
+              <p class="project-running-status-point-label">Sea-trials completed</p>
+              <span class="project-running-status-roundel" aria-hidden="true"></span>
+            </div>
+            <div class="project-running-status-point">
+              <p class="project-running-status-point-label">Surveys completed</p>
+              <span class="project-running-status-roundel" aria-hidden="true"></span>
+            </div>
+            <div class="project-running-status-point">
+              <p class="project-running-status-point-label">Departed Shipyard</p>
+              <span class="project-running-status-roundel" aria-hidden="true"></span>
+            </div>
+            <div class="project-running-status-point">
+              <p class="project-running-status-point-label">Commercial Onhire</p>
+              <span class="project-running-status-roundel" aria-hidden="true"></span>
+            </div>
+            <div class="project-running-status-point">
+              <p class="project-running-status-point-label">Yard and non-yard bills paid</p>
+              <span class="project-running-status-roundel" aria-hidden="true"></span>
+            </div>
+            <div class="project-running-status-point">
+              <p class="project-running-status-point-label">Final Docking Cost compiled</p>
+              <span class="project-running-status-roundel" aria-hidden="true"></span>
+            </div>
+            <div class="project-running-status-point">
+              <p class="project-running-status-point-label">Project completed</p>
+              <span class="project-running-status-roundel" aria-hidden="true"></span>
+            </div>
           </div>
         </div>
       </div>
@@ -756,9 +1119,18 @@
     </div>
   </div>
 
+  <div id="progressDialogOverlay" class="progress-dialog-overlay" aria-hidden="true" hidden>
+    <div class="progress-dialog" role="dialog" aria-modal="true" aria-labelledby="progressDialogTitle">
+      <h2 id="progressDialogTitle" class="progress-dialog-title">DockPilot</h2>
+      <p id="progressDialogBody" class="progress-dialog-body"></p>
+      <div id="progressDialogActions" class="progress-dialog-actions"></div>
+    </div>
+  </div>
+
   <script type="module">
     import { supabase } from './supabaseClient.js';
     import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
+    import { getSession } from './dockpilotAuthContract.js';
     import { loadSavedTheme } from './dockpilotTheme.js';
     import {
       buildProjectFolderName,
@@ -792,19 +1164,30 @@
     const projectDetailLocDate2 = document.getElementById('projectDetailLocDate2');
     const projectDetailLocDate3 = document.getElementById('projectDetailLocDate3');
     const projectLaunchDate = document.getElementById('projectLaunchDate');
+    const recallStatusBadge = document.getElementById('recallStatusBadge');
     const openDataFileBtn = document.getElementById('openDataFileBtn');
     const projectDataFileNote = document.getElementById('projectDataFileNote');
     const dataFileOverlay = document.getElementById('dataFileOverlay');
     const dataFileModal = document.getElementById('dataFileModal');
     const dataFileBody = document.getElementById('dataFileBody');
     const closeDataFileBtn = document.getElementById('closeDataFileBtn');
+    const progressDialogOverlay = document.getElementById('progressDialogOverlay');
+    const progressDialogTitle = document.getElementById('progressDialogTitle');
+    const progressDialogBody = document.getElementById('progressDialogBody');
+    const progressDialogActions = document.getElementById('progressDialogActions');
+    const checkpointPoints = Array.from(document.querySelectorAll('.project-running-status-point'));
 
     const MORE_ACTIONS_IDLE_MS = 2000;
+    const CHECKPOINT_PROGRESS_STORAGE_KEY = 'DOCKPILOT_DDP_PROGRESS_V1';
+    const CHECKPOINT_DATE_STEP_DAYS = 1;
     let moreActionsCollapseTimer = null;
     let moreActionsKeyboardFocus = false;
     let activeProjectContext = null;
     let activeProjectRecord = null;
     let activeDataFileOpen = false;
+    let checkpointState = [];
+    let suppressBeforeUnloadPrompt = false;
+    let pendingDialogResolver = null;
 
     function formatBadgeDate(date) {
       const day = String(date.getDate()).padStart(2, '0');
@@ -815,6 +1198,12 @@
       if (!statusNote) return;
       statusNote.textContent = text;
       statusNote.className = `status-note${tone ? ` ${tone}` : ''}`;
+    }
+
+    function setRecallStatus(state, message) {
+      if (!recallStatusBadge) return;
+      recallStatusBadge.className = `recall-status-badge ${state}`;
+      recallStatusBadge.textContent = message;
     }
 
     function setValueBox(el, value) {
@@ -864,8 +1253,503 @@
       }
     }
 
+    function formatDateDdMmm(isoDate) {
+      const date = new Date(`${isoDate}T00:00:00`);
+      if (Number.isNaN(date.getTime())) return '-- ---';
+      return `${String(date.getDate()).padStart(2, '0')}-${monthNames[date.getMonth()]}`;
+    }
+
+    function formatLane2DateDdMmm(isoDate) {
+      return formatDateDdMmm(isoDate);
+    }
+
+    const MONTH_LOOKUP = {
+      jan: 0, feb: 1, mar: 2, apr: 3, may: 4, jun: 5,
+      jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11
+    };
+
+    function parseManualDateInput(rawText, baseYear = new Date().getFullYear()) {
+      const text = String(rawText ?? '').trim();
+      const match = text.match(/^(\d{1,2})-([A-Za-z]{3})$/);
+      if (!match) return null;
+
+      const dayNum = parseInt(match[1], 10);
+      const monStr = match[2].toLowerCase();
+      if (!(monStr in MONTH_LOOKUP)) return null;
+
+      const monthIndex = MONTH_LOOKUP[monStr];
+      const testDate = new Date(baseYear, monthIndex, dayNum);
+      if (
+        testDate.getFullYear() !== baseYear ||
+        testDate.getMonth() !== monthIndex ||
+        testDate.getDate() !== dayNum
+      ) {
+        return null;
+      }
+
+      const yyyy = String(baseYear);
+      const mm = String(monthIndex + 1).padStart(2, '0');
+      const dd = String(dayNum).padStart(2, '0');
+      return `${yyyy}-${mm}-${dd}`;
+    }
+
+    function getTodayIsoDate() {
+      const now = new Date();
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function getMinimumAllowedDateIso(index) {
+      // Checkpoints 1, 2, 3 (UTM, Boroscopy, LDM) are exempt from sequence/launch-date limits
+      if (index === 1 || index === 2 || index === 3) {
+        return null;
+      }
+
+      // Checkpoint 0 (Project launched) has no prior milestone constraint
+      if (index === 0) {
+        return null;
+      }
+
+      // Checkpoints 4..23: cannot be earlier than "Project launched" date (index 0) or the previous milestone date (index - 1)
+      let minIso = null;
+      const launchIso = checkpointState[0]?.dateIso;
+      const prevIso = checkpointState[index - 1]?.dateIso;
+
+      if (launchIso && prevIso) {
+        minIso = launchIso > prevIso ? launchIso : prevIso;
+      } else if (launchIso) {
+        minIso = launchIso;
+      } else if (prevIso) {
+        minIso = prevIso;
+      }
+
+      return minIso;
+    }
+
+    function shiftIsoDateByDays(isoDate, days) {
+      const date = new Date(`${isoDate}T00:00:00`);
+      if (Number.isNaN(date.getTime())) return getTodayIsoDate();
+      date.setDate(date.getDate() + days);
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function getProgressStorageKey() {
+      const vesselId = String(activeProjectContext?.vessel?.vesselId ?? '').trim() || 'unknown-vessel';
+      const projectKey = getProjectKeyFromContext(activeProjectContext) || vesselId;
+      return `${CHECKPOINT_PROGRESS_STORAGE_KEY}::${projectKey}`;
+    }
+
+    function persistCheckpointState() {
+      try {
+        localStorage.setItem(getProgressStorageKey(), JSON.stringify({ checkpointState }));
+      } catch {
+        // Best effort only.
+      }
+    }
+
+    function loadCheckpointStateFromStorage() {
+      try {
+        const raw = localStorage.getItem(getProgressStorageKey());
+        if (!raw) return null;
+        const parsed = JSON.parse(raw);
+        if (!parsed || !Array.isArray(parsed.checkpointState)) return null;
+        return parsed.checkpointState;
+      } catch {
+        return null;
+      }
+    }
+
+    function getLastContiguousLockedGreenIndex() {
+      let last = -1;
+      for (let index = 0; index < checkpointState.length; index += 1) {
+        const point = checkpointState[index];
+        if (point.locked && point.roundelGreen) {
+          last = index;
+          continue;
+        }
+        break;
+      }
+      return last;
+    }
+
+    function getFlashingCheckpointIndex() {
+      const last = getLastContiguousLockedGreenIndex();
+      const next = last + 1;
+      return next < checkpointState.length ? next : -1;
+    }
+
+    function unlockAndResetFollowing(index) {
+      const todayIso = getTodayIsoDate();
+      for (let i = index + 1; i < checkpointState.length; i += 1) {
+        checkpointState[i].locked = false;
+        checkpointState[i].roundelGreen = false;
+        checkpointState[i].dateIso = todayIso;
+        checkpointState[i].dateValue.classList.remove('is-invalid-highlight');
+      }
+    }
+
+    function renderCheckpoint(index) {
+      const pointState = checkpointState[index];
+      if (!pointState) return;
+
+      pointState.roundelBtn.classList.toggle('is-complete', Boolean(pointState.roundelGreen));
+      pointState.roundelBtn.disabled = false;
+      pointState.roundelBtn.setAttribute('aria-label', pointState.locked ? `Unlock ${pointState.label}` : `Lock ${pointState.label}`);
+      pointState.roundelBtn.title = pointState.locked ? 'Click to unlock checkpoint' : 'Click to lock checkpoint';
+
+      const formattedDate = pointState.isMiddleLane ? formatLane2DateDdMmm(pointState.dateIso) : formatDateDdMmm(pointState.dateIso);
+      pointState.dateValue.value = formattedDate;
+      pointState.dateValue.disabled = Boolean(pointState.locked);
+      pointState.decreaseBtn.disabled = Boolean(pointState.locked);
+      pointState.increaseBtn.disabled = Boolean(pointState.locked);
+    }
+
+    function renderAllCheckpoints() {
+      checkpointState.forEach((_, index) => renderCheckpoint(index));
+      const flashingIndex = getFlashingCheckpointIndex();
+      checkpointState.forEach((point, index) => {
+        point.roundelBtn.classList.toggle('flashing', index === flashingIndex);
+      });
+    }
+
+    function closeProgressDialog(value) {
+      progressDialogOverlay.hidden = true;
+      progressDialogOverlay.setAttribute('aria-hidden', 'true');
+      const resolver = pendingDialogResolver;
+      pendingDialogResolver = null;
+      if (typeof resolver === 'function') resolver(value);
+    }
+
+    function showProgressDialog({ title, message, actions }) {
+      if (pendingDialogResolver) {
+        closeProgressDialog(actions?.[0]?.value ?? 'dismiss');
+      }
+
+      progressDialogTitle.textContent = title;
+      progressDialogBody.textContent = message;
+      progressDialogActions.innerHTML = '';
+
+      return new Promise((resolve) => {
+        pendingDialogResolver = resolve;
+        actions.forEach((action, actionIndex) => {
+          const button = document.createElement('button');
+          button.type = 'button';
+          button.className = `progress-dialog-btn ${action.kind === 'primary' ? 'btn-primary' : 'btn-secondary'}`;
+          button.textContent = action.label;
+          button.addEventListener('click', () => closeProgressDialog(action.value));
+          progressDialogActions.appendChild(button);
+          if (actionIndex === 0) {
+            window.setTimeout(() => button.focus(), 0);
+          }
+        });
+
+        progressDialogOverlay.hidden = false;
+        progressDialogOverlay.setAttribute('aria-hidden', 'false');
+      });
+    }
+
+    async function showSequenceWarning() {
+      await showProgressDialog({
+        title: 'Progress Lock',
+        message: 'Progress cannot be locked until previous steps are completed!',
+        actions: [{ label: 'Continue', value: 'continue', kind: 'primary' }]
+      });
+    }
+
+    function handleCheckpointMutation(index) {
+      unlockAndResetFollowing(index);
+      persistCheckpointState();
+      renderAllCheckpoints();
+    }
+
+    function handleDateCommit(index) {
+      const pointState = checkpointState[index];
+      if (!pointState || pointState.locked) return;
+
+      const inputVal = pointState.dateValue.value.trim();
+      const baseYear = pointState.dateIso ? parseInt(pointState.dateIso.slice(0, 4), 10) : new Date().getFullYear();
+      const parsedIso = parseManualDateInput(inputVal, Number.isNaN(baseYear) ? new Date().getFullYear() : baseYear);
+      const minAllowedIso = getMinimumAllowedDateIso(index);
+
+      if (parsedIso && (!minAllowedIso || parsedIso >= minAllowedIso)) {
+        pointState.dateIso = parsedIso;
+        pointState.dateValue.classList.remove('is-invalid-highlight');
+        pointState.dateValue.value = formatDateDdMmm(parsedIso);
+      } else {
+        const todayIso = getTodayIsoDate();
+        pointState.dateIso = (minAllowedIso && todayIso < minAllowedIso) ? minAllowedIso : todayIso;
+        pointState.dateValue.value = formatDateDdMmm(pointState.dateIso);
+        pointState.dateValue.classList.add('is-invalid-highlight');
+      }
+
+      persistCheckpointState();
+      saveProjectFrontpageCheckpointRecall(activeProjectContext).catch(() => {});
+    }
+
+    function buildCheckpointControl(point, index, startingState) {
+      const laneEl = point.closest('.project-running-status-lane');
+      const isMiddleLane = Boolean(laneEl?.classList.contains('lane-2'));
+      const labelEl = point.querySelector('.project-running-status-point-label');
+      const label = String(labelEl?.textContent ?? `Checkpoint ${index + 1}`).trim();
+      const oldRoundel = point.querySelector('.project-running-status-roundel');
+
+      const roundelBtn = document.createElement('button');
+      roundelBtn.type = 'button';
+      roundelBtn.className = 'project-running-status-roundel';
+      roundelBtn.setAttribute('aria-label', `Lock ${label}`);
+      roundelBtn.title = 'Click to lock checkpoint';
+
+      if (oldRoundel) {
+        oldRoundel.replaceWith(roundelBtn);
+      } else {
+        point.appendChild(roundelBtn);
+      }
+
+      const dateControl = document.createElement('div');
+      dateControl.className = 'project-running-status-date-control';
+
+      const capsule = document.createElement('div');
+      capsule.className = 'project-running-status-date-capsule';
+
+      const decreaseBtn = document.createElement('button');
+      decreaseBtn.type = 'button';
+      decreaseBtn.className = 'project-running-status-date-btn';
+      decreaseBtn.textContent = isMiddleLane ? '^' : 'v';
+      decreaseBtn.setAttribute('aria-label', `${isMiddleLane ? 'Increase' : 'Decrease'} date for ${label}`);
+
+      const dateValue = document.createElement('input');
+      dateValue.type = 'text';
+      dateValue.className = 'project-running-status-date-value';
+      dateValue.setAttribute('aria-label', `Date for ${label}`);
+      dateValue.spellcheck = false;
+      dateValue.autocomplete = 'off';
+
+      const increaseBtn = document.createElement('button');
+      increaseBtn.type = 'button';
+      increaseBtn.className = 'project-running-status-date-btn';
+      increaseBtn.textContent = isMiddleLane ? 'v' : '^';
+      increaseBtn.setAttribute('aria-label', `${isMiddleLane ? 'Decrease' : 'Increase'} date for ${label}`);
+
+      capsule.append(decreaseBtn, dateValue, increaseBtn);
+      dateControl.append(capsule);
+      point.appendChild(dateControl);
+
+      const lockedInitial = Boolean(startingState?.locked || startingState?.roundelGreen);
+      const pointState = {
+        label,
+        isMiddleLane,
+        roundelBtn,
+        decreaseBtn,
+        increaseBtn,
+        dateValue,
+        dateIso: lockedInitial ? (startingState?.dateIso || getTodayIsoDate()) : getTodayIsoDate(),
+        locked: lockedInitial,
+        roundelGreen: lockedInitial
+      };
+
+      dateValue.addEventListener('focus', () => {
+        if (pointState.locked) return;
+        window.setTimeout(() => dateValue.select(), 0);
+      });
+
+      dateValue.addEventListener('keydown', (event) => {
+        if (pointState.locked) return;
+        if (event.key === 'Enter') {
+          event.preventDefault();
+          handleDateCommit(index);
+          dateValue.blur();
+        } else if (event.key === 'Escape') {
+          event.preventDefault();
+          dateValue.classList.remove('is-invalid-highlight');
+          dateValue.value = formatDateDdMmm(pointState.dateIso);
+          dateValue.blur();
+        }
+      });
+
+      dateValue.addEventListener('blur', () => {
+        if (pointState.locked) return;
+        handleDateCommit(index);
+      });
+
+      roundelBtn.addEventListener('click', async () => {
+        const isLocking = !pointState.locked;
+        if (isLocking) {
+          if (index > 0 && !checkpointState[index - 1]?.locked) {
+            await showSequenceWarning();
+            return;
+          }
+
+          pointState.locked = true;
+          pointState.roundelGreen = true;
+          pointState.dateValue.classList.remove('is-invalid-highlight');
+          handleCheckpointMutation(index);
+          saveProjectFrontpageCheckpointRecall(activeProjectContext).catch(() => {});
+        } else {
+          const choice = await showProgressDialog({
+            title: 'Alert',
+            message: 'You are about to change previously saved date! are you sure?',
+            actions: [
+              { label: 'No', value: 'no', kind: 'secondary' },
+              { label: 'Yes', value: 'yes', kind: 'primary' }
+            ]
+          });
+
+          if (choice !== 'yes') {
+            return;
+          }
+
+          pointState.locked = false;
+          pointState.roundelGreen = false;
+          pointState.dateIso = getTodayIsoDate();
+          pointState.dateValue.classList.remove('is-invalid-highlight');
+          handleCheckpointMutation(index);
+          saveProjectFrontpageCheckpointRecall(activeProjectContext).catch(() => {});
+
+          window.setTimeout(() => {
+            pointState.dateValue.focus();
+            pointState.dateValue.select();
+          }, 50);
+        }
+      });
+
+      decreaseBtn.addEventListener('click', () => {
+        if (pointState.locked) return;
+        pointState.dateValue.classList.remove('is-invalid-highlight');
+
+        const stepDays = isMiddleLane ? CHECKPOINT_DATE_STEP_DAYS : -CHECKPOINT_DATE_STEP_DAYS;
+        const nextIso = shiftIsoDateByDays(pointState.dateIso, stepDays);
+        const minAllowedIso = getMinimumAllowedDateIso(index);
+
+        if (minAllowedIso && nextIso < minAllowedIso) {
+          pointState.dateIso = minAllowedIso;
+        } else {
+          pointState.dateIso = nextIso;
+        }
+
+        persistCheckpointState();
+        renderCheckpoint(index);
+        saveProjectFrontpageCheckpointRecall(activeProjectContext).catch(() => {});
+      });
+
+      increaseBtn.addEventListener('click', () => {
+        if (pointState.locked) return;
+        pointState.dateValue.classList.remove('is-invalid-highlight');
+
+        const stepDays = isMiddleLane ? -CHECKPOINT_DATE_STEP_DAYS : CHECKPOINT_DATE_STEP_DAYS;
+        const nextIso = shiftIsoDateByDays(pointState.dateIso, stepDays);
+        const minAllowedIso = getMinimumAllowedDateIso(index);
+
+        if (minAllowedIso && nextIso < minAllowedIso) {
+          pointState.dateIso = minAllowedIso;
+        } else {
+          pointState.dateIso = nextIso;
+        }
+
+        persistCheckpointState();
+        renderCheckpoint(index);
+        saveProjectFrontpageCheckpointRecall(activeProjectContext).catch(() => {});
+      });
+
+      return pointState;
+    }
+
+    function initCheckpointControls(savedCheckpoints) {
+      const persistedState = Array.isArray(savedCheckpoints) && savedCheckpoints.length > 0
+        ? savedCheckpoints
+        : loadCheckpointStateFromStorage();
+
+      checkpointState = checkpointPoints.map((point, index) => {
+        const saved = persistedState?.[index] || (Array.isArray(persistedState)
+          ? persistedState.find((s) => Number(s.checkpoint_index) === index)
+          : null);
+        const isLocked = Boolean(saved?.locked || saved?.roundelGreen || saved?.roundel_green);
+        const dateIso = saved?.checkpoint_date_iso || saved?.dateIso;
+        const normalizedSaved = saved ? {
+          label: saved.checkpoint_label || saved.label,
+          locked: isLocked,
+          roundelGreen: isLocked,
+          dateIso: isLocked ? (dateIso || getTodayIsoDate()) : (dateIso || getTodayIsoDate())
+        } : null;
+        return buildCheckpointControl(point, index, normalizedSaved);
+      });
+      renderAllCheckpoints();
+      persistCheckpointState();
+    }
+
+    function getSaveFilename() {
+      const vesselId = String(activeProjectContext?.vessel?.vesselId ?? 'UNKNOWN').trim() || 'UNKNOWN';
+      const now = new Date();
+      const mm = String(now.getMonth() + 1).padStart(2, '0');
+      const yyyy = String(now.getFullYear());
+      return `${vesselId}_DP_${mm}${yyyy}.json`;
+    }
+
+    function triggerProgressDownload() {
+      const payload = {
+        savedAt: new Date().toISOString(),
+        vesselId: String(activeProjectContext?.vessel?.vesselId ?? '').trim(),
+        projectKey: getProjectKeyFromContext(activeProjectContext),
+        projectContext: activeProjectContext,
+        projectRecord: activeProjectRecord
+          ? {
+            projectFolderPath: activeProjectRecord.projectFolderPath,
+            txtFileName: activeProjectRecord.txtFileName
+          }
+          : null,
+        checkpoints: checkpointState.map((point, index) => ({
+          index: index + 1,
+          label: point.label,
+          dateIso: point.dateIso,
+          dateDisplay: formatDateDdMmm(point.dateIso),
+          locked: point.locked,
+          roundelGreen: point.roundelGreen
+        }))
+      };
+
+      const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+      const url = URL.createObjectURL(blob);
+      const anchor = document.createElement('a');
+      anchor.href = url;
+      anchor.download = getSaveFilename();
+      document.body.appendChild(anchor);
+      anchor.click();
+      anchor.remove();
+      URL.revokeObjectURL(url);
+    }
+
+    async function handleNavigationSavePrompt(onProceed) {
+      const choice = await showProgressDialog({
+        title: 'Save Project Progress',
+        message: 'Would you like to save the project progress for later recall?',
+        actions: [
+          { label: 'No', value: 'no', kind: 'secondary' },
+          { label: 'Yes', value: 'yes', kind: 'primary' }
+        ]
+      });
+
+      if (choice === 'yes') {
+        triggerProgressDownload();
+      }
+
+      suppressBeforeUnloadPrompt = true;
+      try {
+        onProceed();
+      } finally {
+        window.setTimeout(() => {
+          suppressBeforeUnloadPrompt = false;
+        }, 0);
+      }
+    }
+
     function getProjectKeyFromContext(context) {
       if (!context) return '';
+      if (context.projectKey) return context.projectKey;
+      if (context.project_key) return context.project_key;
       return buildProjectFolderName(context?.vessel?.vesselId, context?.createdAt);
     }
 
@@ -952,8 +1836,10 @@
     }
 
     function readFrontContextFromStorage() {
-      const fromLaunch = new URLSearchParams(window.location.search).get('from') === 'launch';
-      if (!fromLaunch) return null;
+      const urlParams = new URLSearchParams(window.location.search);
+      const fromLaunch = urlParams.get('from') === 'launch';
+      const fromReview = urlParams.get('from') === 'review';
+      if (!fromLaunch && !fromReview) return null;
 
       const parsePayload = (raw) => {
         if (!raw) return null;
@@ -964,6 +1850,16 @@
           return null;
         }
       };
+
+      if (fromReview) {
+        try {
+          const reviewCtx = parsePayload(sessionStorage.getItem(DDP_RUNNING_PROJECT_CONTEXT_KEY)) ||
+                            parsePayload(localStorage.getItem(DDP_RUNNING_PROJECT_CONTEXT_KEY));
+          if (reviewCtx) return reviewCtx;
+        } catch {
+          // Fall back to standard context
+        }
+      }
 
       let payload = null;
       try {
@@ -977,6 +1873,125 @@
         return parsePayload(localStorage.getItem(DDP_FRONT_CONTEXT_KEY));
       } catch {
         return null;
+      }
+    }
+
+    async function saveProjectFrontpageRecall(context) {
+      const projectContext = context && typeof context === 'object' ? context : null;
+      const projectKey = getProjectKeyFromContext(projectContext);
+      const sessionData = getSession?.() || {};
+      const companyId = sessionData.companyId || '11111111-1111-1111-1111-111111111111';
+      if (!projectKey || !companyId) {
+        setRecallStatus('pending', 'DB Recall: Standby');
+        return false;
+      }
+
+      setRecallStatus('syncing', 'DB Recall: Saving...');
+
+      const vessel = projectContext?.vessel || {};
+      const docking = projectContext?.docking || {};
+      const preferred = Array.isArray(projectContext?.preferredLocations)
+        ? projectContext.preferredLocations
+        : [];
+      const p1 = preferred[0] || {};
+      const p2 = preferred[1] || {};
+      const p3 = preferred[2] || {};
+
+      try {
+        const response = await fetch('http://localhost:3001/project-frontpage-recall', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            company_id: companyId,
+            project_key: projectKey,
+            launch_date: projectContext?.createdAt || null,
+            vessel_id: vessel.vesselId || null,
+            vessel_name: vessel.vesselName || null,
+            imo: vessel.imo || null,
+            docking_criteria: docking.dockingCriteria || null,
+            cap_survey: docking.capSurveyRequired ? (String(docking.capSurveyRequired).toLowerCase() === 'yes' ? 'Required' : 'Not required') : null,
+            est_release_date: docking.estReleaseDate || null,
+            loceta_1_label: p1.location || null,
+            loceta_1_date: p1.date || null,
+            loceta_2_label: p2.location || null,
+            loceta_2_date: p2.date || null,
+            loceta_3_label: p3.location || null,
+            loceta_3_date: p3.date || null
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Recall save failed (${response.status})`);
+        }
+
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+        setRecallStatus('synced', `DB Recall: Synced (${timeStr})`);
+        return true;
+      } catch (error) {
+        console.warn('[Project Recall] Parent recall save failed:', error);
+        setRecallStatus('error', 'DB Recall: Offline / Error');
+        return false;
+      }
+    }
+
+    async function loadProjectFrontpageCheckpointRecall(context) {
+      const projectKey = getProjectKeyFromContext(context);
+      const sessionData = getSession?.() || {};
+      const companyId = sessionData.companyId || '11111111-1111-1111-1111-111111111111';
+      if (!projectKey) return null;
+
+      try {
+        const response = await fetch(`http://localhost:3001/project-frontpage-checkpoint-recall?company_id=${companyId}&project_key=${projectKey}`);
+        if (!response.ok) return null;
+        const data = await response.json();
+        if (Array.isArray(data?.rows) && data.rows.length > 0) {
+          return data.rows;
+        }
+      } catch (err) {
+        console.warn('[Project Recall] Checkpoint recall load failed:', err);
+      }
+      return null;
+    }
+
+    async function saveProjectFrontpageCheckpointRecall(context) {
+      const projectContext = context && typeof context === 'object' ? context : null;
+      const projectKey = getProjectKeyFromContext(projectContext);
+      const sessionData = getSession?.() || {};
+      const companyId = sessionData.companyId || '11111111-1111-1111-1111-111111111111';
+      if (!projectKey || !companyId || !checkpointState.length) return false;
+
+      setRecallStatus('syncing', 'DB Recall: Saving...');
+
+      const payload = checkpointState.map((point, index) => ({
+        company_id: companyId,
+        project_key: projectKey,
+        checkpoint_index: index,
+        checkpoint_label: point.label || null,
+        checkpoint_date_iso: point.dateIso || null,
+        locked: Boolean(point.locked),
+        roundel_green: Boolean(point.roundelGreen)
+      }));
+
+      try {
+        const response = await fetch('http://localhost:3001/project-frontpage-checkpoint-recall', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ company_id: companyId, project_key: projectKey, rows: payload })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Checkpoint recall save failed (${response.status})`);
+        }
+
+        const now = new Date();
+        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
+        setRecallStatus('synced', `DB Recall: Synced (${timeStr})`);
+        return true;
+      } catch (error) {
+        console.warn('[Project Recall] Checkpoint recall save failed:', error);
+        setRecallStatus('error', 'DB Recall: Offline / Error');
+        return false;
       }
     }
 
@@ -1083,6 +2098,38 @@
       closeDataFileBtn?.addEventListener('click', closeDataFileViewer);
       document.addEventListener('keydown', handleDataFileKeydown);
 
+      document.addEventListener('keydown', (event) => {
+        if (event.key === 'Escape' && !progressDialogOverlay.hidden && pendingDialogResolver) {
+          event.preventDefault();
+          closeProgressDialog('dismiss');
+        }
+      });
+
+      progressDialogOverlay?.addEventListener('click', (event) => {
+        if (event.target === progressDialogOverlay && pendingDialogResolver) {
+          closeProgressDialog('dismiss');
+        }
+      });
+
+      document.addEventListener('click', (event) => {
+        const link = event.target instanceof Element ? event.target.closest('a[href]') : null;
+        if (!link) return;
+        if (link.target && link.target !== '_self') return;
+        const href = link.getAttribute('href') || '';
+        if (!href || href.startsWith('#') || href.startsWith('javascript:')) return;
+
+        event.preventDefault();
+        handleNavigationSavePrompt(() => {
+          window.location.href = link.href;
+        });
+      });
+
+      window.addEventListener('beforeunload', (event) => {
+        if (suppressBeforeUnloadPrompt) return;
+        event.preventDefault();
+        event.returnValue = '';
+      });
+
       registerFleetBtn.disabled = true;
       launchProjectBtn.disabled = true;
       editProjectBtn.disabled = true;
@@ -1095,9 +2142,14 @@
       const context = readFrontContextFromStorage();
       if (context) {
         renderProjectDetails(context);
+        const dbCheckpoints = await loadProjectFrontpageCheckpointRecall(context);
+        initCheckpointControls(dbCheckpoints);
+        await saveProjectFrontpageRecall(context);
         setStatus('Project details loaded from Launch Project context.', 'success');
       } else {
         renderProjectDetails(null);
+        initCheckpointControls(null);
+        setRecallStatus('pending', 'DB Recall: Standby (No Context)');
         setStatus('Project details pending. Use Launch Project from Dry-Docking Project to populate this page.', 'warn');
       }
 

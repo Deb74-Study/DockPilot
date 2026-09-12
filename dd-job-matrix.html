@@ -389,6 +389,9 @@
     const matrixMeta = document.getElementById('matrixMeta');
     const matrixTable = document.getElementById('matrixTable');
 
+    const JOB_MATRIX_DB_TABLE = 'dd_job_matrix';
+    const JOB_MATRIX_DB_KEY = 'default';
+
     let matrixHeader = [];
     let ddJobMatrixArray = [];
 
@@ -507,6 +510,9 @@
           td.textContent = cell;
           td.addEventListener('blur', () => {
             ddJobMatrixArray[rowIndex][colIndex] = td.textContent || '';
+            saveMatrixToDatabase().catch((error) => {
+              console.warn('[DD Job Matrix] Auto-save failed:', error);
+            });
           });
           tr.appendChild(td);
         });
@@ -518,7 +524,77 @@
       updateMatrixMeta();
     }
 
+    async function loadMatrixFromDatabase() {
+      const companyId = getSession()?.companyId;
+      if (!companyId) return null;
+
+      try {
+        const response = await fetch(`http://localhost:3001/dd-job-matrix?company_id=${encodeURIComponent(companyId)}`);
+        if (!response.ok) return null;
+        const payload = await response.json();
+        const row = Array.isArray(payload?.rows) && payload.rows[0] ? payload.rows[0] : null;
+        if (!row) return null;
+
+        const parsedHeader = Array.isArray(JSON.parse(row.matrix_header || '[]')) ? JSON.parse(row.matrix_header || '[]') : [];
+        const parsedRows = Array.isArray(JSON.parse(row.matrix_rows || '[]')) ? JSON.parse(row.matrix_rows || '[]') : [];
+
+        matrixHeader = parsedHeader.map((value) => String(value || ''));
+        ddJobMatrixArray = parsedRows.map((entry) => normalizeRow(entry, matrixHeader.length || 0));
+        if (!matrixHeader.length && ddJobMatrixArray.length) {
+          matrixHeader = Array.from({ length: Math.max(...ddJobMatrixArray.map((row) => row.length), 1) }, (_, index) => `Column ${index + 1}`);
+          ddJobMatrixArray = ddJobMatrixArray.map((row) => normalizeRow(row, matrixHeader.length));
+        }
+        if (!matrixHeader.length) {
+          matrixHeader = ['Job Type', 'Status', 'Notes'];
+          ddJobMatrixArray = [['', '', '']];
+        }
+        renderMatrixTable();
+        return row;
+      } catch (error) {
+        console.warn('[DD Job Matrix] Local DB load failed:', error);
+        return null;
+      }
+    }
+
+    async function saveMatrixToDatabase() {
+      const companyId = getSession()?.companyId;
+      if (!companyId) return false;
+
+      try {
+        const response = await fetch('http://localhost:3001/dd-job-matrix', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            company_id: companyId,
+            matrix_key: JOB_MATRIX_DB_KEY,
+            matrix_header: matrixHeader,
+            matrix_rows: ddJobMatrixArray
+          })
+        });
+
+        if (!response.ok) {
+          throw new Error(`Save failed (${response.status})`);
+        }
+
+        statusNote.textContent = 'DD Job Matrix saved to local database.';
+        statusNote.classList.remove('warn');
+        statusNote.classList.add('success');
+        return true;
+      } catch (error) {
+        console.warn('[DD Job Matrix] Database save failed:', error);
+        statusNote.textContent = 'DD Job Matrix local save failed. Cached changes remain in the page.';
+        statusNote.classList.remove('success');
+        statusNote.classList.add('warn');
+        return false;
+      }
+    }
+
     async function loadMatrixFromSource() {
+      const dbMatrix = await loadMatrixFromDatabase();
+      if (dbMatrix) {
+        return;
+      }
+
       const response = await fetch('./docs/dd-job-selection-root.json', { cache: 'no-store' });
       if (!response.ok) {
         throw new Error(`Unable to load matrix source (${response.status})`);
@@ -538,21 +614,29 @@
     function wireMatrixEvents() {
       if (addMatrixRowBtn) {
         addMatrixRowBtn.addEventListener('click', () => {
-          ddJobMatrixArray.push(Array(matrixHeader.length).fill(''));
+          ddJobMatrixArray.push(Array(matrixHeader.length || 3).fill(''));
           renderMatrixTable();
           statusNote.textContent = 'New blank row added to DD Job Matrix.';
           statusNote.classList.remove('warn');
           statusNote.classList.add('success');
+          saveMatrixToDatabase().catch((error) => {
+            console.warn('[DD Job Matrix] Save on add failed:', error);
+          });
         });
       }
 
       if (resetMatrixBtn) {
         resetMatrixBtn.addEventListener('click', async () => {
           try {
+            matrixHeader = [];
+            ddJobMatrixArray = [];
             await loadMatrixFromSource();
             statusNote.textContent = 'DD Job Matrix reloaded from attachment source.';
             statusNote.classList.remove('warn');
             statusNote.classList.add('success');
+            saveMatrixToDatabase().catch((error) => {
+              console.warn('[DD Job Matrix] Save on reload failed:', error);
+            });
           } catch (error) {
             statusNote.textContent = error?.message || 'Failed to reload DD Job Matrix source.';
             statusNote.classList.remove('success');

@@ -1,4 +1,7 @@
 .DS_Store
+.env.local
+node_modules/
+server/node_modules/
 supabase/.temp/
 supabase/.branches/
 dist/

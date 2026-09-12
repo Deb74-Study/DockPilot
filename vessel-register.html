@@ -681,6 +681,14 @@
     import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
     import { loadSavedTheme }          from './dockpilotTheme.js';
     import { getSession }              from './dockpilotAuthContract.js';
+    import {
+      REGISTRY_COL_HEADERS,
+      REGISTRY_COL_KEYS,
+      DOC_STATUS_KEYS,
+      loadCompanyVesselRegistry,
+      saveCompanyVesselRegistry,
+      normalizeRegistryRow,
+    } from './vesselRegistryStore.js';
 
     // Apply saved theme before anything renders
     loadSavedTheme();
@@ -690,30 +698,8 @@
     const DDP_NAV_SELECTION_KEY = 'DOCKPILOT_DDP_NAV_SELECTION';
     const LAUNCH_HINT_TEXT = 'Click to Initiate project for this vessel.';
 
-    const COL_HEADERS = [
-      'Vessel ID', 'Vessel Name', 'IMO No.', 'Month-Year of Build',
-      'Yard of Build', 'Flag', 'Class', 'LOA (m)', 'LBP (m)',
-      'Breadth (m)', 'Depth (m)', 'Summer Draught (m)', 'DWT (t)', 'GT', 'NT',
-      'GA Plan', 'Midship Plan', 'Shell Exp. Plan', 'Docking Plan',
-      'P/d UTM', 'P/d Blr. Boro.', 'P/d M/E LDM',
-    ];
-
-    const COL_KEYS = [
-      'vesselId', 'vesselName', 'imo', 'monthYearOfBuild',
-      'yardOfBuild', 'flag', 'class', 'loa', 'lbp',
-      'breadth', 'depth', 'summerDraught', 'dwt', 'gt', 'nt',
-      'gaPlanStatus', 'midshipPlanStatus', 'shellExpPlanStatus', 'dockingPlanStatus',
-      'pdUtmStatus', 'pdBlrBoroStatus', 'pdLdmStatus',
-    ];
-    const DOC_STATUS_KEYS = new Set([
-      'gaPlanStatus',
-      'midshipPlanStatus',
-      'shellExpPlanStatus',
-      'dockingPlanStatus',
-      'pdUtmStatus',
-      'pdBlrBoroStatus',
-      'pdLdmStatus',
-    ]);
+    const COL_HEADERS = REGISTRY_COL_HEADERS;
+    const COL_KEYS = REGISTRY_COL_KEYS;
     const EDITABLE_COL_START_IDX = 3; // Skip Vessel ID, Vessel Name, IMO
     const EDITABLE_ROLES = new Set(['frontend developer', 'backend developer', 'company admin']);
 
@@ -796,10 +782,10 @@
       selection.addRange(range);
     }
 
-    function saveRegistry() {
+    async function saveRegistry() {
       if (!currentCompanyId) return;
       try {
-        localStorage.setItem(REGISTRY_KEY_PREFIX + currentCompanyId, JSON.stringify(allRows));
+        await saveCompanyVesselRegistry(currentCompanyId, allRows, REGISTRY_KEY_PREFIX);
       } catch (err) {
         console.warn('[Vessel Registry] Could not persist edits:', err);
         setStatus('Edit applied in view but local save failed.', 'warn');
@@ -856,7 +842,7 @@
       window.location.href = './dry-docking-project.html';
     }
 
-    function commitCellEdit(cell) {
+    async function commitCellEdit(cell) {
       const rowIndex = Number(cell.dataset.rowIndex);
       const colIndex = Number(cell.dataset.colIndex);
       if (!Number.isFinite(rowIndex) || !Number.isFinite(colIndex)) return;
@@ -866,7 +852,7 @@
       if (DOC_STATUS_KEYS.has(key)) return;
       const nextValue = String(cell.textContent ?? '').replace(/[\r\n]+/g, ' ').trim();
       allRows[rowIndex][key] = nextValue;
-      saveRegistry();
+      await saveRegistry();
       setStatus('Static data edited and saved to registry.', 'success');
     }
 
@@ -881,24 +867,9 @@
       return `${dateMatch[1]}-${monthNames[monthIdx]}-${dateMatch[3]}`;
     }
 
-    function normalizeRegistryRow(row) {
-      const source = row && typeof row === 'object' ? row : {};
-      const normalized = { ...source };
-      for (const key of DOC_STATUS_KEYS) {
-        normalized[key] = normalizeDocStatus(source[key]);
-      }
-      return normalized;
-    }
-
     // ── Registry ──
-    function loadRegistry(companyId) {
-      try {
-        const raw    = localStorage.getItem(REGISTRY_KEY_PREFIX + companyId);
-        const parsed = raw ? JSON.parse(raw) : [];
-        return Array.isArray(parsed) ? parsed.map(normalizeRegistryRow) : [];
-      } catch {
-        return [];
-      }
+    async function loadRegistry(companyId) {
+      return loadCompanyVesselRegistry(companyId, REGISTRY_KEY_PREFIX);
     }
 
     // ── Table rendering ──
@@ -1090,10 +1061,10 @@
         requestAnimationFrame(() => selectCellContents(cell));
       });
 
-      tableBody.addEventListener('blur', (event) => {
+      tableBody.addEventListener('blur', async (event) => {
         const cell = event.target.closest('td.is-editable-cell');
         if (!cell || !canEditStaticData) return;
-        commitCellEdit(cell);
+        await commitCellEdit(cell);
       }, true);
 
       tableBody.addEventListener('keydown', (event) => {
@@ -1129,7 +1100,7 @@
     }
 
     // ── Boot ──
-    function initRegistry() {
+    async function initRegistry() {
       todayBadge.textContent = `Date: ${formatBadgeDate(new Date())}`;
 
       registrySearch.value = '';
@@ -1145,7 +1116,7 @@
         return;
       }
 
-      allRows = loadRegistry(companyId);
+      allRows = await loadRegistry(companyId);
       renderTable(allRows);
 
       const n = allRows.length;

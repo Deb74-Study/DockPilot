@@ -1368,8 +1368,9 @@
     loadSavedTheme();
 
     // ── Constants ──
-    const VP_CONTEXT_KEY = 'DOCKPILOT_VP_CONTEXT';
-    const VP_NAV_SELECTION_KEY = 'DOCKPILOT_VP_NAV_SELECTION';
+    const DEFAULT_COMPANY_SCOPE = getSession()?.companyId || 'default';
+    const VP_CONTEXT_KEY = getStoreKey('projectContext', DEFAULT_COMPANY_SCOPE, 'vp_context');
+    const VP_NAV_SELECTION_KEY = getStoreKey('projectContext', DEFAULT_COMPANY_SCOPE, 'vp_nav_selection');
     const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
                         'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
     const YEAR_OPTIONS = Array.from({ length: 71 }, (_, index) => String(1980 + index));
@@ -1972,9 +1973,8 @@
 
       let registry = [];
       try {
-        const raw = localStorage.getItem(VESSEL_REGISTRY_KEY_PREFIX + companyId);
-        const parsed = raw ? JSON.parse(raw) : [];
-        registry = Array.isArray(parsed) ? parsed : [];
+        const registryKey = getStoreKey('vesselRegistry', companyId);
+        registry = readStoreValue(registryKey, []) || [];
       } catch {
         registry = [];
       }
@@ -2111,7 +2111,7 @@
       };
       vpContext = loadedContext;
       try {
-        localStorage.setItem(VP_CONTEXT_KEY, JSON.stringify(loadedContext));
+        writeStoreValue(VP_CONTEXT_KEY, loadedContext);
       } catch {
         // Non-fatal: UI context still updates from in-memory value.
       }
@@ -2566,13 +2566,12 @@
     function applyNavigationSelectionPrefill() {
       let navSelection = null;
       try {
-        const raw = localStorage.getItem(VP_NAV_SELECTION_KEY);
-        navSelection = raw ? JSON.parse(raw) : null;
+        navSelection = readStoreValue(VP_NAV_SELECTION_KEY, null);
       } catch {
         navSelection = null;
       }
 
-      localStorage.removeItem(VP_NAV_SELECTION_KEY);
+      removeStoreValue(VP_NAV_SELECTION_KEY);
 
       if (!navSelection || typeof navSelection !== 'object') return;
 
@@ -2608,8 +2607,7 @@
     function renderContextBanner() {
       let context = null;
       try {
-        const raw = localStorage.getItem(VP_CONTEXT_KEY);
-        const parsed = raw ? JSON.parse(raw) : null;
+        const parsed = readStoreValue(VP_CONTEXT_KEY, null);
         if (parsed && typeof parsed === 'object' && parsed.vesselName) {
           context = parsed;
         }
@@ -2769,12 +2767,10 @@
     function pushToVesselRegistry(metadata) {
       const companyId = getSession()?.companyId;
       if (!companyId) return; // no session context — skip silently
-      const key = VESSEL_REGISTRY_KEY_PREFIX + companyId;
+      const key = getStoreKey('vesselRegistry', companyId);
       let registry = [];
       try {
-        const raw = localStorage.getItem(key);
-        const parsed = raw ? JSON.parse(raw) : [];
-        registry = Array.isArray(parsed) ? parsed : [];
+        registry = readStoreValue(key, []) || [];
       } catch {
         registry = [];
       }
@@ -2820,9 +2816,9 @@
         registry.push(record);
       }
       try {
-        localStorage.setItem(key, JSON.stringify(registry));
+        writeStoreValue(key, registry);
       } catch (err) {
-        console.warn('[VP Registry] Could not write to localStorage:', err);
+        console.warn('[VP Registry] Could not write to Store.js registry:', err);
       }
     }
 

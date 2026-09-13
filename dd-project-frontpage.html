@@ -273,53 +273,6 @@
       flex-wrap: wrap;
     }
 
-    .project-details-badges {
-      display: inline-flex;
-      align-items: center;
-      gap: 8px;
-      flex-wrap: wrap;
-    }
-
-    .recall-status-badge {
-      font-size: 0.8rem;
-      font-weight: 600;
-      border-radius: 999px;
-      padding: 4px 10px;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      white-space: nowrap;
-      transition: all 0.2s ease;
-    }
-
-    .recall-status-badge.pending {
-      color: #3b5066;
-      border: 1px solid #9bb4cf;
-      background: linear-gradient(180deg, #f2f7fd 0%, #e4eef9 100%);
-      box-shadow: 0 0 0 1px rgba(114, 137, 163, 0.2) inset;
-    }
-
-    .recall-status-badge.syncing {
-      color: #784c00;
-      border: 1px solid #ffd27d;
-      background: linear-gradient(180deg, #fff9e6 0%, #ffecb3 100%);
-      box-shadow: 0 0 0 1px rgba(217, 142, 0, 0.2) inset;
-    }
-
-    .recall-status-badge.synced {
-      color: #065f46;
-      border: 1px solid #6ee7b7;
-      background: linear-gradient(180deg, #ecfdf5 0%, #d1fae5 100%);
-      box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.25) inset;
-    }
-
-    .recall-status-badge.error {
-      color: #991b1b;
-      border: 1px solid #fca5a5;
-      background: linear-gradient(180deg, #fef2f2 0%, #fee2e2 100%);
-      box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.2) inset;
-    }
-
     .project-launch-date {
       font-size: 0.8rem;
       color: #0f233a;
@@ -923,10 +876,7 @@
     <section class="panel project-details-panel" aria-label="Project Details">
       <div class="project-details-heading">
         <h2 class="project-details-title">Project Details</h2>
-        <div class="project-details-badges">
-          <span id="recallStatusBadge" class="recall-status-badge pending">DB Recall: Standby</span>
-          <span id="projectLaunchDate" class="project-launch-date pending">Launch date: Data pending</span>
-        </div>
+        <span id="projectLaunchDate" class="project-launch-date pending">Launch date: Data pending</span>
       </div>
       <div class="project-details-grid">
         <div class="project-details-column">
@@ -1164,7 +1114,6 @@
     const projectDetailLocDate2 = document.getElementById('projectDetailLocDate2');
     const projectDetailLocDate3 = document.getElementById('projectDetailLocDate3');
     const projectLaunchDate = document.getElementById('projectLaunchDate');
-    const recallStatusBadge = document.getElementById('recallStatusBadge');
     const openDataFileBtn = document.getElementById('openDataFileBtn');
     const projectDataFileNote = document.getElementById('projectDataFileNote');
     const dataFileOverlay = document.getElementById('dataFileOverlay');
@@ -1198,12 +1147,6 @@
       if (!statusNote) return;
       statusNote.textContent = text;
       statusNote.className = `status-note${tone ? ` ${tone}` : ''}`;
-    }
-
-    function setRecallStatus(state, message) {
-      if (!recallStatusBadge) return;
-      recallStatusBadge.className = `recall-status-badge ${state}`;
-      recallStatusBadge.textContent = message;
     }
 
     function setValueBox(el, value) {
@@ -1882,11 +1825,8 @@
       const sessionData = getSession?.() || {};
       const companyId = sessionData.companyId || '11111111-1111-1111-1111-111111111111';
       if (!projectKey || !companyId) {
-        setRecallStatus('pending', 'DB Recall: Standby');
         return false;
       }
-
-      setRecallStatus('syncing', 'DB Recall: Saving...');
 
       const vessel = projectContext?.vessel || {};
       const docking = projectContext?.docking || {};
@@ -1924,13 +1864,9 @@
           throw new Error(`Recall save failed (${response.status})`);
         }
 
-        const now = new Date();
-        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-        setRecallStatus('synced', `DB Recall: Synced (${timeStr})`);
         return true;
       } catch (error) {
         console.warn('[Project Recall] Parent recall save failed:', error);
-        setRecallStatus('error', 'DB Recall: Offline / Error');
         return false;
       }
     }
@@ -1961,8 +1897,6 @@
       const companyId = sessionData.companyId || '11111111-1111-1111-1111-111111111111';
       if (!projectKey || !companyId || !checkpointState.length) return false;
 
-      setRecallStatus('syncing', 'DB Recall: Saving...');
-
       const payload = checkpointState.map((point, index) => ({
         company_id: companyId,
         project_key: projectKey,
@@ -1984,13 +1918,9 @@
           throw new Error(`Checkpoint recall save failed (${response.status})`);
         }
 
-        const now = new Date();
-        const timeStr = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}:${String(now.getSeconds()).padStart(2, '0')}`;
-        setRecallStatus('synced', `DB Recall: Synced (${timeStr})`);
         return true;
       } catch (error) {
         console.warn('[Project Recall] Checkpoint recall save failed:', error);
-        setRecallStatus('error', 'DB Recall: Offline / Error');
         return false;
       }
     }
@@ -2149,7 +2079,6 @@
       } else {
         renderProjectDetails(null);
         initCheckpointControls(null);
-        setRecallStatus('pending', 'DB Recall: Standby (No Context)');
         setStatus('Project details pending. Use Launch Project from Dry-Docking Project to populate this page.', 'warn');
       }
 

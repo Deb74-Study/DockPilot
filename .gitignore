@@ -7,6 +7,8 @@ supabase/.branches/
 dist/
 .dockpilot-local.log
 .dockpilot-local.pid
+.dockpilot-api.log
+.dockpilot-api.pid
 
 # Local generated docking project folders (e.g. ISAN_9303_DP_06092026)
 *_DP_[0-9][0-9][0-9][0-9][0-9][0-9][0-9][0-9]/

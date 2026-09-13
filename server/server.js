@@ -39,6 +39,138 @@ const parseBody = async (req) => {
 const ensureDbConnected = async () => {
   if (db._connected) return;
   await db.connect();
+  db._connected = true;
+  await ensureSchema();
+};
+
+const ensureSchema = async () => {
+  const schemaSql = `
+    CREATE TABLE IF NOT EXISTS public.companies (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      name text NOT NULL,
+      contact_admin_email text NOT NULL,
+      contact_name text,
+      contact_address text,
+      registration_no text,
+      phone text,
+      tba1 text,
+      tba2 text,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now()
+    );
+
+    CREATE TABLE IF NOT EXISTS public.credentials (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      company_id uuid NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
+      full_name text NOT NULL,
+      role text NOT NULL,
+      login_name text NOT NULL,
+      password_hash text NOT NULL,
+      expiry text NOT NULL,
+      access text[] NOT NULL DEFAULT '{}'::text[],
+      must_change_password boolean NOT NULL DEFAULT false,
+      password_updated_at timestamptz NOT NULL DEFAULT now(),
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      CONSTRAINT credentials_company_id_login_name_key UNIQUE (company_id, login_name)
+    );
+
+    CREATE TABLE IF NOT EXISTS public.vessel_registry (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      company_id uuid NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
+      vessel_id text NOT NULL,
+      vessel_name text NOT NULL,
+      imo text,
+      month_year_of_build text,
+      yard_of_build text,
+      flag text,
+      class text,
+      loa numeric,
+      lbp numeric,
+      breadth numeric,
+      depth numeric,
+      summer_draught numeric,
+      dwt numeric,
+      gt numeric,
+      nt numeric,
+      ga_plan_status text NOT NULL DEFAULT 'Pending',
+      midship_plan_status text NOT NULL DEFAULT 'Pending',
+      shell_exp_plan_status text NOT NULL DEFAULT 'Pending',
+      docking_plan_status text NOT NULL DEFAULT 'Pending',
+      pd_utm_status text NOT NULL DEFAULT 'Pending',
+      pd_blr_boro_status text NOT NULL DEFAULT 'Pending',
+      pd_ldm_status text NOT NULL DEFAULT 'Pending',
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      CONSTRAINT vessel_registry_company_vessel_unique UNIQUE (company_id, vessel_id)
+    );
+
+    CREATE TABLE IF NOT EXISTS public.fleet_registration (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      company_id uuid NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
+      matrix_key text NOT NULL DEFAULT 'default',
+      main_header text NOT NULL DEFAULT 'Fleet Registration Matrix',
+      sub_header_row_a jsonb NOT NULL DEFAULT '[]'::jsonb,
+      sub_header_row_b jsonb NOT NULL DEFAULT '[]'::jsonb,
+      row_labels jsonb NOT NULL DEFAULT '[]'::jsonb,
+      matrix_data jsonb NOT NULL DEFAULT '[]'::jsonb,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      CONSTRAINT fleet_registration_company_matrix_unique UNIQUE (company_id, matrix_key)
+    );
+
+    CREATE TABLE IF NOT EXISTS public.dd_job_matrix (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      company_id uuid NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
+      matrix_key text NOT NULL DEFAULT 'default',
+      matrix_header jsonb NOT NULL DEFAULT '[]'::jsonb,
+      matrix_rows jsonb NOT NULL DEFAULT '[]'::jsonb,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      CONSTRAINT dd_job_matrix_company_key_unique UNIQUE (company_id, matrix_key)
+    );
+
+    CREATE TABLE IF NOT EXISTS public.project_frontpage_recall (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      company_id uuid NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
+      project_key text NOT NULL,
+      launch_date text,
+      vessel_id text,
+      vessel_name text,
+      imo text,
+      docking_criteria text,
+      cap_survey text,
+      est_release_date text,
+      loceta_1_label text,
+      loceta_1_date text,
+      loceta_2_label text,
+      loceta_2_date text,
+      loceta_3_label text,
+      loceta_3_date text,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      CONSTRAINT project_frontpage_recall_company_project_unique UNIQUE (company_id, project_key)
+    );
+
+    CREATE TABLE IF NOT EXISTS public.project_frontpage_checkpoint_recall (
+      id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+      company_id uuid NOT NULL REFERENCES public.companies(id) ON DELETE CASCADE,
+      project_key text NOT NULL,
+      checkpoint_index integer NOT NULL,
+      checkpoint_label text,
+      checkpoint_date_iso text,
+      locked boolean NOT NULL DEFAULT false,
+      roundel_green boolean NOT NULL DEFAULT false,
+      created_at timestamptz NOT NULL DEFAULT now(),
+      updated_at timestamptz NOT NULL DEFAULT now(),
+      CONSTRAINT project_frontpage_checkpoint_recall_company_project_checkpoint_unique UNIQUE (company_id, project_key, checkpoint_index)
+    );
+  `;
+  try {
+    await db.query(schemaSql);
+  } catch (err) {
+    console.error('[local-db-server] schema initialization warning:', err.message);
+  }
 };
 
 const safeText = (value) => String(value ?? '').trim();

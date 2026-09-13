@@ -3,18 +3,22 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>DockPilot | Docking Software</title>
+  <title>Running Projects Overview | DockPilot</title>
   <style>
     :root {
-      --landscape-ratio: 1.58;
       --edge-padding: clamp(12px, 1.6vw, 22px);
-      --panel: rgba(9, 16, 32, 0.82);
+      --panel: rgba(11, 24, 45, 0.92);
       --panel-soft: rgba(18, 29, 54, 0.72);
+      --line: rgba(255, 255, 255, 0.1);
       --text: #eef4ff;
       --muted: #aebcda;
       --accent: #67d6ff;
-      --accent-2: #5c8dff;
-      --border: rgba(255,255,255,0.08);
+      --accent-2: #72f1cb;
+      --ok: #8ef0b1;
+      --warn: #ffd28c;
+      --badge-fill: #093046;
+      --badge-line: rgba(107, 215, 255, 0.24);
+      --border: rgba(255,255,255,0.1);
       --shadow: 0 24px 60px rgba(0, 0, 0, 0.35);
     }
 
@@ -27,231 +31,345 @@
 
     body {
       min-height: 100dvh;
-      display: grid;
-      place-items: center;
+      display: block;
+      margin: 0;
       padding: var(--edge-padding);
+      overflow-x: hidden;
       font-family: Inter, "Segoe UI", Roboto, sans-serif;
       background:
-        radial-gradient(circle at top left, #133977 0%, transparent 32%),
-        radial-gradient(circle at bottom right, #0f8f98 0%, transparent 30%),
-        linear-gradient(135deg, #06111f, #0a1830 40%, #07111e 100%);
+        linear-gradient(
+          180deg,
+          #2a4b6b 0%,
+          #1b6ea8 20%,
+          #2d8cd6 45%,
+          #6ab7e9 70%,
+          #2a4b6b 100%
+        );
       color: var(--text);
+      box-sizing: border-box;
     }
 
-    .writing-area {
-      /* Main adaptive rule:
-         uses max height when possible,
-         otherwise width becomes the limiting factor */
-      width: min(
-        calc(100vw - (var(--edge-padding) * 2)),
-        calc((100dvh - (var(--edge-padding) * 2)) * var(--landscape-ratio))
-      );
-      height: min(
-        calc(100dvh - (var(--edge-padding) * 2)),
-        calc((100vw - (var(--edge-padding) * 2)) / var(--landscape-ratio))
-      );
-
-      max-width: 1400px;
-      max-height: 900px;
-      background: linear-gradient(180deg, rgba(9,16,32,.92), rgba(8,12,25,.95));
-      border: 1px solid var(--border);
-      border-radius: 24px;
-      box-shadow: var(--shadow);
-      padding: clamp(18px, 2vw, 28px);
+    .manager-shell {
+      width: min(1280px, 100%);
+      max-width: calc(100vw - (2 * var(--edge-padding)));
+      margin: 0 auto;
       display: grid;
-      grid-template-rows: auto 1fr;
-      gap: clamp(16px, 1.5vw, 22px);
-      overflow: hidden;
-    }
-
-    header {
-      display: flex;
-      align-items: flex-start;
-      justify-content: space-between;
-      gap: 16px;
-    }
-
-    .brand {
-      display: flex;
-      align-items: flex-start;
-      gap: 18px;
-      font-weight: 700;
-      letter-spacing: .02em;
-      font-size: 2rem;
-    }
-
-    .header-actions {
-      display: inline-flex;
-      align-items: flex-start;
       gap: 10px;
     }
 
-    .brand-copy {
+    .panel {
+      width: 100%;
+      min-width: 0;
+      background: var(--panel);
+      border: 1px solid var(--border);
+      border-radius: 22px;
+      box-shadow: var(--shadow);
+      padding: 16px;
+    }
+
+    .header-panel {
+      display: grid;
+      gap: 8px;
+      position: relative;
+    }
+
+    .toolbar-row {
       display: flex;
-      flex-direction: column;
       align-items: flex-start;
-      gap: 8px;
-    }
-
-    .brand-name {
-      line-height: 1;
-    }
-
-    .logo {
-      width: 80px;
-      height: 80px;
-      border-radius: 24px;
-      display: grid;
-      place-items: center;
-      background: linear-gradient(135deg, var(--accent), var(--accent-2));
-      color: #06111f;
-      font-weight: 900;
-      font-size: 2rem;
-    }
-
-    nav {
-      display: flex;
-      gap: 16px;
-      color: var(--muted);
-      font-size: .95rem;
+      justify-content: space-between;
+      gap: 10px;
       flex-wrap: wrap;
     }
 
-    .hero {
-      display: grid;
-      grid-template-columns: 1.15fr .85fr;
-      gap: clamp(16px, 2vw, 28px);
-      min-height: 0;
-    }
-
-    .eyebrow {
+    .toolbar-actions {
       display: inline-flex;
-      gap: 8px;
       align-items: center;
-      padding: 8px 12px;
-      border-radius: 999px;
-      background: rgba(103,214,255,.12);
-      color: var(--accent);
-      font-size: .84rem;
-      border: 1px solid rgba(103,214,255,.18);
-    }
-
-    .brand .eyebrow {
-      font-size: .78rem;
-      padding: 6px 11px;
-    }
-
-    .lead {
-      font-size: clamp(1rem, 1.25vw, 1.12rem);
-      line-height: 1.65;
-      color: var(--muted);
-      max-width: 60ch;
-    }
-
-    .actions {
-      display: flex;
-      gap: 12px;
+      gap: 5px;
       flex-wrap: wrap;
-      margin: 18px 0 20px;
     }
 
-    .btn {
-      padding: 12px 16px;
+    .tag {
+      display: inline-flex;
+      width: 158px;
+      padding: 5px 10px;
+      border-radius: 999px;
+      color: var(--accent);
+      background: var(--badge-fill);
+      border: 1px solid var(--badge-line);
+      font-size: 0.76rem;
+      font-weight: 700;
+      letter-spacing: 0.05em;
+      text-transform: uppercase;
+    }
+
+    h1 {
+      margin: 0;
+      font-size: clamp(1.45rem, 2.4vw, 1.95rem);
+      line-height: 1.1;
+    }
+
+    p,
+    .muted {
+      margin: 0;
+      color: var(--muted);
+      line-height: 1.35;
+      font-size: 0.86rem;
+    }
+
+    .return-link,
+    button {
+      border: 0;
       border-radius: 12px;
-      text-decoration: none;
-      font-weight: 600;
-      border: 1px solid transparent;
-    }
-
-    .btn.primary {
-      background: linear-gradient(135deg, var(--accent), #77f1d5);
-      color: #07111e;
-    }
-
-    .btn.secondary {
-      background: rgba(255,255,255,.04);
-      border-color: var(--border);
-      color: var(--text);
-    }
-
-    .btn:hover,
-    .btn:focus-visible {
-      transform: translateY(-2px);
-      border-color: rgba(103,214,255,.60);
-      background: linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72));
-      color: #eef4ff;
-    }
-
-    .return-link {
+      padding: 9px 13px;
+      font-size: 0.86rem;
+      font-weight: 700;
+      cursor: pointer;
       display: inline-flex;
       align-items: center;
       justify-content: center;
       text-decoration: none;
-      color: #06263a;
-      background: var(--accent);
-      padding: 10px 14px;
-      border-radius: 10px;
-      font-weight: 700;
-      border: 1px solid transparent;
+      color: var(--text);
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
     }
 
-    .return-link:focus-visible {
+    .return-link {
+      width: 168px;
+    }
+
+    .secondary-btn {
+      width: 158px;
+    }
+
+    .return-link:focus-visible,
+    button:focus-visible {
       outline: 2px solid rgba(103,214,255,.5);
       outline-offset: 2px;
     }
 
     .return-link:hover,
-    .return-link:focus-visible {
+    .return-link:focus-visible,
+    .secondary-btn:hover,
+    .secondary-btn:focus-visible {
       transform: translateY(-2px);
       border-color: rgba(103,214,255,.60);
       background: linear-gradient(135deg, rgba(10,55,120,.80), rgba(8,110,130,.72));
-      color: #eef4ff;
     }
 
-    .highlights {
+    button[disabled] {
+      opacity: 0.45;
+      cursor: not-allowed;
+      transform: none !important;
+      filter: none !important;
+      background: rgba(255, 255, 255, 0.06) !important;
+      border-color: var(--line) !important;
+    }
+
+    .status-note {
+      margin: 0;
+      padding: 7px 10px;
+      border-radius: 10px;
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      background: rgba(255, 255, 255, 0.03);
+      color: var(--muted);
+      line-height: 1.3;
+      font-size: 0.8rem;
+    }
+
+    .status-note.success {
+      color: var(--ok);
+      background: rgba(142, 240, 177, 0.08);
+      border-color: rgba(142, 240, 177, 0.18);
+    }
+
+    .status-note.warn {
+      color: var(--warn);
+      background: rgba(255, 210, 140, 0.08);
+      border-color: rgba(255, 210, 140, 0.18);
+    }
+
+    .more-actions-dropdown {
+      position: absolute;
+      top: calc(36px + 2px + 20px);
+      right: 16px;
+      display: flex;
+      width: 168px;
+      z-index: 10;
+    }
+
+    .more-actions-dropdown.collapsed {
+      flex-direction: row;
+      align-items: center;
+      background: rgba(255, 255, 255, 0.06);
+      border: 1px solid var(--line);
+      border-radius: 12px;
+      padding: 8px;
+      justify-content: center;
+    }
+
+    .more-actions-dropdown.collapsed .more-actions-toggle {
+      width: 100%;
+      height: 32px;
+      padding: 0 13px !important;
+    }
+
+    .more-actions-dropdown:not(.collapsed) {
+      flex-direction: column;
+      gap: 8px;
+      background: rgba(11, 24, 45, 0.65);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 12px;
+      padding: 8px;
+      width: 168px;
+    }
+
+    .more-actions-toggle {
+      width: 100% !important;
+      padding: 9px 13px !important;
+      border-radius: 12px !important;
+    }
+
+    .more-actions-buttons {
+      display: none;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .more-actions-dropdown:not(.collapsed) .more-actions-buttons {
+      display: flex;
+    }
+
+    .more-actions-dropdown button {
+      width: 100%;
+      height: 32px;
+      padding: 0 13px !important;
+    }
+
+    /* ── Overview Main Layout Grid ── */
+    .overview-layout-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12px;
+      align-items: stretch;
+    }
+
+    /* ── Left Column Highlights / Info ── */
+    .overview-info-panel {
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      gap: 16px;
+      background: linear-gradient(180deg, rgba(9, 22, 40, 0.95), rgba(6, 16, 28, 0.96));
+      border: 1px solid rgba(103, 214, 255, 0.14);
+      border-radius: 20px;
+      padding: 20px;
+    }
+
+    .brand-hero-section {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .brand-logo {
+      width: 64px;
+      height: 64px;
+      border-radius: 20px;
+      display: grid;
+      place-items: center;
+      background: linear-gradient(135deg, var(--accent), var(--accent-2));
+      color: #06111f;
+      font-weight: 900;
+      font-size: 1.7rem;
+      box-shadow: 0 8px 24px rgba(103, 214, 255, 0.3);
+    }
+
+    .brand-title-wrap {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+    }
+
+    .brand-title {
+      margin: 0;
+      font-size: 1.55rem;
+      font-weight: 800;
+      letter-spacing: 0.02em;
+      color: #ffffff;
+      line-height: 1.1;
+    }
+
+    .brand-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 999px;
+      background: rgba(103, 214, 255, 0.12);
+      color: var(--accent);
+      font-size: 0.76rem;
+      font-weight: 700;
+      border: 1px solid rgba(103, 214, 255, 0.22);
+      width: fit-content;
+    }
+
+    .overview-lead-text {
+      margin: 0;
+      font-size: 0.92rem;
+      line-height: 1.5;
+      color: var(--muted);
+    }
+
+    .overview-stats-grid {
       display: grid;
       grid-template-columns: repeat(3, 1fr);
-      gap: 12px;
+      gap: 10px;
     }
 
-    .card {
-      background: var(--panel-soft);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 14px;
+    .stat-card {
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid var(--line);
+      border-radius: 14px;
+      padding: 12px 10px;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.02);
     }
 
-    .card strong {
-      display: block;
-      font-size: 1.05rem;
-      margin-bottom: 4px;
+    .stat-card strong {
+      font-size: 1.1rem;
+      color: var(--accent);
+      font-weight: 800;
     }
 
-    .card span {
+    .stat-card span {
       color: var(--muted);
-      font-size: .92rem;
+      font-size: 0.74rem;
+      line-height: 1.25;
     }
 
+    /* ── Right Column Running Projects Overview Panel ── */
     .running-project-panel {
-      background:
-        linear-gradient(180deg, rgba(255,255,255,.05), transparent),
-        #0a1326;
-      border: 1px solid var(--border);
-      border-radius: 18px;
       display: grid;
       grid-template-rows: auto 1fr;
-      min-height: 0;
+      background: linear-gradient(180deg, rgba(9, 22, 40, 0.95), rgba(6, 16, 28, 0.96));
+      border: 1px solid rgba(103, 214, 255, 0.14);
+      border-radius: 20px;
       overflow: hidden;
+      min-height: 380px;
+      max-height: 480px;
     }
 
     .running-project-header {
-      display: grid;
-      grid-template-columns: minmax(0, 1fr) auto;
+      display: flex;
       align-items: center;
-      gap: 10px;
-      padding: 10px 14px;
+      justify-content: space-between;
+      gap: 12px;
+      padding: 12px 16px;
       border-bottom: 1px solid rgba(103, 214, 255, 0.15);
-      background: linear-gradient(180deg, rgba(11, 24, 45, 0.98), rgba(11, 24, 45, 0.9));
+      background: linear-gradient(180deg, rgba(14, 30, 54, 0.98), rgba(11, 24, 45, 0.9));
     }
 
     .running-project-title {
@@ -259,7 +377,7 @@
       color: var(--accent);
       font-size: 1rem;
       font-weight: 700;
-      letter-spacing: 0.05em;
+      letter-spacing: 0.04em;
       text-transform: uppercase;
     }
 
@@ -272,18 +390,20 @@
     .running-project-year label {
       color: var(--accent);
       font-weight: 700;
-      font-size: 0.86rem;
+      font-size: 0.84rem;
       letter-spacing: 0.02em;
     }
 
     .running-project-year select {
-      width: 112px;
+      width: 104px;
       border-radius: 10px;
       border: 1px solid rgba(255, 255, 255, 0.2);
-      background: rgba(3, 18, 35, 0.72);
+      background: rgba(3, 18, 35, 0.85);
       color: var(--text);
-      padding: 8px 10px;
+      padding: 6px 10px;
       font-size: 0.85rem;
+      font-weight: 600;
+      cursor: pointer;
     }
 
     .running-project-year select:focus-visible {
@@ -292,11 +412,11 @@
     }
 
     .running-project-body {
-      padding: 12px 14px 14px;
+      padding: 12px 14px;
       display: grid;
-      gap: 10px;
+      gap: 8px;
       align-content: start;
-      overflow: auto;
+      overflow-y: auto;
     }
 
     .project-item {
@@ -304,10 +424,10 @@
       grid-template-columns: minmax(0, 1fr) auto;
       gap: 10px;
       align-items: center;
-      padding: 12px;
-      border-radius: 12px;
-      background: rgba(255,255,255,.03);
-      border: 1px solid rgba(255,255,255,.05);
+      padding: 12px 14px;
+      border-radius: 14px;
+      background: rgba(255, 255, 255, 0.03);
+      border: 1px solid rgba(255, 255, 255, 0.06);
       cursor: pointer;
       transition: transform 140ms ease, background 140ms ease, border-color 140ms ease, box-shadow 140ms ease;
     }
@@ -315,103 +435,124 @@
     .project-item:hover,
     .project-item:focus-visible {
       transform: translateY(-2px);
-      background: rgba(255, 255, 255, 0.07);
-      border-color: rgba(103, 214, 255, 0.35);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+      background: rgba(255, 255, 255, 0.08);
+      border-color: rgba(103, 214, 255, 0.45);
+      box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
       outline: none;
+    }
+
+    .project-item strong {
+      display: block;
+      color: #ffffff;
+      font-size: 0.94rem;
+      font-weight: 700;
+      letter-spacing: 0.02em;
     }
 
     .project-item small {
       display: block;
       color: var(--muted);
-      margin-top: 4px;
+      margin-top: 3px;
+      font-size: 0.8rem;
     }
 
     .project-state {
-      padding: 6px 12px;
+      padding: 5px 12px;
       border-radius: 999px;
-      font-size: .78rem;
+      font-size: 0.76rem;
       font-weight: 700;
       white-space: nowrap;
       text-align: center;
-      max-width: 200px;
+      max-width: 220px;
       overflow: hidden;
       text-overflow: ellipsis;
     }
 
     .project-state.active {
-      background: rgba(65,211,125,.12);
+      background: rgba(65, 211, 125, 0.14);
       color: #7ff0aa;
-      border: 1px solid rgba(65, 211, 125, 0.25);
+      border: 1px solid rgba(65, 211, 125, 0.3);
     }
 
     .project-state.pending {
-      background: rgba(255,182,72,.12);
+      background: rgba(255, 182, 72, 0.14);
       color: #ffd48b;
-      border: 1px solid rgba(255, 182, 72, 0.25);
+      border: 1px solid rgba(255, 182, 72, 0.3);
     }
 
     .project-overview-empty {
-      padding: 24px 12px;
+      padding: 36px 12px;
       text-align: center;
       color: var(--muted);
       font-size: 0.88rem;
       font-style: italic;
     }
 
-    @media (max-width: 980px) {
-      :root { --landscape-ratio: 1.33; }
-
-      .hero {
-        grid-template-columns: 1fr;
-      }
-
-      .highlights {
-        grid-template-columns: 1fr;
-      }
-
+    @media (max-width: 900px) {
+      .manager-shell { width: 100%; }
+      .toolbar-row { align-items: flex-start; }
+      .more-actions-dropdown { position: static; margin-left: auto; }
+      .overview-layout-grid { grid-template-columns: 1fr; }
     }
   </style>
 </head>
 <body>
-  <section class="writing-area">
-    <header>
-      <div class="brand">
-        <div class="logo">DP</div>
-        <div class="brand-copy">
-          <span class="brand-name">DockPilot</span>
-          <div class="eyebrow">⚓ Smart Docking Control</div>
+  <main class="manager-shell">
+    <section class="panel header-panel">
+      <div class="toolbar-row">
+        <span id="todayBadge" class="tag">Date:</span>
+        <div class="toolbar-actions">
+          <a class="return-link" href="./frontpage.html">Return to Frontpage</a>
         </div>
       </div>
-      <div class="header-actions">
-        <a class="return-link" href="./frontpage.html">Return to Frontpage</a>
-      </div>
-    </header>
 
-    <main class="hero">
-      <section>
-        <div class="actions">
-          <a class="btn primary" href="#">Request Demo</a>
-          <a class="btn secondary" href="#">See Platform</a>
+      <div id="moreActionsDropdown" class="more-actions-dropdown collapsed">
+        <button id="moreActionsToggle" type="button" class="secondary-btn more-actions-toggle">See More</button>
+        <div class="more-actions-buttons">
+          <button id="launchProjectBtn" type="button" class="secondary-btn">Initiate Project</button>
+          <button id="registerFleetBtn" type="button" class="secondary-btn">Register Fleet</button>
+        </div>
+      </div>
+
+      <div>
+        <h1>Running DD Projects</h1>
+        <p class="muted">Review dry-docking project execution status, active milestones, and vessel progress overview.</p>
+      </div>
+    </section>
+
+    <p id="statusNote" class="status-note">Active running projects loaded from database.</p>
+
+    <div class="overview-layout-grid">
+      <section class="panel overview-info-panel" aria-label="DockPilot Overview">
+        <div class="brand-hero-section">
+          <div class="brand-logo">DP</div>
+          <div class="brand-title-wrap">
+            <h2 class="brand-title">DockPilot</h2>
+            <span class="brand-badge">⚓ Smart Docking Control</span>
+          </div>
         </div>
 
-        <div class="highlights">
-          <div class="card">
+        <p class="overview-lead-text">
+          Centralized fleet dry-docking operations and milestone telemetry. Track active repairs, shipyard submissions, and critical path progressions in real time across your global fleet.
+        </p>
+
+        <div class="overview-stats-grid">
+          <div class="stat-card">
             <strong>-22%</strong>
-            <span>Average vessel idle time</span>
+            <span>Avg Vessel Idle Time</span>
           </div>
-          <div class="card">
+          <div class="stat-card">
             <strong>Live ETA</strong>
-            <span>Shared across dock and ops teams</span>
+            <span>Dock &amp; Ops Synchronization</span>
           </div>
-          <div class="card">
+          <div class="stat-card">
             <strong>24/7 View</strong>
-            <span>For terminals, harbors, and fleets</span>
+            <span>Terminals &amp; Fleets</span>
           </div>
         </div>
       </section>
 
-      <aside class="running-project-panel">
+      <aside class="panel running-project-panel" aria-label="DD Projects Overview">
         <div class="running-project-header">
           <h2 class="running-project-title">DD Projects Overview</h2>
           <div class="running-project-year">
@@ -441,9 +582,8 @@
           <div class="project-overview-empty">Loading projects...</div>
         </div>
       </aside>
-    </main>
-
-  </section>
+    </div>
+  </main>
 
   <script type="module">
     import { supabase } from './supabaseClient.js';
@@ -455,8 +595,30 @@
     loadSavedTheme();
 
     const DDP_RUNNING_PROJECT_CONTEXT_KEY = 'DOCKPILOT_RUNNING_PROJECT_CONTEXT';
+    const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    const todayBadge = document.getElementById('todayBadge');
+    const statusNote = document.getElementById('statusNote');
     const yearSelect = document.getElementById('runningProjectYearSelect');
     const projectBody = document.getElementById('runningProjectBody');
+    const moreActionsDropdown = document.getElementById('moreActionsDropdown');
+    const moreActionsToggle = document.getElementById('moreActionsToggle');
+    const launchProjectBtn = document.getElementById('launchProjectBtn');
+    const registerFleetBtn = document.getElementById('registerFleetBtn');
+
+    const MORE_ACTIONS_IDLE_MS = 2000;
+    let moreActionsCollapseTimer = null;
+    let moreActionsKeyboardFocus = false;
+
+    function formatBadgeDate(date) {
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${day}-${monthNames[date.getMonth()]}-${date.getFullYear()}`;
+    }
+
+    function setStatus(text, tone = '') {
+      if (!statusNote) return;
+      statusNote.textContent = text;
+      statusNote.className = `status-note${tone ? ` ${tone}` : ''}`;
+    }
 
     let allRecallProjects = [];
     let allRecallCheckpoints = [];
@@ -513,8 +675,11 @@
 
       if (filtered.length === 0) {
         projectBody.innerHTML = `<div class="project-overview-empty">No active dry-docking projects for ${selectedYear}</div>`;
+        setStatus(`No active dry-docking projects found for ${selectedYear}.`, '');
         return;
       }
+
+      setStatus(`Loaded ${filtered.length} running project${filtered.length === 1 ? '' : 's'} for ${selectedYear}. Click any vessel to open frontpage.`, 'success');
 
       filtered.forEach((project) => {
         const vesselId = project.vessel_id || project.project_key || 'Unknown Vessel';
@@ -612,15 +777,89 @@
       renderProjectsForYear(yearSelect ? yearSelect.value : currentYear);
     }
 
-    yearSelect?.addEventListener('change', () => {
-      renderProjectsForYear(yearSelect.value);
-    });
+    function clearMoreActionsCollapseTimer() {
+      if (moreActionsCollapseTimer) {
+        window.clearTimeout(moreActionsCollapseTimer);
+        moreActionsCollapseTimer = null;
+      }
+    }
+
+    function setMoreActionsExpanded(isExpanded) {
+      if (!moreActionsDropdown) return;
+      moreActionsDropdown.classList.toggle('collapsed', !isExpanded);
+      if (moreActionsToggle) {
+        moreActionsToggle.textContent = isExpanded ? 'See Less' : 'See More';
+      }
+      if (!isExpanded) {
+        clearMoreActionsCollapseTimer();
+        return;
+      }
+      scheduleMoreActionsAutoCollapse();
+    }
+
+    function scheduleMoreActionsAutoCollapse() {
+      clearMoreActionsCollapseTimer();
+      if (!moreActionsDropdown || moreActionsDropdown.classList.contains('collapsed')) return;
+      moreActionsCollapseTimer = window.setTimeout(() => {
+        if (!moreActionsDropdown || moreActionsDropdown.classList.contains('collapsed')) return;
+        if (moreActionsDropdown.matches(':hover')) return;
+        if (moreActionsKeyboardFocus && moreActionsDropdown.contains(document.activeElement)) return;
+        setMoreActionsExpanded(false);
+      }, MORE_ACTIONS_IDLE_MS);
+    }
+
+    function wireEvents() {
+      moreActionsToggle?.addEventListener('click', () => {
+        setMoreActionsExpanded(moreActionsDropdown.classList.contains('collapsed'));
+      });
+      moreActionsDropdown?.addEventListener('mouseenter', clearMoreActionsCollapseTimer);
+      moreActionsDropdown?.addEventListener('mouseleave', scheduleMoreActionsAutoCollapse);
+      moreActionsDropdown?.addEventListener('focusin', clearMoreActionsCollapseTimer);
+      moreActionsDropdown?.addEventListener('pointerdown', () => {
+        moreActionsKeyboardFocus = false;
+      });
+      moreActionsDropdown?.addEventListener('keydown', () => {
+        moreActionsKeyboardFocus = true;
+      });
+      moreActionsDropdown?.addEventListener('focusout', () => {
+        window.setTimeout(() => {
+          if (!moreActionsDropdown?.contains(document.activeElement)) {
+            scheduleMoreActionsAutoCollapse();
+          }
+        }, 0);
+      });
+      document.addEventListener('click', (event) => {
+        if (moreActionsDropdown && !moreActionsDropdown.contains(event.target) && !moreActionsDropdown.classList.contains('collapsed')) {
+          setMoreActionsExpanded(false);
+        }
+      });
+
+      launchProjectBtn?.addEventListener('click', () => {
+        window.location.href = './dry-docking-project.html';
+      });
+
+      registerFleetBtn?.addEventListener('click', () => {
+        window.location.href = './fleet-registration.html';
+      });
+
+      yearSelect?.addEventListener('change', () => {
+        renderProjectsForYear(yearSelect.value);
+      });
+    }
+
+    function initPage() {
+      if (todayBadge) {
+        todayBadge.textContent = `Date: ${formatBadgeDate(new Date())}`;
+      }
+      wireEvents();
+      loadRecallDatabase();
+    }
 
     startDockPilotPageGuard({
       supabase,
       landingPage: './DockPilot_landing.html'
     }).then(() => {
-      loadRecallDatabase();
+      initPage();
     }).catch((error) => {
       console.error('DockPilot guard startup failed:', error);
       window.location.href = './DockPilot_landing.html';

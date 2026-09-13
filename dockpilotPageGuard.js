@@ -193,13 +193,13 @@ function createHeaderDbPill() {
   pill.style.transition = 'all 160ms ease';
   pill.style.whiteSpace = 'nowrap';
 
-  if (toolbarActions) {
+  if (todayBadge && todayBadge.parentNode) {
+    todayBadge.insertAdjacentElement('afterend', pill);
+    pill.style.marginLeft = '20px';
+  } else if (toolbarActions) {
     toolbarActions.insertBefore(pill, toolbarActions.firstChild);
   } else if (headerActions) {
     headerActions.insertBefore(pill, headerActions.firstChild);
-  } else if (todayBadge && todayBadge.parentNode) {
-    todayBadge.insertAdjacentElement('afterend', pill);
-    pill.style.marginLeft = '8px';
   } else {
     return null;
   }

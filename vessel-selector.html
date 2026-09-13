@@ -2146,31 +2146,28 @@
         }
 
         try {
+          const compId = currentCompanyId || getSession()?.companyId || 'default';
           const selectedRecord = findSelectedRegistryRecord();
-          const hasRecordPayload = hasParticularsData(selectedRecord);
 
-          writeStoreValue(getStoreKey('projectContext', currentCompanyId || 'default', 'vp_context'), {
+          const contextPayload = {
             fleetGroup: getGroupByKey(selectedGroupKey)?.groupName || '',
             managerName: tmFmDisplay.value.trim(),
             vesselName: selectedVesselName,
             tsiName: tsiDisplay.value.trim()
-          });
+          };
 
-          if (hasRecordPayload) {
-            writeStoreValue(VP_NAV_SELECTION_KEY, {
-              vesselName: selectedVesselName,
-              imo: cleanText(selectedRecord?.imo || ''),
-              context: {
-                fleetGroup: getGroupByKey(selectedGroupKey)?.groupName || '',
-                managerName: tmFmDisplay.value.trim(),
-                tsiName: tsiDisplay.value.trim(),
-                vesselName: selectedVesselName
-              },
-              record: selectedRecord
-            });
-          } else {
-            removeStoreValue(VP_NAV_SELECTION_KEY);
-          }
+          const navPayload = {
+            vesselName: selectedVesselName,
+            imo: cleanText(selectedRecord?.imo || ''),
+            context: contextPayload,
+            record: selectedRecord || null
+          };
+
+          writeStoreValue(getStoreKey('projectContext', compId, 'vp_context'), contextPayload);
+          writeStoreValue(getStoreKey('projectContext', 'default', 'vp_context'), contextPayload);
+          writeStoreValue(getStoreKey('projectContext', compId, 'vp_nav_selection'), navPayload);
+          writeStoreValue(getStoreKey('projectContext', 'default', 'vp_nav_selection'), navPayload);
+          writeStoreValue(VP_NAV_SELECTION_KEY, navPayload);
         } catch (error) {
           console.error('Failed to write vessel particulars context:', error);
         }

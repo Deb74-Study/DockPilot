@@ -266,21 +266,34 @@
     }
 
     .project-details-heading {
-      display: flex;
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
       align-items: center;
-      justify-content: space-between;
       gap: 10px;
-      flex-wrap: wrap;
+    }
+
+    .project-details-heading .project-details-title {
+      justify-self: start;
+    }
+
+    .project-details-heading .project-launch-date {
+      justify-self: center;
+    }
+
+    .project-details-heading .panel-collapse-btn {
+      justify-self: end;
     }
 
     .project-launch-date {
-      font-size: 0.8rem;
+      font-size: 0.92rem;
+      font-weight: 600;
       color: #0f233a;
       border: 1px solid #79b8ff;
       border-radius: 999px;
-      padding: 4px 10px;
+      padding: 5px 14px;
       background: linear-gradient(180deg, #e6f3ff 0%, #cfe8ff 100%);
       box-shadow: 0 0 0 1px rgba(24, 92, 166, 0.2) inset;
+      white-space: nowrap;
     }
 
     .project-launch-date.pending {
@@ -295,6 +308,12 @@
       display: grid;
       grid-template-columns: repeat(3, minmax(0, 1fr));
       gap: 24px;
+    }
+
+    .project-details-grid[hidden],
+    .project-running-status-grid[hidden],
+    .project-links-grid[hidden] {
+      display: none !important;
     }
 
     .project-details-column {
@@ -887,6 +906,16 @@
       .manager-shell { width: 100%; }
       .toolbar-row { align-items: flex-start; }
       .more-actions-dropdown { position: static; margin-left: auto; }
+      .project-details-heading {
+        grid-template-columns: 1fr;
+        justify-items: start;
+        gap: 8px;
+      }
+      .project-details-heading .project-details-title,
+      .project-details-heading .project-launch-date,
+      .project-details-heading .panel-collapse-btn {
+        justify-self: start;
+      }
       .project-details-grid { grid-template-columns: 1fr; }
       .project-detail-row { grid-template-columns: minmax(0, 1fr); }
       .project-running-status-grid { width: 1240px; }
@@ -925,8 +954,9 @@
       <div class="project-details-heading">
         <h2 class="project-details-title">Project Details</h2>
         <span id="projectLaunchDate" class="project-launch-date pending">Launch date: Data pending</span>
+        <button id="toggleProjectDetailsBtn" type="button" class="panel-collapse-btn" aria-expanded="false" aria-controls="projectDetailsGrid">▲ Expand ▲</button>
       </div>
-      <div class="project-details-grid">
+      <div id="projectDetailsGrid" class="project-details-grid" hidden>
         <div class="project-details-column">
           <div class="project-detail-row">
             <span class="project-detail-label">Vessel ID</span>
@@ -1168,6 +1198,8 @@
     const projectDetailLocDate2 = document.getElementById('projectDetailLocDate2');
     const projectDetailLocDate3 = document.getElementById('projectDetailLocDate3');
     const projectLaunchDate = document.getElementById('projectLaunchDate');
+    const toggleProjectDetailsBtn = document.getElementById('toggleProjectDetailsBtn');
+    const projectDetailsGrid = document.getElementById('projectDetailsGrid');
     const toggleRunningStatusBtn = document.getElementById('toggleRunningStatusBtn');
     const projectRunningStatusGrid = document.getElementById('projectRunningStatusGrid');
     const toggleProjectLinksBtn = document.getElementById('toggleProjectLinksBtn');
@@ -2136,6 +2168,7 @@
         updateState();
       }
 
+      setupCollapsiblePanel(toggleProjectDetailsBtn, projectDetailsGrid, true);
       setupCollapsiblePanel(toggleRunningStatusBtn, projectRunningStatusGrid, true);
       setupCollapsiblePanel(toggleProjectLinksBtn, projectLinksGrid, true);
 

@@ -954,9 +954,9 @@
       <div class="project-details-heading">
         <h2 class="project-details-title">Project Details</h2>
         <span id="projectLaunchDate" class="project-launch-date pending">Launch date: Data pending</span>
-        <button id="toggleProjectDetailsBtn" type="button" class="panel-collapse-btn" aria-expanded="false" aria-controls="projectDetailsGrid">▲ Expand ▲</button>
+        <button id="toggleProjectDetailsBtn" type="button" class="panel-collapse-btn" aria-expanded="true" aria-controls="projectDetailsGrid">▲ Collapse ▲</button>
       </div>
-      <div id="projectDetailsGrid" class="project-details-grid" hidden>
+      <div id="projectDetailsGrid" class="project-details-grid">
         <div class="project-details-column">
           <div class="project-detail-row">
             <span class="project-detail-label">Vessel ID</span>
@@ -2168,7 +2168,7 @@
         updateState();
       }
 
-      setupCollapsiblePanel(toggleProjectDetailsBtn, projectDetailsGrid, true);
+      setupCollapsiblePanel(toggleProjectDetailsBtn, projectDetailsGrid, false);
       setupCollapsiblePanel(toggleRunningStatusBtn, projectRunningStatusGrid, true);
       setupCollapsiblePanel(toggleProjectLinksBtn, projectLinksGrid, true);
 

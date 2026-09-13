@@ -64,63 +64,79 @@ export function normalizeRegistryRow(row = {}) {
 export async function loadCompanyVesselRegistry(companyId, legacyKeyPrefix = null) {
   if (!companyId) return [];
 
-  try {
-    const response = await fetch(`${LOCAL_DB_API_URL}?company_id=${encodeURIComponent(companyId)}`);
-    if (response.ok) {
-      const payload = await response.json();
-      const rows = Array.isArray(payload?.rows) ? payload.rows : [];
-      const normalized = rows.map((row) => ({
-        vesselId: row.vessel_id || row.vesselId || '',
-        vesselName: row.vessel_name || row.vesselName || '',
-        imo: row.imo || '',
-        monthYearOfBuild: row.month_year_of_build || row.monthYearOfBuild || '',
-        yardOfBuild: row.yard_of_build || row.yardOfBuild || '',
-        flag: row.flag || '',
-        class: row.class || '',
-        loa: row.loa ?? '',
-        lbp: row.lbp ?? '',
-        breadth: row.breadth ?? '',
-        depth: row.depth ?? '',
-        summerDraught: row.summer_draught ?? row.summerDraught ?? '',
-        dwt: row.dwt ?? '',
-        gt: row.gt ?? '',
-        nt: row.nt ?? '',
-        gaPlanStatus: row.ga_plan_status || row.gaPlanStatus || 'Pending',
-        midshipPlanStatus: row.midship_plan_status || row.midshipPlanStatus || 'Pending',
-        shellExpPlanStatus: row.shell_exp_plan_status || row.shellExpPlanStatus || 'Pending',
-        dockingPlanStatus: row.docking_plan_status || row.dockingPlanStatus || 'Pending',
-        pdUtmStatus: row.pd_utm_status || row.pdUtmStatus || 'Pending',
-        pdBlrBoroStatus: row.pd_blr_boro_status || row.pdBlrBoroStatus || 'Pending',
-        pdLdmStatus: row.pd_ldm_status || row.pdLdmStatus || 'Pending'
-      })).map(normalizeRegistryRow);
-
-      const store = readRegistryMap();
-      store[companyId] = normalized;
-      writeStoreValue(VESSEL_REGISTRY_STORE_KEY, store);
-      return normalized;
-    }
-  } catch (error) {
-    console.warn('[vesselRegistryStore] Remote local DB load failed, retrying local cache:', error);
-  }
-
+  // Read local store / legacy store first so existing data is never lost
   const store = readRegistryMap();
-  let rows = Array.isArray(store[companyId]) ? store[companyId] : [];
+  let localRows = Array.isArray(store[companyId]) ? store[companyId] : [];
 
-  if (!rows.length && legacyKeyPrefix) {
+  if (!localRows.length && legacyKeyPrefix) {
     try {
       const legacyRaw = localStorage.getItem(`${legacyKeyPrefix}${companyId}`);
       const legacyRows = legacyRaw ? JSON.parse(legacyRaw) : [];
       if (Array.isArray(legacyRows) && legacyRows.length) {
-        rows = legacyRows;
-        store[companyId] = rows;
-        localStorage.setItem(VESSEL_REGISTRY_STORE_KEY, JSON.stringify(store));
+        localRows = legacyRows;
+        store[companyId] = localRows;
+        writeStoreValue(VESSEL_REGISTRY_STORE_KEY, store);
       }
     } catch (error) {
       console.warn('[vesselRegistryStore] Failed to migrate legacy registry entries:', error);
     }
   }
 
-  return rows.map(normalizeRegistryRow);
+  if (!localRows.length) {
+    const directStoreKey = getStoreKey('vesselRegistry', companyId);
+    const directRows = readStoreValue(directStoreKey, []);
+    if (Array.isArray(directRows) && directRows.length) {
+      localRows = directRows;
+      store[companyId] = localRows;
+      writeStoreValue(VESSEL_REGISTRY_STORE_KEY, store);
+    }
+  }
+
+  try {
+    const response = await fetch(`${LOCAL_DB_API_URL}?company_id=${encodeURIComponent(companyId)}`);
+    if (response.ok) {
+      const payload = await response.json();
+      const rows = Array.isArray(payload?.rows) ? payload.rows : [];
+      if (rows.length > 0) {
+        const normalized = rows.map((row) => ({
+          vesselId: row.vessel_id || row.vesselId || '',
+          vesselName: row.vessel_name || row.vesselName || '',
+          imo: row.imo || '',
+          monthYearOfBuild: row.month_year_of_build || row.monthYearOfBuild || '',
+          yardOfBuild: row.yard_of_build || row.yardOfBuild || '',
+          flag: row.flag || '',
+          class: row.class || '',
+          loa: row.loa ?? '',
+          lbp: row.lbp ?? '',
+          breadth: row.breadth ?? '',
+          depth: row.depth ?? '',
+          summerDraught: row.summer_draught ?? row.summerDraught ?? '',
+          dwt: row.dwt ?? '',
+          gt: row.gt ?? '',
+          nt: row.nt ?? '',
+          gaPlanStatus: row.ga_plan_status || row.gaPlanStatus || 'Pending',
+          midshipPlanStatus: row.midship_plan_status || row.midshipPlanStatus || 'Pending',
+          shellExpPlanStatus: row.shell_exp_plan_status || row.shellExpPlanStatus || 'Pending',
+          dockingPlanStatus: row.docking_plan_status || row.dockingPlanStatus || 'Pending',
+          pdUtmStatus: row.pd_utm_status || row.pdUtmStatus || 'Pending',
+          pdBlrBoroStatus: row.pd_blr_boro_status || row.pdBlrBoroStatus || 'Pending',
+          pdLdmStatus: row.pd_ldm_status || row.pdLdmStatus || 'Pending'
+        })).map(normalizeRegistryRow);
+
+        store[companyId] = normalized;
+        writeStoreValue(VESSEL_REGISTRY_STORE_KEY, store);
+        return normalized;
+      } else if (localRows.length > 0) {
+        // Database is empty for this company but local storage has records — auto-upload to PostgreSQL
+        saveCompanyVesselRegistry(companyId, localRows).catch(() => {});
+        return localRows.map(normalizeRegistryRow);
+      }
+    }
+  } catch (error) {
+    console.warn('[vesselRegistryStore] Remote local DB load failed, using local cache:', error);
+  }
+
+  return localRows.map(normalizeRegistryRow);
 }
 
 export async function saveCompanyVesselRegistry(companyId, rows, legacyKeyPrefix = null) {

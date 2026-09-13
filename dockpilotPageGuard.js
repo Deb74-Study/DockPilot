@@ -174,8 +174,9 @@ function createHeaderDbPill() {
   const existing = document.getElementById('dockpilot-header-db-pill');
   if (existing) return existing;
 
-  const targetContainer = document.querySelector('.toolbar-actions') || document.querySelector('.header-actions');
-  if (!targetContainer) return null;
+  const todayBadge = document.getElementById('todayBadge');
+  const toolbarActions = document.querySelector('.toolbar-actions');
+  const headerActions = document.querySelector('.header-actions');
 
   const pill = document.createElement('span');
   pill.id = 'dockpilot-header-db-pill';
@@ -190,8 +191,19 @@ function createHeaderDbPill() {
   pill.style.cursor = 'pointer';
   pill.style.userSelect = 'none';
   pill.style.transition = 'all 160ms ease';
+  pill.style.whiteSpace = 'nowrap';
 
-  targetContainer.insertBefore(pill, targetContainer.firstChild);
+  if (todayBadge && todayBadge.parentNode) {
+    todayBadge.insertAdjacentElement('afterend', pill);
+    pill.style.marginLeft = '8px';
+  } else if (toolbarActions) {
+    toolbarActions.insertBefore(pill, toolbarActions.firstChild);
+  } else if (headerActions) {
+    headerActions.insertBefore(pill, headerActions.firstChild);
+  } else {
+    return null;
+  }
+
   return pill;
 }
 
@@ -436,6 +448,9 @@ export async function startDockPilotPageGuard({
     throw new Error('Supabase client is required for DockPilot guard.');
   }
 
+  // Start continuous local database health monitor and toolbar badge immediately
+  const stopDbHealthMonitor = initDbHealthMonitor();
+
   const returnTarget = buildReturnTarget();
   let session = getSession();
 
@@ -458,9 +473,6 @@ export async function startDockPilotPageGuard({
 
   session = saveSession(validation.session) || validation.session;
   markActivity();
-
-  // Start continuous local database health monitor and toolbar badge
-  const stopDbHealthMonitor = initDbHealthMonitor();
 
   const overlay = createIdleOverlay();
   let isLocked = false;

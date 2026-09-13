@@ -1171,9 +1171,51 @@
       };
     }
 
+    function getFleetRegStateKey() {
+      const compId = currentCompanyId || getSession()?.companyId || 'default';
+      return getStoreKey('fleetRegistration', compId, 'state');
+    }
+
+    async function loadFleetRegistrationFromDb(companyId) {
+      if (!companyId) return null;
+      try {
+        const res = await fetch(`http://localhost:3001/fleet-registration?company_id=${encodeURIComponent(companyId)}`);
+        if (res.ok) {
+          const payload = await res.json();
+          const row = Array.isArray(payload?.rows) ? payload.rows[0] : payload?.row;
+          if (row) {
+            const rawA = row.sub_header_row_a || row.subHeaderRowA;
+            const subHeaderRowA = typeof rawA === 'string' ? JSON.parse(rawA) : (Array.isArray(rawA) ? rawA : []);
+            const rawB = row.sub_header_row_b || row.subHeaderRowB;
+            const subHeaderRowB = typeof rawB === 'string' ? JSON.parse(rawB) : (Array.isArray(rawB) ? rawB : []);
+            const rawLabels = row.row_labels || row.rowLabels;
+            const rowLabels = typeof rawLabels === 'string' ? JSON.parse(rawLabels) : (Array.isArray(rawLabels) ? rawLabels : []);
+            const rawData = row.matrix_data || row.matrixData;
+            const matrixData = typeof rawData === 'string' ? JSON.parse(rawData) : (Array.isArray(rawData) ? rawData : []);
+
+            if (subHeaderRowA.length > 0 || matrixData.length > 0) {
+              const state = {
+                subHeaderRowA,
+                subHeaderRowB,
+                rowLabels,
+                matrixData
+              };
+              const normalized = normalizeFleetRegistrationState(state);
+              writeStoreValue(getFleetRegStateKey(), normalized);
+              return normalized;
+            }
+          }
+        }
+      } catch (err) {
+        console.warn('[vessel-selector] Could not fetch fleet registration from local DB:', err);
+      }
+      return null;
+    }
+
     function readRegistrationState() {
       try {
-        const parsed = readStoreValue(FLEET_REG_STATE_KEY, null);
+        const key = getFleetRegStateKey();
+        const parsed = readStoreValue(key, null) || readStoreValue(FLEET_REG_STATE_KEY, null);
         return normalizeFleetRegistrationState(parsed);
       } catch (error) {
         console.error('Failed to parse fleet registration state:', error);
@@ -1320,7 +1362,9 @@
 
     function persistRegistrationState(state) {
       try {
-        writeStoreValue(FLEET_REG_STATE_KEY, normalizeFleetRegistrationState(state));
+        const normalized = normalizeFleetRegistrationState(state);
+        writeStoreValue(getFleetRegStateKey(), normalized);
+        writeStoreValue(FLEET_REG_STATE_KEY, normalized);
       } catch (error) {
         console.error('Failed to persist fleet registration state:', error);
         setStatus('Fleet data could not be saved to browser storage.', 'warn');
@@ -2285,6 +2329,7 @@
     async function initFleetComposition() {
       currentCompanyId = getSession()?.companyId || '';
       todayBadge.textContent = `Date: ${formatBadgeDate(new Date())}`;
+      await loadFleetRegistrationFromDb(currentCompanyId);
       const trees = refreshDerivedTrees();
       setSelectorFilterToggleState(false);
       await refreshRegistryPanel();

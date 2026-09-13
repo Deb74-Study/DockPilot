@@ -1363,6 +1363,12 @@
     import { startDockPilotPageGuard } from './dockpilotPageGuard.js';
     import { loadSavedTheme } from './dockpilotTheme.js';
     import { getSession } from './dockpilotAuthContract.js';
+    import { getStoreKey, readStoreValue, writeStoreValue } from './Store.js';
+    import {
+      loadCompanyVesselRegistry,
+      saveCompanyVesselRegistry,
+      normalizeDocStatus
+    } from './vesselRegistryStore.js';
 
     // Apply saved theme before anything renders
     loadSavedTheme();
@@ -2764,16 +2770,10 @@
     // ── Vessel Registry ──
     const VESSEL_REGISTRY_KEY_PREFIX = 'DOCKPILOT_VESSEL_REGISTRY_';
 
-    function pushToVesselRegistry(metadata) {
+    async function pushToVesselRegistry(metadata) {
       const companyId = getSession()?.companyId;
       if (!companyId) return; // no session context — skip silently
-      const key = getStoreKey('vesselRegistry', companyId);
-      let registry = [];
-      try {
-        registry = readStoreValue(key, []) || [];
-      } catch {
-        registry = [];
-      }
+      let registry = await loadCompanyVesselRegistry(companyId, VESSEL_REGISTRY_KEY_PREFIX);
       const p = metadata.particulars;
       const vesselId = makeVesselId(p.vesselName, p.imo);
       const existingIndex = registry.findIndex(r => r.imo === p.imo);
@@ -2816,9 +2816,9 @@
         registry.push(record);
       }
       try {
-        writeStoreValue(key, registry);
+        await saveCompanyVesselRegistry(companyId, registry, VESSEL_REGISTRY_KEY_PREFIX);
       } catch (err) {
-        console.warn('[VP Registry] Could not write to Store.js registry:', err);
+        console.warn('[VP Registry] Could not save registry:', err);
       }
     }
 
@@ -2829,7 +2829,7 @@
         const metadata = collectParticulars();
         await saveDraftMetadata(metadata);
         await exportVpPackage(metadata);
-        pushToVesselRegistry(metadata);
+        await pushToVesselRegistry(metadata);
         setStatus('Vessel particulars saved and package exported successfully.', 'success');
         // Ask user to move files to working folder
         showModal({

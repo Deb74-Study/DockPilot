@@ -1,5 +1,5 @@
 import http from 'node:http';
-import { Client } from 'pg';
+import { Pool } from 'pg';
 
 const PORT = Number(process.env.PORT || 3001);
 const DB_CONFIG = {
@@ -8,12 +8,26 @@ const DB_CONFIG = {
   database: process.env.PGDATABASE || 'dockpilot',
   user: process.env.PGUSER || 'dockpilot',
   password: process.env.PGPASSWORD || 'dockpilot_local_dev',
+  max: 10,
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 5000,
 };
 
-const db = new Client(DB_CONFIG);
+const pool = new Pool(DB_CONFIG);
+
+pool.on('error', (err) => {
+  console.warn('[pg-pool] Idle client background warning (will auto-reconnect):', err.message);
+});
+
+let schemaInitialized = false;
 
 const sendJson = (res, statusCode, payload) => {
-  res.writeHead(statusCode, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type' });
+  res.writeHead(statusCode, {
+    'Content-Type': 'application/json',
+    'Access-Control-Allow-Origin': '*',
+    'Access-Control-Allow-Methods': 'GET,POST,PUT,DELETE,OPTIONS',
+    'Access-Control-Allow-Headers': 'Content-Type'
+  });
   res.end(JSON.stringify(payload));
 };
 
@@ -36,14 +50,8 @@ const parseBody = async (req) => {
   }
 };
 
-const ensureDbConnected = async () => {
-  if (db._connected) return;
-  await db.connect();
-  db._connected = true;
-  await ensureSchema();
-};
-
 const ensureSchema = async () => {
+  if (schemaInitialized) return;
   const schemaSql = `
     CREATE TABLE IF NOT EXISTS public.companies (
       id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -167,17 +175,22 @@ const ensureSchema = async () => {
     );
   `;
   try {
-    await db.query(schemaSql);
+    await pool.query(schemaSql);
+    schemaInitialized = true;
   } catch (err) {
     console.error('[local-db-server] schema initialization warning:', err.message);
   }
+};
+
+const ensureDbConnected = async () => {
+  await ensureSchema();
 };
 
 const safeText = (value) => String(value ?? '').trim();
 
 const poolQuery = async (sql, params = []) => {
   await ensureDbConnected();
-  return db.query(sql, params);
+  return pool.query(sql, params);
 };
 
 const ensureCompanyExists = async (companyId) => {
@@ -279,10 +292,13 @@ const route = async (req, res) => {
 
   try {
     if (path === '/health') {
-      await ensureDbConnected();
-      const result = await poolQuery('SELECT 1 AS ok');
-      sendJson(res, 200, { ok: true, db: result.rows[0].ok === 1 });
-      return;
+      try {
+        await ensureDbConnected();
+        const result = await pool.query('SELECT 1 AS ok');
+        sendJson(res, 200, { ok: true, db: result.rows?.[0]?.ok === 1 });
+      } catch (dbErr) {
+        sendJson(res, 200, { ok: true, db: false, error: dbErr.message });
+      }
     }
 
     if (path === '/companies' && req.method === 'GET') {
@@ -538,14 +554,25 @@ const route = async (req, res) => {
 const server = http.createServer(route);
 server.listen(PORT, () => {
   console.log(`Local PostgreSQL API listening on http://localhost:${PORT}`);
+  ensureDbConnected().catch((err) => {
+    console.warn('[local-db-server] Initial database connection warning (will retry on requests):', err.message);
+  });
+});
+
+process.on('unhandledRejection', (reason) => {
+  console.warn('[local-db-server] Unhandled rejection (server continuing):', reason);
+});
+
+process.on('uncaughtException', (err) => {
+  console.error('[local-db-server] Uncaught exception (server continuing):', err);
 });
 
 process.on('SIGINT', async () => {
-  await db.end();
+  await pool.end();
   process.exit(0);
 });
 
 process.on('SIGTERM', async () => {
-  await db.end();
+  await pool.end();
   process.exit(0);
 });

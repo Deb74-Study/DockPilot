@@ -29,6 +29,15 @@ if [[ -z "$DB_STATUS" ]]; then
   "${COMPOSE_CMD[@]}" up -d dockpilot-db
 fi
 
+if ! lsof -iTCP:3001 -sTCP:LISTEN >/dev/null 2>&1; then
+  echo "Starting local API server on port 3001..."
+  (
+    cd "$ROOT_DIR/server"
+    PORT=3001 node server.js >"$ROOT_DIR/.dockpilot-api.log" 2>&1 &
+    echo $! > "$ROOT_DIR/.dockpilot-api.pid"
+  )
+fi
+
 if [[ $# -gt 0 ]]; then
   "${COMPOSE_CMD[@]}" exec -T dockpilot-db psql -U dockpilot -d dockpilot -c "$*"
 else

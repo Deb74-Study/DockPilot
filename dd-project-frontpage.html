@@ -364,6 +364,41 @@
       overflow-x: auto;
     }
 
+    .project-running-status-header,
+    .project-links-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 10px;
+    }
+
+    .panel-collapse-btn {
+      appearance: none;
+      -webkit-appearance: none;
+      background: rgba(255, 255, 255, 0.08);
+      border: 1px solid var(--line);
+      border-radius: 10px;
+      padding: 5px 14px;
+      color: var(--accent);
+      font-family: inherit;
+      font-size: 0.84rem;
+      font-weight: 700;
+      letter-spacing: 0.03em;
+      cursor: pointer;
+      display: inline-flex;
+      align-items: center;
+      gap: 0;
+      white-space: nowrap;
+      transition: all 140ms ease;
+    }
+
+    .panel-collapse-btn:hover,
+    .panel-collapse-btn:focus-visible {
+      background: linear-gradient(135deg, rgba(10, 55, 120, 0.8), rgba(8, 110, 130, 0.72));
+      border-color: rgba(103, 214, 255, 0.6);
+      transform: translateY(-1px);
+    }
+
     .project-running-status-title {
       margin: 0;
       font-size: 1.05rem;
@@ -927,8 +962,11 @@
     </section>
 
     <section class="panel project-running-status-panel" aria-label="Project Running Status">
-      <h2 class="project-running-status-title">Project Running Status</h2>
-      <div class="project-running-status-grid" role="img" aria-label="Three-line snaked milestone progress with twenty-four checkpoints">
+      <div class="project-running-status-header">
+        <h2 class="project-running-status-title">Project Running Status</h2>
+        <button id="toggleRunningStatusBtn" type="button" class="panel-collapse-btn" aria-expanded="false" aria-controls="projectRunningStatusGrid">▲ Expand ▲</button>
+      </div>
+      <div id="projectRunningStatusGrid" class="project-running-status-grid" role="img" aria-label="Three-line snaked milestone progress with twenty-four checkpoints" hidden>
         <svg class="project-running-status-track" viewBox="0 0 1000 360" preserveAspectRatio="none" aria-hidden="true">
           <defs>
             <linearGradient id="projectRunningStatusTrackGradient" x1="24" y1="0" x2="976" y2="0" gradientUnits="userSpaceOnUse">
@@ -1025,8 +1063,11 @@
     </section>
 
     <section class="panel project-links-panel" aria-label="Project Links">
-      <h2 class="project-details-title">Project Links</h2>
-      <div class="project-links-grid">
+      <div class="project-links-header">
+        <h2 class="project-details-title">Project Links</h2>
+        <button id="toggleProjectLinksBtn" type="button" class="panel-collapse-btn" aria-expanded="false" aria-controls="projectLinksGrid">▲ Expand ▲</button>
+      </div>
+      <div id="projectLinksGrid" class="project-links-grid" hidden>
         <div class="project-link-card">
           <div class="project-link-card-header">
             <h3 class="project-link-card-title">Project Data File</h3>
@@ -1114,6 +1155,10 @@
     const projectDetailLocDate2 = document.getElementById('projectDetailLocDate2');
     const projectDetailLocDate3 = document.getElementById('projectDetailLocDate3');
     const projectLaunchDate = document.getElementById('projectLaunchDate');
+    const toggleRunningStatusBtn = document.getElementById('toggleRunningStatusBtn');
+    const projectRunningStatusGrid = document.getElementById('projectRunningStatusGrid');
+    const toggleProjectLinksBtn = document.getElementById('toggleProjectLinksBtn');
+    const projectLinksGrid = document.getElementById('projectLinksGrid');
     const openDataFileBtn = document.getElementById('openDataFileBtn');
     const projectDataFileNote = document.getElementById('projectDataFileNote');
     const dataFileOverlay = document.getElementById('dataFileOverlay');
@@ -2059,6 +2104,27 @@
         event.preventDefault();
         event.returnValue = '';
       });
+
+      function setupCollapsiblePanel(btn, targetEl, isDefaultCollapsed = true) {
+        if (!btn || !targetEl) return;
+        let isExpanded = !isDefaultCollapsed;
+
+        const updateState = () => {
+          targetEl.hidden = !isExpanded;
+          btn.setAttribute('aria-expanded', String(isExpanded));
+          btn.textContent = isExpanded ? '▲ Collapse ▲' : '▼ Expand ▼';
+        };
+
+        btn.addEventListener('click', () => {
+          isExpanded = !isExpanded;
+          updateState();
+        });
+
+        updateState();
+      }
+
+      setupCollapsiblePanel(toggleRunningStatusBtn, projectRunningStatusGrid, true);
+      setupCollapsiblePanel(toggleProjectLinksBtn, projectLinksGrid, true);
 
       registerFleetBtn.disabled = true;
       launchProjectBtn.disabled = true;

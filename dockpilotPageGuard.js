@@ -61,6 +61,223 @@ function isSessionExpired(expiryDate) {
   return new Date(`${expiryDate}T23:59:59`).getTime() < Date.now();
 }
 
+function createDbHealthBanner() {
+  const existing = document.getElementById('dockpilot-db-health-banner');
+  if (existing) return existing.__dbHealthControl;
+
+  const banner = document.createElement('div');
+  banner.id = 'dockpilot-db-health-banner';
+  banner.style.position = 'fixed';
+  banner.style.top = '0';
+  banner.style.left = '0';
+  banner.style.right = '0';
+  banner.style.zIndex = '99990';
+  banner.style.display = 'none';
+  banner.style.alignItems = 'center';
+  banner.style.justifyContent = 'space-between';
+  banner.style.padding = '8px 18px';
+  banner.style.fontSize = '0.86rem';
+  banner.style.fontWeight = '600';
+  banner.style.boxShadow = '0 4px 18px rgba(0, 0, 0, 0.45)';
+  banner.style.transition = 'all 240ms ease';
+  banner.style.boxSizing = 'border-box';
+
+  const messageBox = document.createElement('div');
+  messageBox.style.display = 'flex';
+  messageBox.style.alignItems = 'center';
+  messageBox.style.gap = '10px';
+  messageBox.style.flexWrap = 'wrap';
+
+  const icon = document.createElement('span');
+  icon.style.fontSize = '1rem';
+
+  const text = document.createElement('span');
+
+  messageBox.appendChild(icon);
+  messageBox.appendChild(text);
+
+  const actionBox = document.createElement('div');
+  actionBox.style.display = 'flex';
+  actionBox.style.alignItems = 'center';
+  actionBox.style.gap = '8px';
+
+  const retryBtn = document.createElement('button');
+  retryBtn.type = 'button';
+  retryBtn.textContent = 'Retry Connection';
+  retryBtn.style.appearance = 'none';
+  retryBtn.style.border = '1px solid rgba(255, 255, 255, 0.3)';
+  retryBtn.style.borderRadius = '8px';
+  retryBtn.style.padding = '4px 12px';
+  retryBtn.style.fontSize = '0.8rem';
+  retryBtn.style.fontWeight = '700';
+  retryBtn.style.cursor = 'pointer';
+  retryBtn.style.background = 'rgba(255, 255, 255, 0.15)';
+  retryBtn.style.color = '#ffffff';
+  retryBtn.style.transition = 'background 140ms ease';
+
+  retryBtn.addEventListener('mouseenter', () => {
+    retryBtn.style.background = 'rgba(255, 255, 255, 0.3)';
+  });
+  retryBtn.addEventListener('mouseleave', () => {
+    retryBtn.style.background = 'rgba(255, 255, 255, 0.15)';
+  });
+
+  actionBox.appendChild(retryBtn);
+  banner.appendChild(messageBox);
+  banner.appendChild(actionBox);
+  document.body.appendChild(banner);
+
+  const ctrl = {
+    setOffline() {
+      banner.style.background = 'linear-gradient(90deg, #7f1d1d, #991b1b)';
+      banner.style.color = '#fecaca';
+      banner.style.borderBottom = '1px solid #f87171';
+      icon.textContent = '⚠️';
+      text.textContent = 'Local PostgreSQL Database is offline. Run ./launch_dockpilot_local.command to start services.';
+      retryBtn.style.display = 'inline-block';
+      retryBtn.disabled = false;
+      banner.style.display = 'flex';
+    },
+    setOnline(temporary = false) {
+      if (temporary) {
+        banner.style.background = 'linear-gradient(90deg, #064e3b, #047857)';
+        banner.style.color = '#d1fae5';
+        banner.style.borderBottom = '1px solid #34d399';
+        icon.textContent = '✅';
+        text.textContent = 'Local PostgreSQL Database connected successfully.';
+        retryBtn.style.display = 'none';
+        banner.style.display = 'flex';
+        setTimeout(() => {
+          banner.style.display = 'none';
+        }, 2200);
+      } else {
+        banner.style.display = 'none';
+      }
+    },
+    setChecking() {
+      retryBtn.disabled = true;
+      retryBtn.textContent = 'Checking...';
+    },
+    resetRetry() {
+      retryBtn.disabled = false;
+      retryBtn.textContent = 'Retry Connection';
+    },
+    retryBtn,
+    banner
+  };
+
+  banner.__dbHealthControl = ctrl;
+  return ctrl;
+}
+
+function createHeaderDbPill() {
+  const existing = document.getElementById('dockpilot-header-db-pill');
+  if (existing) return existing;
+
+  const targetContainer = document.querySelector('.toolbar-actions') || document.querySelector('.header-actions');
+  if (!targetContainer) return null;
+
+  const pill = document.createElement('span');
+  pill.id = 'dockpilot-header-db-pill';
+  pill.style.display = 'inline-flex';
+  pill.style.alignItems = 'center';
+  pill.style.gap = '6px';
+  pill.style.padding = '6px 12px';
+  pill.style.borderRadius = '999px';
+  pill.style.fontSize = '0.78rem';
+  pill.style.fontWeight = '700';
+  pill.style.lineHeight = '1';
+  pill.style.cursor = 'pointer';
+  pill.style.userSelect = 'none';
+  pill.style.transition = 'all 160ms ease';
+
+  targetContainer.insertBefore(pill, targetContainer.firstChild);
+  return pill;
+}
+
+async function checkLocalDbHealth() {
+  try {
+    const controller = new AbortController();
+    const timeout = setTimeout(() => controller.abort(), 2000);
+    const res = await fetch('http://localhost:3001/health', {
+      method: 'GET',
+      signal: controller.signal
+    });
+    clearTimeout(timeout);
+    if (!res.ok) return false;
+    const data = await res.json();
+    return Boolean(data?.ok && data?.db);
+  } catch {
+    return false;
+  }
+}
+
+function initDbHealthMonitor() {
+  const bannerCtrl = createDbHealthBanner();
+  const headerPill = createHeaderDbPill();
+  let wasOffline = false;
+
+  const updateUI = (isOnline, isInitial = false) => {
+    if (headerPill) {
+      if (isOnline) {
+        headerPill.textContent = '🟢 DB: Connected';
+        headerPill.style.background = 'rgba(16, 185, 129, 0.12)';
+        headerPill.style.color = '#6ee7b7';
+        headerPill.style.border = '1px solid rgba(52, 211, 153, 0.35)';
+        headerPill.title = 'Local PostgreSQL database and API server are healthy on port 3001';
+      } else {
+        headerPill.textContent = '🔴 DB: Offline (Retry)';
+        headerPill.style.background = 'rgba(239, 68, 68, 0.15)';
+        headerPill.style.color = '#fca5a5';
+        headerPill.style.border = '1px solid rgba(248, 113, 113, 0.4)';
+        headerPill.title = 'Click to retry connecting to local PostgreSQL on port 3001';
+      }
+    }
+
+    if (!isOnline) {
+      wasOffline = true;
+      bannerCtrl.setOffline();
+    } else {
+      if (wasOffline && !isInitial) {
+        bannerCtrl.setOnline(true);
+        wasOffline = false;
+      } else {
+        bannerCtrl.setOnline(false);
+      }
+    }
+  };
+
+  const executeCheck = async (isInitial = false) => {
+    bannerCtrl.setChecking();
+    const isHealthy = await checkLocalDbHealth();
+    bannerCtrl.resetRetry();
+    updateUI(isHealthy, isInitial);
+    return isHealthy;
+  };
+
+  bannerCtrl.retryBtn.addEventListener('click', () => {
+    executeCheck(false);
+  });
+
+  if (headerPill) {
+    headerPill.addEventListener('click', () => {
+      executeCheck(false);
+    });
+  }
+
+  // Initial check
+  executeCheck(true);
+
+  // Background monitor: poll every 6 seconds to auto-recover if service starts
+  const intervalId = setInterval(() => {
+    executeCheck(false);
+  }, 6000);
+
+  return () => {
+    clearInterval(intervalId);
+  };
+}
+
 function createIdleOverlay() {
   const wrapper = document.createElement('div');
   wrapper.id = 'dockpilot-idle-lock';
@@ -242,6 +459,9 @@ export async function startDockPilotPageGuard({
   session = saveSession(validation.session) || validation.session;
   markActivity();
 
+  // Start continuous local database health monitor and toolbar badge
+  const stopDbHealthMonitor = initDbHealthMonitor();
+
   const overlay = createIdleOverlay();
   let isLocked = false;
 
@@ -362,6 +582,7 @@ export async function startDockPilotPageGuard({
     },
     stop() {
       clearInterval(idleInterval);
+      stopDbHealthMonitor();
       overlay.destroy();
       activityEvents.forEach((eventName) => {
         window.removeEventListener(eventName, markActivityIfNeeded, { capture: true });
